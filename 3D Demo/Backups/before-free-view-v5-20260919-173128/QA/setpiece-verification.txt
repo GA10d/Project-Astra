@@ -1,0 +1,144 @@
+PASS Computer tests use isolated QA storage, never personal documents
+PASS All three setpiece modules are installed
+PASS Default planet exists
+PASS Initial state contains only the original nine interactions
+PASS Invalid numeric mode is rejected
+INFO 00_Default | offscreen render and readback=73.5 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 00_Default
+PASS Key 1 activates planetary breakup
+PASS Original solid planet is hidden during breakup
+PASS Planet explosion uses many solid fragments | fragments=36
+PASS Planet detonation produces an explosion
+PASS Planet detonation shakes the actual camera
+INFO 01_Planet_Breakup | offscreen render and readback=71.7 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 01_Planet_Breakup
+INFO 01_D_Close_Planet_Fragments_After4Seconds | offscreen render and readback=32.4 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 01_D_Close_Planet_Fragments_After4Seconds
+PASS Planetary breakup resources clear on zero
+PASS Key 2 activates the visitor
+PASS A physical UFO, pilot and waving hand exist
+PASS Visitor alert is present on the physical monitor
+INFO 02_D_Central_Visitor | offscreen render and readback=19.1 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 02_D_Central_Visitor
+INFO 02_A_UFO_Monitor_Alert | offscreen render and readback=18.5 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 02_A_UFO_Monitor_Alert
+PASS Visitor warning is queued as a computer desktop modal
+PASS Powered computer opens with its visitor alert pending
+PASS Closing the alert desktop returns input to the cabin
+PASS Physical monitor popup vanishes when terminal loses power
+PASS An unpowered monitor cannot open its computer desktop
+PASS Physical monitor popup returns with restored power
+PASS Alien pilot really waves between frames
+INFO 02_D_Close_Visitor_Wave | offscreen render and readback=12.8 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 02_D_Close_Visitor_Wave
+PASS Visitor is completely removed on zero
+PASS Key 3 starts a damage crisis
+PASS Impact immediately locks the failed power circuit
+PASS All normal and emergency lamps go dark initially
+PASS Alarm does not start before the delayed second impact
+PASS Blackout has no premature alarm audio
+PASS Computer is unavailable during the initial complete blackout
+PASS Initial impact shakes the camera
+PASS Light and power commands cannot bypass damage lock
+PASS Operating the real power lever cannot restore failed lights
+INFO 03_D_Impact_Blackout | offscreen render and readback=7.0 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_D_Impact_Blackout
+PASS Blackout is still silent before the three-second deadline
+PASS Second impact starts emergency alarm after three seconds
+PASS The emergency siren is actually playing audio
+PASS Impact warning has the requested exact text
+PASS Screen receives emergency power while main circuit stays locked
+PASS Impact warning is queued as a computer desktop modal
+PASS Red emergency lights visibly pulse | range=0.22..1.00
+PASS Exactly three repairable cracks are spawned
+PASS Cannot repair cracks with bare hands
+PASS Unsafe near-window observation is blocked during crisis
+INFO 03_D_Three_Cracks_Alarm | offscreen render and readback=36.3 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_D_Three_Cracks_Alarm
+INFO 03_A_Impact_Monitor_Alert | offscreen render and readback=9.5 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_A_Impact_Monitor_Alert
+PASS Emergency battery powers the interactive computer despite failed main circuit
+PASS Emergency computer closes without ending the repair crisis
+PASS Hammer is physically reachable on the tool wall
+INFO 03_B_Tool_Wall_Hammer | offscreen render and readback=12.9 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_B_Tool_Wall_Hammer
+PASS Real hammer click equips the repair tool
+INFO 03_D_Hammer_Equipped | offscreen render and readback=16.2 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_D_Hammer_Equipped
+PASS Crack 1 is reachable by actual player raycast
+PASS Crack 1 requires the hammer animation before completion
+PASS Crack 1 is repaired exactly once
+PASS Crack 2 is reachable by actual player raycast
+PASS Crack 2 requires the hammer animation before completion
+PASS Crack 2 is repaired exactly once
+PASS Crack 3 is reachable by actual player raycast
+PASS Crack 3 requires the hammer animation before completion
+PASS Crack 3 is repaired exactly once
+PASS All three repairs end the crisis
+PASS Successful repair clears alarm and restores normal lights
+PASS Completing repairs stops the real siren audio
+PASS Window observation is available after repair
+INFO 03_D_Crisis_Repaired | offscreen render and readback=60.6 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_D_Crisis_Repaired
+PASS Reset removes temporary hammer and crack interactions
+PASS Key 4 begins a real warp transition
+INFO 04_D_Crimson_Warp | offscreen render and readback=45.0 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 04_D_Crimson_Warp
+PASS Warp completes rather than remaining in a transition
+PASS Crimson system has nine separate molten planets
+PASS Planet-scale eye has fourteen animated mesh tentacles
+PASS Default planet is absent from the crimson destination
+PASS Eye creature tendrils deform their real geometry
+INFO 04_D_Crimson_Eye_And_Lava_Worlds | offscreen render and readback=43.3 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 04_D_Crimson_Eye_And_Lava_Worlds
+PASS Cinematic exterior respects gameplay pause
+PASS Key 5 replaces the crimson scene with a battlefield
+PASS Previous eye scene is released when switching directly
+PASS Battlefield has numerous distinct fighters | fighters=28
+PASS Both red and blue factions are present
+PASS Dogfighting craft move through three-dimensional space
+PASS Battle continuously emits multiple laser bolts | peak=18
+PASS Red and blue factions fire matching colored lasers
+PASS Battle generates recurring craft explosions | explosions=4
+PASS Nearby battlefield blasts shake the cabin
+INFO 05_D_Dogfight_Red_And_Blue | offscreen render and readback=12.7 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 05_D_Dogfight_Red_And_Blue
+PASS Key 6 changes the exterior to a fuel station
+PASS Battle ships and lasers are removed on station arrival
+PASS Refuelling station has a visible generated structure
+PASS Eight ships queue for refuelling | queued=8
+INFO 06_D_Orbital_Fuel_Station | offscreen render and readback=34.6 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 06_D_Orbital_Fuel_Station
+PASS Final zero reset restores default planet and exterior
+PASS Final zero reset clears warnings and temporary assets
+PASS Final zero reset restores main power and cancels alarm
+PASS Final zero reset stops alarm audio and removes pending desktop alerts
+PASS Final zero reset returns camera to a stable central pose
+INFO 07_Default_Restored | offscreen render and readback=53.2 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 07_Default_Restored
+PASS Rapid switch cycle 1 mode 1
+PASS Rapid switch cycle 1 mode 2
+PASS Rapid switch cycle 1 mode 3
+PASS Rapid switch cycle 1 mode 4
+PASS Rapid switch cycle 1 mode 5
+PASS Rapid switch cycle 1 mode 6
+PASS Rapid switch cycle 1 mode 0
+PASS Rapid switch cleanup 1 restores default planet and exterior
+PASS Rapid switch cleanup 1 clears warnings and temporary assets
+PASS Rapid switch cleanup 1 restores main power and cancels alarm
+PASS Rapid switch cleanup 1 stops alarm audio and removes pending desktop alerts
+PASS Rapid switch cleanup 1 returns camera to a stable central pose
+PASS Rapid switch cycle 2 mode 1
+PASS Rapid switch cycle 2 mode 2
+PASS Rapid switch cycle 2 mode 3
+PASS Rapid switch cycle 2 mode 4
+PASS Rapid switch cycle 2 mode 5
+PASS Rapid switch cycle 2 mode 6
+PASS Rapid switch cycle 2 mode 0
+PASS Rapid switch cleanup 2 restores default planet and exterior
+PASS Rapid switch cleanup 2 clears warnings and temporary assets
+PASS Rapid switch cleanup 2 restores main power and cancels alarm
+PASS Rapid switch cleanup 2 stops alarm audio and removes pending desktop alerts
+PASS Rapid switch cleanup 2 returns camera to a stable central pose
+PASS No shader, runtime, or assertion errors were logged
+RESULT PASS | checks=126 failures=0 errors=0

@@ -1,0 +1,413 @@
+PASS Computer tests use isolated QA storage, never personal documents
+PASS All six setpiece modules are installed
+PASS Default planet exists
+PASS Initial state contains only the original nine interactions
+PASS Invalid numeric mode is rejected
+INFO 00_Default | offscreen render and readback=76.9 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 00_Default
+PASS Key 1 activates planetary breakup
+PASS Original solid planet is hidden during breakup
+PASS Planet explosion uses many solid fragments | fragments=36
+PASS Planet detonation produces an explosion
+PASS Planet detonation shakes the actual camera
+INFO 01_Planet_Breakup | offscreen render and readback=73.6 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 01_Planet_Breakup
+INFO 01_D_Close_Planet_Fragments_After4Seconds | offscreen render and readback=32.0 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 01_D_Close_Planet_Fragments_After4Seconds
+PASS Planetary breakup resources clear on zero
+PASS Key 2 activates the visitor
+PASS A physical UFO, pilot and waving hand exist
+PASS Visitor alert is present on the physical monitor
+INFO 02_D_Central_Visitor | offscreen render and readback=51.5 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 02_D_Central_Visitor
+INFO 02_A_UFO_Monitor_Alert | offscreen render and readback=51.2 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 02_A_UFO_Monitor_Alert
+PASS Visitor warning is queued as a computer desktop modal
+PASS Powered computer opens with its visitor alert pending
+PASS Closing the alert desktop returns input to the cabin
+PASS Physical monitor popup vanishes when terminal loses power
+PASS An unpowered monitor cannot open its computer desktop
+PASS Physical monitor popup returns with restored power
+PASS Alien pilot really waves between frames
+INFO 02_D_Close_Visitor_Wave | offscreen render and readback=29.2 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 02_D_Close_Visitor_Wave
+PASS Visitor is completely removed on zero
+PASS Key 3 starts a damage crisis
+PASS Impact immediately locks the failed power circuit
+PASS All normal and emergency lamps go dark initially
+PASS Alarm does not start before the delayed second impact
+PASS Blackout has no premature alarm audio
+PASS Computer is unavailable during the initial complete blackout
+PASS Initial impact shakes the camera
+PASS Light and power commands cannot bypass damage lock
+PASS Operating the real power lever cannot restore failed lights
+INFO 03_D_Impact_Blackout | offscreen render and readback=14.8 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_D_Impact_Blackout
+PASS Blackout is still silent before the three-second deadline
+PASS Second impact starts emergency alarm after three seconds
+PASS The emergency siren is actually playing audio
+PASS Impact warning has the requested exact text
+PASS Screen receives emergency power while main circuit stays locked
+PASS Impact warning is queued as a computer desktop modal
+PASS Red emergency lights visibly pulse | range=0.22..1.00
+PASS Exactly three repairable cracks are spawned
+PASS Cannot repair cracks with bare hands
+PASS Unsafe near-window observation is blocked during crisis
+INFO 03_D_Three_Cracks_Alarm | offscreen render and readback=26.1 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_D_Three_Cracks_Alarm
+INFO 03_A_Impact_Monitor_Alert | offscreen render and readback=25.0 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_A_Impact_Monitor_Alert
+PASS Emergency battery powers the interactive computer despite failed main circuit
+PASS Emergency computer closes without ending the repair crisis
+PASS Hammer is physically reachable on the tool wall
+INFO 03_B_Tool_Wall_Hammer | offscreen render and readback=30.7 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_B_Tool_Wall_Hammer
+PASS Real hammer click equips the repair tool
+INFO 03_D_Hammer_Equipped | offscreen render and readback=27.7 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_D_Hammer_Equipped
+PASS Crack 1 is reachable by actual player raycast
+PASS Crack 1 requires the hammer animation before completion
+PASS Crack 1 is repaired exactly once
+PASS Crack 2 is reachable by actual player raycast
+PASS Crack 2 requires the hammer animation before completion
+PASS Crack 2 is repaired exactly once
+PASS Crack 3 is reachable by actual player raycast
+PASS Crack 3 requires the hammer animation before completion
+PASS Crack 3 is repaired exactly once
+PASS All three repairs end the crisis
+PASS Successful repair clears alarm and restores normal lights
+PASS Completing repairs stops the real siren audio
+PASS Window observation is available after repair
+INFO 03_D_Crisis_Repaired | offscreen render and readback=68.0 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 03_D_Crisis_Repaired
+PASS Reset removes temporary hammer and crack interactions
+PASS Key 4 begins a real warp transition
+INFO 04_D_Crimson_Warp | offscreen render and readback=48.9 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 04_D_Crimson_Warp
+PASS Warp completes rather than remaining in a transition
+PASS Crimson system has nine separate molten planets
+PASS Planet-scale eye has fourteen animated mesh tentacles
+PASS Default planet is absent from the crimson destination
+PASS Eye creature tendrils deform their real geometry
+INFO 04_D_Crimson_Eye_And_Lava_Worlds | offscreen render and readback=41.4 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 04_D_Crimson_Eye_And_Lava_Worlds
+PASS Cinematic exterior respects gameplay pause
+PASS Key 5 replaces the crimson scene with a battlefield
+PASS Previous eye scene is released when switching directly
+PASS Battlefield has numerous distinct fighters | fighters=28
+PASS Both red and blue factions are present
+PASS Dogfighting craft move through three-dimensional space
+PASS Battle continuously emits multiple laser bolts | peak=18
+PASS Red and blue factions fire matching colored lasers
+PASS Battle generates recurring craft explosions | explosions=4
+PASS Nearby battlefield blasts shake the cabin
+INFO 05_D_Dogfight_Red_And_Blue | offscreen render and readback=44.1 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 05_D_Dogfight_Red_And_Blue
+PASS Key 6 changes the exterior to a fuel station
+PASS Battle ships and lasers are removed on station arrival
+PASS Refuelling station has a visible generated structure
+PASS Eight ships queue for refuelling | queued=8
+INFO 06_D_Orbital_Fuel_Station | offscreen render and readback=43.4 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 06_D_Orbital_Fuel_Station
+PASS Key 7 starts the migration without turning the player
+PASS Whale migration contains multiple real creatures
+PASS Whale wake contains a school of small luminous animals | followers=120
+PASS Whales replace the original exterior
+PASS Phasing school adds at least eight small physical whales
+PASS Large exterior whale migration remains intact
+PASS Phasing animals have no active colliders to intercept cabin clicks
+PASS Every small whale genuinely enters cabin and exits opposite sides | through-routes=12
+PASS School crosses all four walls rather than only the window | side-mask=15
+PASS Whale paths remain continuous for two minutes without loop teleports
+PASS Whale paths keep clearance around center and near-window camera
+PASS Live whale positions match their sampled physical paths
+PASS Interior whales use smaller bodies than the exterior matriarch
+INFO 19_D_Whale_Migration_Arrival | offscreen render and readback=74.2 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 19_D_Whale_Migration_Arrival
+PASS Hero whale physically crosses the exterior
+PASS Whales add a visibly lit temporary cabin reflection
+INFO 20_D_Whale_Blue_Cabin_Reflection | offscreen render and readback=80.2 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 20_D_Whale_Blue_Cabin_Reflection
+INFO 21_D_Close_Whale_And_Followers | offscreen render and readback=36.2 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 21_D_Close_Whale_And_Followers
+PASS Whale animation stops in the pause menu
+PASS Interior whale visibly crosses the A wall view
+INFO 29_A_Small_Whales_Inside_Cabin | offscreen render and readback=52.8 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 29_A_Small_Whales_Inside_Cabin
+PASS Interior whale visibly crosses the D wall view
+INFO 30_D_Small_Whales_Inside_Cabin | offscreen render and readback=67.5 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 30_D_Small_Whales_Inside_Cabin
+PASS Interior whale visibly crosses the C wall view
+INFO 31_C_Small_Whales_Inside_Cabin | offscreen render and readback=75.7 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 31_C_Small_Whales_Inside_Cabin
+PASS Interior whale visibly crosses the B wall view
+INFO 32_B_Small_Whales_Inside_Cabin | offscreen render and readback=79.0 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 32_B_Small_Whales_Inside_Cabin
+PASS Pause freezes actual interior whale geometry
+PASS Interior whale movement resumes after pause
+PASS Whale scene and its blue reflection lights are fully removed
+PASS Zero also removes every interior phasing whale
+PASS Key 8 starts the duplicate probe encounter
+PASS Duplicate probe contains a physical pilot and lever
+PASS Mirror scene accumulates delayed player samples
+PASS Duplicate ship is reported on the monitor
+PASS Duplicate pilot does not instantly copy new mouse look
+PASS Duplicate pilot copies player look after a real delay | look=(0.77, 0.48); elapsed=1.630136; sample=1.124974
+PASS Mirror cabin lights initially retain their delayed state
+PASS Mirror cabin lights follow the player's light switch after delay
+PASS Duplicate cabin can relight during the imitation phase
+INFO 22_D_Duplicate_Probe_Imitation | offscreen render and readback=70.7 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 22_D_Duplicate_Probe_Imitation
+INFO 23_D_Close_Duplicate_Pilot | offscreen render and readback=36.4 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 23_D_Close_Duplicate_Pilot
+PASS Duplicate pilot enters the independent uncanny phase
+PASS Independent pilot really switches off the duplicate's lamps
+PASS Mirror blackout never switches off the player's actual power
+INFO 24_D_Duplicate_Independent_Blackout | offscreen render and readback=46.9 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 24_D_Duplicate_Independent_Blackout
+PASS Duplicate pilot pauses along with the cabin
+PASS Key 9 replaces the mirror scene with a sorting station
+PASS Switching to sorting removes the duplicate pilot and samples
+PASS Sorting station contains many separate human probes | probes=26
+PASS Sorting process has an articulated stamping arm
+PASS Shipping label is not applied before the scanning sequence
+INFO 25_D_Sorting_Clamp_And_Scan | offscreen render and readback=36.6 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 25_D_Sorting_Clamp_And_Scan
+PASS Robot physically applies the biological inventory label
+INFO 26_D_Sorting_Label_Close | offscreen render and readback=56.0 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 26_D_Sorting_Label_Close
+PASS Neighbouring dark probe is routed into recycling
+PASS Sorting never locks navigation or disables actual ship power
+INFO 27_D_Sorting_Route_And_Probe_Queue | offscreen render and readback=70.4 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 27_D_Sorting_Route_And_Probe_Queue
+PASS Sorting releases the player's capsule for redeployment
+INFO 28_D_Sorting_Released_For_Redeployment | offscreen render and readback=77.8 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 28_D_Sorting_Released_For_Redeployment
+PASS Sorting conveyor and robot respect gameplay pause
+PASS All new exterior materials have supported shaders
+PASS Zero removes sorting props, stamp and temporary lighting
+PASS Final zero reset restores default planet and exterior
+PASS Final zero reset clears warnings and temporary assets
+PASS Final zero reset restores main power and cancels alarm
+PASS Final zero reset stops alarm audio and removes pending desktop alerts
+PASS Final zero reset returns camera to a stable central pose
+PASS Final zero reset removes encounter geometry and restores original light count
+INFO 07_Default_Restored | offscreen render and readback=59.3 ms; resolution=1600x900
+PASS Camera rendered nonblank frame 07_Default_Restored
+PASS Rapid switch cycle 1 mode 1
+PASS Rapid switch cycle 1 mode 2
+PASS Rapid switch cycle 1 mode 3
+PASS Rapid switch cycle 1 mode 4
+PASS Rapid switch cycle 1 mode 5
+PASS Rapid switch cycle 1 mode 6
+PASS Rapid switch cycle 1 mode 7
+PASS Rapid switch cycle 1 mode 8
+PASS Rapid switch cycle 1 mode 9
+PASS Rapid switch cycle 1 mode 0
+PASS Rapid switch cleanup 1 restores default planet and exterior
+PASS Rapid switch cleanup 1 clears warnings and temporary assets
+PASS Rapid switch cleanup 1 restores main power and cancels alarm
+PASS Rapid switch cleanup 1 stops alarm audio and removes pending desktop alerts
+PASS Rapid switch cleanup 1 returns camera to a stable central pose
+PASS Rapid switch cleanup 1 removes encounter geometry and restores original light count
+PASS Rapid switch cycle 2 mode 1
+PASS Rapid switch cycle 2 mode 2
+PASS Rapid switch cycle 2 mode 3
+PASS Rapid switch cycle 2 mode 4
+PASS Rapid switch cycle 2 mode 5
+PASS Rapid switch cycle 2 mode 6
+PASS Rapid switch cycle 2 mode 7
+PASS Rapid switch cycle 2 mode 8
+PASS Rapid switch cycle 2 mode 9
+PASS Rapid switch cycle 2 mode 0
+PASS Rapid switch cleanup 2 restores default planet and exterior
+PASS Rapid switch cleanup 2 clears warnings and temporary assets
+PASS Rapid switch cleanup 2 restores main power and cancels alarm
+PASS Rapid switch cleanup 2 stops alarm audio and removes pending desktop alerts
+PASS Rapid switch cleanup 2 returns camera to a stable central pose
+PASS Rapid switch cleanup 2 removes encounter geometry and restores original light count
+PASS Wall 0 event 1 activates without selecting another wall
+PASS Wall 0 event 1 preserves the camera pose at the instant of triggering
+PASS Wall 0 event 1 leaves navigation orientation unchanged on the next frame
+PASS Wall 0 event 2 activates without selecting another wall
+PASS Wall 0 event 2 preserves the camera pose at the instant of triggering
+PASS Wall 0 event 2 leaves navigation orientation unchanged on the next frame
+PASS Wall 0 event 3 activates without selecting another wall
+PASS Wall 0 event 3 preserves the camera pose at the instant of triggering
+PASS Wall 0 event 3 leaves navigation orientation unchanged on the next frame
+PASS Wall 0 event 4 activates without selecting another wall
+PASS Wall 0 event 4 preserves the camera pose at the instant of triggering
+PASS Wall 0 event 4 leaves navigation orientation unchanged on the next frame
+PASS Wall 0 event 5 activates without selecting another wall
+PASS Wall 0 event 5 preserves the camera pose at the instant of triggering
+PASS Wall 0 event 5 leaves navigation orientation unchanged on the next frame
+PASS Wall 0 event 6 activates without selecting another wall
+PASS Wall 0 event 6 preserves the camera pose at the instant of triggering
+PASS Wall 0 event 6 leaves navigation orientation unchanged on the next frame
+PASS Wall 0 event 7 activates without selecting another wall
+PASS Wall 0 event 7 preserves the camera pose at the instant of triggering
+PASS Wall 0 event 7 leaves navigation orientation unchanged on the next frame
+PASS Wall 0 event 8 activates without selecting another wall
+PASS Wall 0 event 8 preserves the camera pose at the instant of triggering
+PASS Wall 0 event 8 leaves navigation orientation unchanged on the next frame
+PASS Wall 0 event 9 activates without selecting another wall
+PASS Wall 0 event 9 preserves the camera pose at the instant of triggering
+PASS Wall 0 event 9 leaves navigation orientation unchanged on the next frame
+PASS Wall 1 event 1 activates without selecting another wall
+PASS Wall 1 event 1 preserves the camera pose at the instant of triggering
+PASS Wall 1 event 1 leaves navigation orientation unchanged on the next frame
+PASS Wall 1 event 2 activates without selecting another wall
+PASS Wall 1 event 2 preserves the camera pose at the instant of triggering
+PASS Wall 1 event 2 leaves navigation orientation unchanged on the next frame
+PASS Wall 1 event 3 activates without selecting another wall
+PASS Wall 1 event 3 preserves the camera pose at the instant of triggering
+PASS Wall 1 event 3 leaves navigation orientation unchanged on the next frame
+PASS Wall 1 event 4 activates without selecting another wall
+PASS Wall 1 event 4 preserves the camera pose at the instant of triggering
+PASS Wall 1 event 4 leaves navigation orientation unchanged on the next frame
+PASS Wall 1 event 5 activates without selecting another wall
+PASS Wall 1 event 5 preserves the camera pose at the instant of triggering
+PASS Wall 1 event 5 leaves navigation orientation unchanged on the next frame
+PASS Wall 1 event 6 activates without selecting another wall
+PASS Wall 1 event 6 preserves the camera pose at the instant of triggering
+PASS Wall 1 event 6 leaves navigation orientation unchanged on the next frame
+PASS Wall 1 event 7 activates without selecting another wall
+PASS Wall 1 event 7 preserves the camera pose at the instant of triggering
+PASS Wall 1 event 7 leaves navigation orientation unchanged on the next frame
+PASS Wall 1 event 8 activates without selecting another wall
+PASS Wall 1 event 8 preserves the camera pose at the instant of triggering
+PASS Wall 1 event 8 leaves navigation orientation unchanged on the next frame
+PASS Wall 1 event 9 activates without selecting another wall
+PASS Wall 1 event 9 preserves the camera pose at the instant of triggering
+PASS Wall 1 event 9 leaves navigation orientation unchanged on the next frame
+PASS Wall 2 event 1 activates without selecting another wall
+PASS Wall 2 event 1 preserves the camera pose at the instant of triggering
+PASS Wall 2 event 1 leaves navigation orientation unchanged on the next frame
+PASS Wall 2 event 2 activates without selecting another wall
+PASS Wall 2 event 2 preserves the camera pose at the instant of triggering
+PASS Wall 2 event 2 leaves navigation orientation unchanged on the next frame
+PASS Wall 2 event 3 activates without selecting another wall
+PASS Wall 2 event 3 preserves the camera pose at the instant of triggering
+PASS Wall 2 event 3 leaves navigation orientation unchanged on the next frame
+PASS Wall 2 event 4 activates without selecting another wall
+PASS Wall 2 event 4 preserves the camera pose at the instant of triggering
+PASS Wall 2 event 4 leaves navigation orientation unchanged on the next frame
+PASS Wall 2 event 5 activates without selecting another wall
+PASS Wall 2 event 5 preserves the camera pose at the instant of triggering
+PASS Wall 2 event 5 leaves navigation orientation unchanged on the next frame
+PASS Wall 2 event 6 activates without selecting another wall
+PASS Wall 2 event 6 preserves the camera pose at the instant of triggering
+PASS Wall 2 event 6 leaves navigation orientation unchanged on the next frame
+PASS Wall 2 event 7 activates without selecting another wall
+PASS Wall 2 event 7 preserves the camera pose at the instant of triggering
+PASS Wall 2 event 7 leaves navigation orientation unchanged on the next frame
+PASS Wall 2 event 8 activates without selecting another wall
+PASS Wall 2 event 8 preserves the camera pose at the instant of triggering
+PASS Wall 2 event 8 leaves navigation orientation unchanged on the next frame
+PASS Wall 2 event 9 activates without selecting another wall
+PASS Wall 2 event 9 preserves the camera pose at the instant of triggering
+PASS Wall 2 event 9 leaves navigation orientation unchanged on the next frame
+PASS Wall 3 event 1 activates without selecting another wall
+PASS Wall 3 event 1 preserves the camera pose at the instant of triggering
+PASS Wall 3 event 1 leaves navigation orientation unchanged on the next frame
+PASS Wall 3 event 2 activates without selecting another wall
+PASS Wall 3 event 2 preserves the camera pose at the instant of triggering
+PASS Wall 3 event 2 leaves navigation orientation unchanged on the next frame
+PASS Wall 3 event 3 activates without selecting another wall
+PASS Wall 3 event 3 preserves the camera pose at the instant of triggering
+PASS Wall 3 event 3 leaves navigation orientation unchanged on the next frame
+PASS Wall 3 event 4 activates without selecting another wall
+PASS Wall 3 event 4 preserves the camera pose at the instant of triggering
+PASS Wall 3 event 4 leaves navigation orientation unchanged on the next frame
+PASS Wall 3 event 5 activates without selecting another wall
+PASS Wall 3 event 5 preserves the camera pose at the instant of triggering
+PASS Wall 3 event 5 leaves navigation orientation unchanged on the next frame
+PASS Wall 3 event 6 activates without selecting another wall
+PASS Wall 3 event 6 preserves the camera pose at the instant of triggering
+PASS Wall 3 event 6 leaves navigation orientation unchanged on the next frame
+PASS Wall 3 event 7 activates without selecting another wall
+PASS Wall 3 event 7 preserves the camera pose at the instant of triggering
+PASS Wall 3 event 7 leaves navigation orientation unchanged on the next frame
+PASS Wall 3 event 8 activates without selecting another wall
+PASS Wall 3 event 8 preserves the camera pose at the instant of triggering
+PASS Wall 3 event 8 leaves navigation orientation unchanged on the next frame
+PASS Wall 3 event 9 activates without selecting another wall
+PASS Wall 3 event 9 preserves the camera pose at the instant of triggering
+PASS Wall 3 event 9 leaves navigation orientation unchanged on the next frame
+PASS Turning setup for event 1 is genuinely in progress
+PASS Event 1 does not snap or cancel an active wall turn
+PASS Event 1 lets the original wall turn finish normally
+PASS Turning setup for event 2 is genuinely in progress
+PASS Event 2 does not snap or cancel an active wall turn
+PASS Event 2 lets the original wall turn finish normally
+PASS Turning setup for event 3 is genuinely in progress
+PASS Event 3 does not snap or cancel an active wall turn
+PASS Event 3 lets the original wall turn finish normally
+PASS Turning setup for event 4 is genuinely in progress
+PASS Event 4 does not snap or cancel an active wall turn
+PASS Event 4 lets the original wall turn finish normally
+PASS Turning setup for event 5 is genuinely in progress
+PASS Event 5 does not snap or cancel an active wall turn
+PASS Event 5 lets the original wall turn finish normally
+PASS Turning setup for event 6 is genuinely in progress
+PASS Event 6 does not snap or cancel an active wall turn
+PASS Event 6 lets the original wall turn finish normally
+PASS Turning setup for event 7 is genuinely in progress
+PASS Event 7 does not snap or cancel an active wall turn
+PASS Event 7 lets the original wall turn finish normally
+PASS Turning setup for event 8 is genuinely in progress
+PASS Event 8 does not snap or cancel an active wall turn
+PASS Event 8 lets the original wall turn finish normally
+PASS Turning setup for event 9 is genuinely in progress
+PASS Event 9 does not snap or cancel an active wall turn
+PASS Event 9 lets the original wall turn finish normally
+PASS Near-window setup for event 1 is complete
+PASS Near-window event 1 never teleports or turns the camera
+PASS Event 1 preserves completed near-window observation
+PASS Event 1 does not restart the approach on its next frame
+PASS Near-window setup for event 2 is complete
+PASS Near-window event 2 never teleports or turns the camera
+PASS Event 2 preserves completed near-window observation
+PASS Event 2 does not restart the approach on its next frame
+PASS Near-window setup for event 3 is complete
+PASS Near-window event 3 never teleports or turns the camera
+PASS Impact requests a smooth retreat instead of instant recentering
+PASS Impact retreat passes through an intermediate near-window pose
+PASS Impact retreat finishes at the center without changing the viewed wall
+PASS Near-window setup for event 4 is complete
+PASS Near-window event 4 never teleports or turns the camera
+PASS Event 4 preserves completed near-window observation
+PASS Event 4 does not restart the approach on its next frame
+PASS Near-window setup for event 5 is complete
+PASS Near-window event 5 never teleports or turns the camera
+PASS Event 5 preserves completed near-window observation
+PASS Event 5 does not restart the approach on its next frame
+PASS Near-window setup for event 6 is complete
+PASS Near-window event 6 never teleports or turns the camera
+PASS Event 6 preserves completed near-window observation
+PASS Event 6 does not restart the approach on its next frame
+PASS Near-window setup for event 7 is complete
+PASS Near-window event 7 never teleports or turns the camera
+PASS Event 7 preserves completed near-window observation
+PASS Event 7 does not restart the approach on its next frame
+PASS Near-window setup for event 8 is complete
+PASS Near-window event 8 never teleports or turns the camera
+PASS Event 8 preserves completed near-window observation
+PASS Event 8 does not restart the approach on its next frame
+PASS Near-window setup for event 9 is complete
+PASS Near-window event 9 never teleports or turns the camera
+PASS Event 9 preserves completed near-window observation
+PASS Event 9 does not restart the approach on its next frame
+PASS Visitor trigger preserves an in-flight window approach
+PASS Window approach still finishes after an event trigger
+PASS Station trigger preserves an in-flight window retreat
+PASS Window retreat still finishes after an event trigger
+PASS View preservation regression cleanup restores default planet and exterior
+PASS View preservation regression cleanup clears warnings and temporary assets
+PASS View preservation regression cleanup restores main power and cancels alarm
+PASS View preservation regression cleanup stops alarm audio and removes pending desktop alerts
+PASS View preservation regression cleanup returns camera to a stable central pose
+PASS View preservation regression cleanup removes encounter geometry and restores original light count
+PASS Zero deliberately keeps its default A-wall reset behavior
+PASS No shader, runtime, or assertion errors were logged
+RESULT PASS | checks=381 failures=0 errors=0

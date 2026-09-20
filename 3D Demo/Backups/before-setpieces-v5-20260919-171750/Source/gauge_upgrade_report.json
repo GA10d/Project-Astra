@@ -1,0 +1,106 @@
+{
+  "gauges": [
+    {
+      "name": "GAUGE_A_O2",
+      "wall": "A",
+      "label": "O2",
+      "blender_position": [
+        -1.1800000667572021,
+        -1.2879999876022339,
+        1.8799999952316284
+      ],
+      "unity_expected_position": [
+        1.18,
+        1.88,
+        1.288
+      ],
+      "unity_world_axis": [
+        0,
+        0,
+        1
+      ],
+      "maximum_swing_degrees": 2.4
+    },
+    {
+      "name": "GAUGE_A_PWR",
+      "wall": "A",
+      "label": "PWR",
+      "blender_position": [
+        1.1800000667572021,
+        -1.2879999876022339,
+        1.8900001049041748
+      ],
+      "unity_expected_position": [
+        -1.18,
+        1.89,
+        1.288
+      ],
+      "unity_world_axis": [
+        0,
+        0,
+        1
+      ],
+      "maximum_swing_degrees": 2.4
+    },
+    {
+      "name": "GAUGE_B_TEMP",
+      "wall": "B",
+      "label": "TEMP",
+      "blender_position": [
+        1.2300000190734863,
+        1.065000057220459,
+        1.0399999618530273
+      ],
+      "unity_expected_position": [
+        -1.23,
+        1.04,
+        -1.065
+      ],
+      "unity_world_axis": [
+        -1,
+        0,
+        0
+      ],
+      "maximum_swing_degrees": 2.4
+    },
+    {
+      "name": "GAUGE_D_PSI",
+      "wall": "D",
+      "label": "PSI",
+      "blender_position": [
+        -1.253000020980835,
+        -0.9900000095367432,
+        0.8899999856948853
+      ],
+      "unity_expected_position": [
+        1.253,
+        0.89,
+        0.99
+      ],
+      "unity_world_axis": [
+        1,
+        0,
+        0
+      ],
+      "maximum_swing_degrees": 2.4
+    }
+  ],
+  "max_world_vertex_error_metres": 0.0,
+  "packed_images_preserved": [
+    [
+      "NavalPaint_Albedo.png",
+      3107071
+    ],
+    [
+      "PaintedMetal012_2K-PNG_Displacement.png",
+      6300293
+    ],
+    [
+      "PaintedMetal012_2K-PNG_Roughness.png",
+      1843895
+    ]
+  ],
+  "material_nodes_unchanged": true,
+  "export_objects": 71,
+  "export_triangles": 141988
+}
