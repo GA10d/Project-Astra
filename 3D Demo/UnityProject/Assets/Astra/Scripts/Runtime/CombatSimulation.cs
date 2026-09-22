@@ -5,7 +5,7 @@ using UnityEngine;
 namespace AstraCabin
 {
     // World coordinates are independent of the desktop size; simulation runs at 120 Hz.
-    public sealed class CombatSimulation
+    public sealed partial class CombatSimulation
     {
         public enum Phase { Menu, Running, Paused, Upgrade, Won, Lost }
         public struct Controls { public float turn; public bool thrust, brake, fire, boost, missile; }
@@ -13,8 +13,13 @@ namespace AstraCabin
         public sealed class Enemy
         {
             public Vector2 position, velocity;
-            public float angle, hp, maxHp, timer, warning, shotAngle, flash, age;
+            public float angle, angularVelocity, hp, maxHp, timer, warning, shotAngle, flash, age;
             public int kind, id;
+            public PilotStyle pilot;
+            public Maneuver maneuver;
+            public Vector2 observedPosition, observedVelocity, maneuverGoal;
+            public float observedHeading, decisionTimer, maneuverTime, evadeCooldown;
+            public int side = 1, passes, breaks, avoidanceCount;
             public float Radius { get { return kind == 2 ? 42 : kind == 1 ? 23 : 15; } }
         }
         public sealed class Bullet
@@ -40,7 +45,13 @@ namespace AstraCabin
         public readonly List<Cue> cues = new List<Cue>();
         public const float ArenaRadius = 1550;
         public const float CruiseSpeed = 235, BrakeSpeed = 95, ThrustSpeed = 355, BoostSpeed = 640;
-        public const float TurnSpeed = 245;
+        public const float TurnSpeed = 80;
+        public static float FlightTurnRate(float speed)
+        {
+            if (speed <= CruiseSpeed) return Mathf.Lerp(120, TurnSpeed, Mathf.InverseLerp(BrakeSpeed, CruiseSpeed, speed));
+            if (speed <= ThrustSpeed) return Mathf.Lerp(TurnSpeed, 55, Mathf.InverseLerp(CruiseSpeed, ThrustSpeed, speed));
+            return Mathf.Lerp(55, 32, Mathf.InverseLerp(ThrustSpeed, BoostSpeed, speed));
+        }
         public const float LockHalfAngle = 40;
         System.Random random = new System.Random(1943);
         float fireCooldown, sinceDamage, trailClock;
@@ -85,7 +96,12 @@ namespace AstraCabin
                 Vector2 p = position + Direction(a) * (kind == 2 ? 580 : Range(420, 620));
                 p = Vector2.ClampMagnitude(p, ArenaRadius - 160);
                 float hp = kind == 2 ? 780 : kind == 1 ? 130 : kind == 3 ? 65 : 65;
-                enemies.Add(new Enemy { id = nextId++, kind = kind, position = p, angle = Bearing(position - p), hp = hp, maxHp = hp, timer = Range(1.2f, 2.8f) });
+                var enemy = new Enemy { id = nextId++, kind = kind, position = p, angle = Bearing(position - p), hp = hp, maxHp = hp, timer = Range(1.2f, 2.8f) };
+                enemy.pilot = kind == 3 ? PilotStyle.Training : kind == 2 ? PilotStyle.Commander : kind == 1 ? PilotStyle.Gunship : (PilotStyle)(i % 3);
+                enemy.side = i % 2 == 0 ? 1 : -1;
+                enemy.observedPosition = position; enemy.observedVelocity = velocity; enemy.observedHeading = angle;
+                enemy.decisionTimer = i * .045f;
+                enemies.Add(enemy);
             }
             cues.Add(new Cue("sector", 0.5f));
         }
@@ -108,13 +124,15 @@ namespace AstraCabin
                 energy -= 32; boostTime = .38f; boostCooldown = 1.2f - engineLevel * .12f;
                 invulnerable = Mathf.Max(invulnerable, .24f); cues.Add(new Cue("boost", .65f));
             }
-            float turnRate = (TurnSpeed + engineLevel * 28) * (input.brake ? 1.45f : boostTime > 0 ? .65f : 1);
-            float change = Mathf.Clamp(input.turn, -1, 1) * turnRate * dt;
+            float turnRate = FlightTurnRate(velocity.magnitude) * (1 + Mathf.Min(engineLevel, 3) * .04f);
+            angularVelocity = Mathf.MoveTowards(angularVelocity, Mathf.Clamp(input.turn, -1, 1) * turnRate, 240 * dt);
+            float change = angularVelocity * dt;
             angle = Mathf.Repeat(angle + change + 180, 360) - 180;
-            angularVelocity = Mathf.Lerp(angularVelocity, change / dt, 1 - Mathf.Exp(-14 * dt));
             float speed = boostTime > 0 ? BoostSpeed + engineLevel * 55 : input.brake ? BrakeSpeed : input.thrust ? ThrustSpeed : CruiseSpeed;
-            // A/D turn the nose; W/S set thrust/braking. Velocity follows with brief inertia.
-            velocity = Vector2.Lerp(velocity, Direction(angle) * speed, 1 - Mathf.Exp(-(input.brake ? 6.8f : boostTime > 0 ? 8 : 3.5f) * dt));
+            // Separate speed and heading so turning cannot cancel forward speed.
+            float flightSpeed = Mathf.Lerp(velocity.magnitude, speed, 1 - Mathf.Exp(-(input.brake ? 3 : boostTime > 0 ? 8 : 2) * dt));
+            float flightHeading = Mathf.LerpAngle(Bearing(velocity), angle, 1 - Mathf.Exp(-7 * dt));
+            velocity = Direction(flightHeading) * flightSpeed;
             position += velocity * dt;
             if (position.magnitude > ArenaRadius) { position = position.normalized * ArenaRadius; velocity += -position.normalized * 750 * dt; }
             UpdateLock(dt);
@@ -165,16 +183,10 @@ namespace AstraCabin
             {
                 e.age += dt; e.flash = Mathf.Max(0, e.flash - dt * 8);
                 if (e.kind == 3) continue;
-                Vector2 delta = position - e.position;
-                float distance = delta.magnitude;
-                Vector2 lead = position + velocity * Mathf.Clamp(distance / 520, 0, .8f);
-                float target = Bearing(lead - e.position);
-                if (e.kind == 0 && distance < 135) target += 110; // Fly past, then re-enter; avoid perpetual face-to-face circles.
-                e.angle = Mathf.MoveTowardsAngle(e.angle, target, (e.kind == 2 ? 48 : e.kind == 1 ? 85 : 150) * dt);
-                float speed = e.kind == 2 ? 62 : e.kind == 1 ? 108 : 205;
-                if (e.kind != 0 && distance < 350) speed = -35;
-                e.velocity = Vector2.Lerp(e.velocity, Direction(e.angle) * speed, 1 - Mathf.Exp(-3 * dt));
-                e.position = Vector2.ClampMagnitude(e.position + e.velocity * dt, ArenaRadius - 40);
+                FlyEnemy(e, dt);
+                float distance = Vector2.Distance(position, e.position);
+                Vector2 lead = e.observedPosition + e.observedVelocity * Mathf.Clamp(distance / 520, 0, .65f);
+                float aim = Bearing(lead - e.position);
                 e.timer -= dt;
                 if (e.warning > 0)
                 {
@@ -187,8 +199,8 @@ namespace AstraCabin
                         if (e.kind == 2 && e.hp < e.maxHp * .5f) for (int i = 0; i < 12; i++) EnemyBullet(e, i * 30 + e.age * 7, 190);
                     }
                 }
-                else if (e.timer <= 0 && distance < 950 && Mathf.Abs(Mathf.DeltaAngle(e.angle, target)) < 32)
-                { e.warning = e.kind == 2 ? .95f : .58f; e.shotAngle = Bearing(lead - e.position); }
+                else if (e.maneuver == Maneuver.Attack && FireSlotAvailable(e) && e.timer <= 0 && distance > 65 && distance < 850 && Mathf.Abs(Mathf.DeltaAngle(e.angle, aim)) < 16)
+                { e.warning = e.kind == 2 ? .95f : .48f; e.shotAngle = e.angle + Mathf.Clamp(Mathf.DeltaAngle(e.angle, aim), -8, 8); }
                 if (distance < e.Radius + 12) DamagePlayer(18);
             }
         }

@@ -7,7 +7,7 @@ using UnityEngine;
 namespace AstraCabin
 {
     // Opt-in standalone acceptance runner. It uses the same simulation, UI and audio as players.
-    public sealed class CombatVerification : MonoBehaviour
+    public sealed partial class CombatVerification : MonoBehaviour
     {
         string output;
         int failures, errors;
@@ -48,14 +48,20 @@ namespace AstraCabin
             yield return new WaitForSecondsRealtime(1.5f);
             Check("QA uses isolated document storage", computer.IsTestStorage);
             TestSimulation();
+            TestEnemyPilots();
             controller.SnapToWall(0); Check("OS opens", computer.Open()); computer.OpenApp("combat");
             Check("Combat registered with desktop", computer.CurrentApp == "combat" && app.IsVisible);
             yield return Capture("01_Combat_Menu");
             app.StartSortie(false);
             var sound = GetComponent<CombatSound>();
             Check("Supplied BGM imported", sound.MusicLoaded);
+            float initialGain = sound.MusicGain, fadeStart = Time.realtimeSinceStartup;
             yield return new WaitForSecondsRealtime(.12f); float earlyGain = sound.MusicGain;
-            Check("Music starts quietly", sound.MusicPlaying && earlyGain < .015f, earlyGain.ToString("F4"));
+            // Start must be silent. Allow a delayed first audio Update after screenshot
+            // readback; the following samples separately require a continuing ramp.
+            float fadeElapsed = Time.realtimeSinceStartup - fadeStart;
+            Check("Music starts quietly", initialGain == 0 && sound.MusicPlaying && fadeElapsed < 1 && earlyGain < .03f,
+                "gain=" + earlyGain.ToString("F4") + " elapsed=" + fadeElapsed.ToString("F3"));
             yield return new WaitForSecondsRealtime(1.1f); float midGain = sound.MusicGain;
             yield return new WaitForSecondsRealtime(1.6f);
             Check("Music fades in gradually", midGain > earlyGain && sound.MusicGain > midGain && sound.MusicGain > .15f, earlyGain + " < " + midGain + " < " + sound.MusicGain);
@@ -81,6 +87,18 @@ namespace AstraCabin
             yield return new WaitForSecondsRealtime(.15f);
             Check("Turning drives cabin roll", Mathf.Abs(app.CabinRoll) > .1f, app.CabinRoll.ToString());
             CheckDesktopMotion(computer, controller, "Turning");
+            Check("Bank starts gently with bounded tilt speed", Mathf.Abs(app.CabinRoll) < 1.2f);
+            yield return new WaitForSecondsRealtime(3);
+            Check("Sustained turn reaches the larger five-degree bank", app.CabinRoll < -4.5f && app.CabinRoll >= -5.01f, app.CabinRoll.ToString("F2"));
+            float previousRoll = app.CabinRoll;
+            app.sim.angularVelocity = -CombatSimulation.FlightTurnRate(app.sim.velocity.magnitude);
+            yield return new WaitForSecondsRealtime(.2f);
+            Check("Opposite steering banks gradually through center", app.CabinRoll < 0 && app.CabinRoll > previousRoll && app.CabinRoll - previousRoll < .9f);
+            app.sim.angularVelocity = 0;
+            yield return new WaitForSecondsRealtime(.2f);
+            Check("Releasing steering returns bank smoothly", app.CabinRoll < -2.5f);
+            app.sim.angularVelocity = CombatSimulation.FlightTurnRate(app.sim.velocity.magnitude);
+            yield return new WaitForSecondsRealtime(.4f);
             yield return Capture("09_Desktop_Turning");
             app.sim.DamagePlayer(20); yield return new WaitForSecondsRealtime(.08f);
             Check("Damage drives real cabin lighting without damage lock", app.LightPulse > 0 && !systems.DamageLocked);
@@ -186,7 +204,7 @@ namespace AstraCabin
             s.Start(true);
             s.Step(1f / 120, new CombatSimulation.Controls { turn = 1 });
             Check("Steering responds on the first tick", s.angle > 0);
-            Check("Velocity retains controlled inertia", Mathf.Abs(CombatSimulation.Bearing(s.velocity) - s.angle) > .5f);
+            Check("Velocity retains controlled inertia", Mathf.Abs(CombatSimulation.Bearing(s.velocity) - s.angle) > .001f && Mathf.Abs(CombatSimulation.Bearing(s.velocity) - s.angle) < 1);
             for (int i = 0; i < 120; i++) s.Step(1f / 120, new CombatSimulation.Controls { brake = true });
             Check("Brake converges to low-speed flight", s.velocity.magnitude < 105);
             float oldAngle = s.angle; s.Step(1f / 120, new CombatSimulation.Controls { turn = -1 });

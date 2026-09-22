@@ -33,7 +33,9 @@ namespace AstraCabin
                 }
                 if (s.x < -60 || s.x > field.width + 60 || s.y < -60 || s.y > field.height + 60) { EdgeMarker(s, field, e.kind == 2); continue; }
                 Color color = e.flash > 0 ? Color.white : e.kind == 3 ? dim : e.kind == 2 ? red : amber;
+                if (e.kind == 0 && e.flash <= 0) color = e.pilot == CombatSimulation.PilotStyle.Slasher ? new Color(1, .53f, .36f) : e.pilot == CombatSimulation.PilotStyle.Flanker ? new Color(.76f, .65f, 1) : amber;
                 Sprite(e.kind == 2 ? boss : e.kind == 1 ? heavy : ship, s, -e.angle, e.Radius * 2.9f * zoom, color);
+                if (e.kind != 3) Label(new Rect(s.x - 52, s.y - e.Radius * zoom - 33, 130, 18), CombatSimulation.PilotName(e) + " / " + CombatSimulation.ManeuverName(e), 10, color);
                 if (e.hp < e.maxHp) { Fill(new Rect(s.x - 19, s.y - e.Radius * zoom - 12, 38, 3), new Color(.2f, .25f, .21f)); Fill(new Rect(s.x - 19, s.y - e.Radius * zoom - 12, 38 * e.hp / e.maxHp, 3), color); }
                 if (sim.lockedTarget == e)
                 {

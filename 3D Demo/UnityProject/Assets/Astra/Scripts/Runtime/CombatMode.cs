@@ -26,6 +26,7 @@ namespace AstraCabin
         readonly Color ink = new Color(.74f, .88f, .78f), dim = new Color(.36f, .54f, .47f), green = new Color(.4f, 1, .76f), amber = new Color(1, .69f, .3f), red = new Color(1, .31f, .24f);
         readonly Vector2[] stars = new Vector2[140];
         public float CabinRoll { get { return roll; } }
+        public const float MaxCabinRoll = 5, CabinRollSpeed = 3;
         public float LightPulse { get { return lightTimer; } }
 
         void Awake()
@@ -96,7 +97,10 @@ namespace AstraCabin
                 return;
             }
             kick = Mathf.Max(0, kick - dt * 5); lightTimer = Mathf.Max(0, lightTimer - dt);
-            roll = Mathf.Lerp(roll, reducedMotion ? 0 : -Mathf.Clamp(sim.angularVelocity / 245, -1, 1) * 2.2f, 1 - Mathf.Exp(-5 * dt));
+            float availableTurn = CombatSimulation.FlightTurnRate(sim.velocity.magnitude) * (1 + Mathf.Min(sim.engineLevel, 3) * .04f);
+            float rollTarget = -Mathf.Clamp(sim.angularVelocity / availableTurn, -1, 1) * MaxCabinRoll;
+            float easedRoll = Mathf.Lerp(roll, rollTarget, 1 - Mathf.Exp(-1.8f * dt));
+            roll = Mathf.MoveTowards(roll, easedRoll, CabinRollSpeed * dt);
             float shake = reducedMotion ? 0 : sim.trauma * sim.trauma;
             if (controller)
             {
