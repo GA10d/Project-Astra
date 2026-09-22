@@ -53,11 +53,19 @@ Shader "Astra/WornMetal"
                  + tex2D(_MainTex, p.xz).rgb * weights.y
                  + tex2D(_MainTex, p.xy).rgb * weights.z;
         }
+        float3 safeUnit(float3 value, float3 fallback)
+        {
+            // Degenerate UV tangents (for example at knob caps) must not feed
+            // normalize(0) into lighting. HDR NaNs spread across the desktop blur.
+            float lengthSquared = dot(value, value);
+            return lengthSquared > 0.00000001
+                ? value * rsqrt(max(lengthSquared, 0.00000001)) : fallback;
+        }
         void surf(Input IN, inout SurfaceOutputStandard o)
         {
             // World projection gives small plates, pipes and bevels a consistent
             // physical scale without relying on the FBX's layout / overlapping UVs.
-            float3 n = normalize(WorldNormalVector(IN, float3(0,0,1)));
+            float3 n = safeUnit(WorldNormalVector(IN, float3(0,0,1)), float3(0,1,0));
             float3 weights = pow(abs(n), 5.0);
             weights /= max(dot(weights, float3(1,1,1)), 0.0001);
             float3 p = IN.worldPos * max(0.01, _Scale);
@@ -93,11 +101,11 @@ Shader "Astra/WornMetal"
                             + float3(ny.x, 0, ny.y) * weights.y
                             + float3(nz.x, nz.y, 0) * weights.z;
             gradient -= n * dot(n, gradient);
-            float3 detailedNormal = normalize(n + gradient * (_BumpScale * _DetailStrength));
-            float3 worldTangent = normalize(WorldNormalVector(IN, float3(1,0,0)));
-            float3 worldBitangent = normalize(WorldNormalVector(IN, float3(0,1,0)));
-            o.Normal = normalize(float3(dot(detailedNormal, worldTangent),
-                                         dot(detailedNormal, worldBitangent), dot(detailedNormal, n)));
+            float3 detailedNormal = safeUnit(n + gradient * (_BumpScale * _DetailStrength), n);
+            float3 worldTangent = safeUnit(WorldNormalVector(IN, float3(1,0,0)), float3(0,0,0));
+            float3 worldBitangent = safeUnit(WorldNormalVector(IN, float3(0,1,0)), float3(0,0,0));
+            o.Normal = safeUnit(float3(dot(detailedNormal, worldTangent),
+                                      dot(detailedNormal, worldBitangent), dot(detailedNormal, n)), float3(0,0,1));
             o.Alpha = 1;
         }
         ENDCG

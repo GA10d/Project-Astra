@@ -321,14 +321,16 @@ namespace AstraCabin
             if (IsPaused)
             {
                 Panel(new Rect(0f, 0f, w, h), new Color(0.01f, 0.02f, 0.02f, 0.77f));
-                Rect box = new Rect(w * 0.5f - 215f, h * 0.5f - 150f, 430f, 300f);
+                Rect box = new Rect(w * 0.5f - 215f, h * 0.5f - 179f, 430f, 358f);
                 Panel(box, new Color(0.08f, 0.10f, 0.085f, 0.98f));
                 Panel(new Rect(box.x, box.y, box.width, 3f), line);
                 GUI.Label(new Rect(box.x + 20f, box.y + 19f, 390f, 38f), "SYSTEM HOLD / 已暂停", hoverStyle);
                 GUI.Label(new Rect(box.x + 20f, box.y + 57f, 390f, 35f), "Q / E 切换墙面 · 鼠标查看 · 左键操作", centeredStyle);
                 if (GUI.Button(new Rect(box.x + 45f, box.y + 108f, 340f, 44f), "继续 / RESUME", buttonStyle)) SetPaused(false);
                 if (GUI.Button(new Rect(box.x + 45f, box.y + 166f, 340f, 44f), muted ? "开启声音 / SOUND ON" : "静音 / MUTE", buttonStyle)) ToggleMute();
-                if (GUI.Button(new Rect(box.x + 45f, box.y + 224f, 340f, 44f), "退出 / EXIT", buttonStyle))
+                var presentation = viewCamera ? viewCamera.GetComponent<CabinPresentation>() : null;
+                if (presentation && GUI.Button(new Rect(box.x + 45f, box.y + 224f, 340f, 44f), "画面 / " + presentation.LookLabel, buttonStyle)) presentation.CycleLook();
+                if (GUI.Button(new Rect(box.x + 45f, box.y + 282f, 340f, 44f), "退出 / EXIT", buttonStyle))
                 {
                     Time.timeScale = 1f;
                     Application.Quit();

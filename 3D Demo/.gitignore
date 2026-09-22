@@ -26,3 +26,6 @@ Logs/
 # Blender recovery files
 *.blend1
 *.blend2
+
+# Rebuildable industrial art sample
+BuildArt/

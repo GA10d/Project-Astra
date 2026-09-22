@@ -107,7 +107,9 @@ namespace AstraCabin
             initialized = true;
             qaStorage = Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-qa") >= 0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-setpiece-qa") >= 0 ||
-                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-combat-qa") >= 0;
+                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-combat-qa") >= 0 ||
+                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-art-qa") >= 0 ||
+                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-render-qa") >= 0;
             LoadArchive();
             ReloadStore();
             runningApps.Add("browser");

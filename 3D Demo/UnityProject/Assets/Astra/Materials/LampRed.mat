@@ -8,11 +8,10 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: LampRed
-  m_Shader: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
+  m_Shader: {fileID: 4800000, guid: c888731c3a3a74f4a9eb809f0b8114fa, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
-  m_ValidKeywords:
-  - _EMISSION
+  m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -67,7 +66,7 @@ Material:
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
-    - _Glossiness: 0.5
+    - _Glossiness: 0.18
     - _GlossyReflections: 1
     - _Metallic: 0
     - _Mode: 0
@@ -79,6 +78,6 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
-    - _Color: {r: 0.55, g: 0.03025, b: 0.0055, a: 0.55}
-    - _EmissionColor: {r: 1.5, g: 0.082499996, b: 0.015, a: 1.5}
+    - _Color: {r: 0.32313725, g: 0.10039216, b: 0.067450985, a: 0.4}
+    - _EmissionColor: {r: 0.462905, g: 0.0384521, b: 0.018118223, a: 0.75}
   m_BuildTextureStacks: []

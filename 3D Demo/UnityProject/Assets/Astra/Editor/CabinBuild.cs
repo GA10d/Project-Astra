@@ -94,6 +94,7 @@ public static class CabinBuild
         director.stars=UnityEngine.Object.FindObjectOfType<LoopingStarfield>();
         director.retainedMaterials=new[]{materials["SetpieceFracture"], materials["SetpieceGlow"], materials["SetpieceUnlit"], materials["SetpieceSprite"], materials["SetpieceCanopy"]};
         controls.AddComponent<SetpieceVerification>();
+        CabinArtBuild.ApplyToOpenScene();
         EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),Root+"/Scenes/Cabin04.unity");
         EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(Root+"/Scenes/Cabin04.unity",true)};
         AssetDatabase.SaveAssets();

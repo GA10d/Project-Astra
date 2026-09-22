@@ -28,5 +28,5 @@ Material:
     - _Brightness: 1.25
     - _Power: 1
     m_Colors:
-    - _Color: {r: 0.20999995, g: 0.8399999, b: 0.49, a: 1}
+    - _Color: {r: 0.65882355, g: 0.80784315, b: 0.5372549, a: 1}
   m_BuildTextureStacks: []

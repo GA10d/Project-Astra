@@ -40,7 +40,7 @@ Material:
     - _BumpScale: 0.28
     - _DetailScale: 3.4
     - _DetailStrength: 0.78
-    - _Glossiness: 0.28
+    - _Glossiness: 0.22
     - _Metallic: 0.12
     - _Scale: 2.5
     - _TextureScale: 0.9
