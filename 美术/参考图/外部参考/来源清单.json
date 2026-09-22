@@ -1,0 +1,101 @@
+[
+  {
+    "id": "R01",
+    "title": "Buckshot Roulette",
+    "developer": [
+      "Mike Klubnika"
+    ],
+    "page_url": "https://store.steampowered.com/app/2835570/",
+    "image_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2835570/ss_c9c2df013e1c2d1b97f2c5cce57c22c24efd5178.1920x1080.jpg?t=1783085442",
+    "local_path": "参考图/外部参考/buckshot_roulette_1.jpg",
+    "retrieved": "2026-09-22",
+    "rights": "Reference and commentary only; copyright retained by respective rightsholders."
+  },
+  {
+    "id": "R02",
+    "title": "Mouthwashing",
+    "developer": [
+      "Wrong Organ"
+    ],
+    "page_url": "https://store.steampowered.com/app/2475490/",
+    "image_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2475490/ss_ec922c5769acb9986aa009e41b71ecdcd51e484f.1920x1080.jpg?t=1786624390",
+    "local_path": "参考图/外部参考/mouthwashing_2.jpg",
+    "retrieved": "2026-09-22",
+    "rights": "Reference and commentary only; copyright retained by respective rightsholders."
+  },
+  {
+    "id": "R03",
+    "title": "Iron Lung",
+    "developer": [
+      "David Szymanski"
+    ],
+    "page_url": "https://store.steampowered.com/app/1846170/",
+    "image_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1846170/ss_1c62a35a9022be7973eacaa117f6c5b4a37d71d1.1920x1080.jpg?t=1770061280",
+    "local_path": "参考图/外部参考/iron_lung_2.jpg",
+    "retrieved": "2026-09-22",
+    "rights": "Reference and commentary only; copyright retained by respective rightsholders."
+  },
+  {
+    "id": "R04",
+    "title": "Nauticrawl",
+    "developer": [
+      "Spare Parts Oasis"
+    ],
+    "page_url": "https://store.steampowered.com/app/922100/",
+    "image_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/922100/ss_cf0fd448f26419f3c666c9e4f0841a8097684415.1920x1080.jpg?t=1726492764",
+    "local_path": "参考图/外部参考/nauticrawl_3.jpg",
+    "retrieved": "2026-09-22",
+    "rights": "Reference and commentary only; copyright retained by respective rightsholders."
+  },
+  {
+    "id": "R05",
+    "title": "Arctic Eggs",
+    "developer": [
+      "The Water Museum",
+      "cockydoody",
+      "abmarnie",
+      "Cameron Ginex"
+    ],
+    "page_url": "https://store.steampowered.com/app/2763670/",
+    "image_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/2763670/ss_da061e95820699b2e171071d0b5890c1adb6f887.1920x1080.jpg?t=1777045542",
+    "local_path": "参考图/外部参考/arctic_eggs_1.jpg",
+    "retrieved": "2026-09-22",
+    "rights": "Reference and commentary only; copyright retained by respective rightsholders."
+  },
+  {
+    "id": "R06",
+    "title": "SIGNALIS",
+    "developer": [
+      "rose-engine"
+    ],
+    "page_url": "https://store.steampowered.com/app/1262350/",
+    "image_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1262350/ss_bb676746c44db01c2bd7ca78616032984f958106.1920x1080.jpg?t=1773697315",
+    "local_path": "参考图/外部参考/signalis_4.jpg",
+    "retrieved": "2026-09-22",
+    "rights": "Reference and commentary only; copyright retained by respective rightsholders."
+  },
+  {
+    "id": "R07",
+    "title": "Duskers",
+    "developer": [
+      "Misfits Attic"
+    ],
+    "page_url": "https://store.steampowered.com/app/254320/",
+    "image_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/254320/ss_fd7b606082fc64b9ac575635204a7ee5307cac72.1920x1080.jpg?t=1776751920",
+    "local_path": "参考图/外部参考/duskers_1.jpg",
+    "retrieved": "2026-09-22",
+    "rights": "Reference and commentary only; copyright retained by respective rightsholders."
+  },
+  {
+    "id": "R08",
+    "title": "SIGNALIS",
+    "developer": [
+      "rose-engine"
+    ],
+    "page_url": "https://store.steampowered.com/app/1262350/",
+    "image_url": "https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1262350/ss_dc87789ecfa2f83dd58ac778866fbf7fdc1ec99a.1920x1080.jpg?t=1773697315",
+    "local_path": "参考图/外部参考/signalis_3.jpg",
+    "retrieved": "2026-09-22",
+    "rights": "Reference and commentary only; copyright retained by respective rightsholders."
+  }
+]
