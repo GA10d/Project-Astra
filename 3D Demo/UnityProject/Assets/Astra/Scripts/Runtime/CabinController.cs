@@ -17,6 +17,7 @@ namespace AstraCabin
         public bool automationMode;
         [HideInInspector] public Vector3 cinematicOffset;
         [HideInInspector] public Vector3 cinematicEuler;
+        [HideInInspector] public Vector3 combatEuler, combatOffset;
         [HideInInspector] public bool observationAllowed = true;
         [Header("Observation window / D wall")]
         public Vector3 windowObservationPosition = new Vector3(1.06f, 1.65f, 0f);
@@ -106,6 +107,8 @@ namespace AstraCabin
             viewCamera.transform.rotation = baseRotation * Quaternion.Euler(-currentLook.y * lookDegrees, currentLook.x * lookDegrees, 0f);
             viewCamera.transform.position += viewCamera.transform.rotation * cinematicOffset;
             viewCamera.transform.rotation *= Quaternion.Euler(cinematicEuler);
+            viewCamera.transform.position += viewCamera.transform.rotation * combatOffset;
+            viewCamera.transform.rotation *= Quaternion.Euler(combatEuler);
             viewCamera.fieldOfView = Mathf.Lerp(fieldOfView, windowFieldOfView, approach);
             if (!automationMode && !IsPaused && !ComputerOpen && modalChangedFrame != Time.frameCount)
             {

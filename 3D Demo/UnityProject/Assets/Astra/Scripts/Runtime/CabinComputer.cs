@@ -43,6 +43,7 @@ namespace AstraCabin
         string acknowledgedAlert = "";
         public bool HasPendingEventAlert { get { return !string.IsNullOrEmpty(eventAlertTitle) && acknowledgedAlert != eventAlertTitle + eventAlertBody; } }
         public bool IsOpen { get; private set; }
+        public CombatMode Combat { get; private set; }
         public string CurrentApp { get { return activeApp; } }
         public string CurrentDocumentId { get { return editorDocumentId; } }
         public string CurrentDocumentText { get { return editorBody; } }
@@ -97,6 +98,7 @@ namespace AstraCabin
             if (!systems) systems = FindObjectOfType<CabinSystems>();
             if (!presentation && Camera.main) presentation = Camera.main.GetComponent<CabinPresentation>();
             Initialize();
+            Combat = GetComponent<CombatMode>() ?? gameObject.AddComponent<CombatMode>();
         }
 
         void Initialize()
@@ -104,7 +106,8 @@ namespace AstraCabin
             if (initialized) return;
             initialized = true;
             qaStorage = Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-qa") >= 0 ||
-                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-setpiece-qa") >= 0;
+                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-setpiece-qa") >= 0 ||
+                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-combat-qa") >= 0;
             LoadArchive();
             ReloadStore();
             runningApps.Add("browser");
@@ -138,7 +141,7 @@ namespace AstraCabin
             }
             IsOpen = true;
             previousIme = Input.imeCompositionMode;
-            Input.imeCompositionMode = IMECompositionMode.On;
+            Input.imeCompositionMode = activeApp == "combat" ? IMECompositionMode.Off : IMECompositionMode.On;
             if (controller) controller.SetComputerMode(true);
             if (presentation) presentation.computerBlur = true;
             Cursor.visible = true;
@@ -162,6 +165,7 @@ namespace AstraCabin
         public void Close()
         {
             if (!IsOpen) return;
+            if (Combat) Combat.Suspend();
             SaveCurrentDocument();
             Persist();
             IsOpen = false;
@@ -390,7 +394,8 @@ namespace AstraCabin
             if (app == "filemanager" || app == "documents") app = "files";
             if (app == "text" || app == "notepad") app = "editor";
             if (app == "recyclebin") app = "trash";
-            if (app != "files" && app != "editor" && app != "browser" && app != "trash") return;
+            if (app != "files" && app != "editor" && app != "browser" && app != "trash" && app != "combat") return;
+            if (activeApp == "combat" && app != "combat" && Combat) Combat.Suspend();
             SaveCurrentDocument();
             if (app == "editor" && string.IsNullOrEmpty(editorDocumentId))
             {
@@ -399,6 +404,8 @@ namespace AstraCabin
             }
             if (!runningApps.Contains(app)) runningApps.Add(app);
             activeApp = app;
+            if (IsOpen) Input.imeCompositionMode = app == "combat" ? IMECompositionMode.Off : IMECompositionMode.On;
+            if (app == "combat" && !maximized) { restoreRect = windowRect; windowRect = new Rect(154, 42, 1198, 684); maximized = true; }
             confirmationId = "";
             GUIUtility.keyboardControl = 0;
             SetStatus(AppName(app) + " / 就绪");
@@ -453,7 +460,7 @@ namespace AstraCabin
         void PlayClick() { if (CabinAudio.Instance) CabinAudio.Instance.Play(CabinSound.Click, controller ? controller.centerPosition : transform.position); }
         static string AppName(string app)
         {
-            switch (app) { case "files": return "文件管理"; case "editor": return "文本编辑器"; case "trash": return "垃圾堆"; default: return "离线浏览器"; }
+            switch (app) { case "combat": return "战斗模式"; case "files": return "文件管理"; case "editor": return "文本编辑器"; case "trash": return "垃圾堆"; default: return "离线浏览器"; }
         }
 
         void EnsureStyles()
@@ -533,7 +540,7 @@ namespace AstraCabin
         {
             Event current = Event.current;
             if (current.type != EventType.KeyDown) return;
-            if (current.keyCode == KeyCode.Escape) { Close(); current.Use(); return; }
+            if (current.keyCode == KeyCode.Escape) { if (activeApp == "combat" && Combat) Combat.HandleEscape(); else Close(); current.Use(); return; }
             if ((current.control || current.command) && current.keyCode == KeyCode.S)
             { SaveCurrentDocument(); PlayClick(); current.Use(); }
             else if ((current.control || current.command) && current.keyCode == KeyCode.N && (activeApp == "editor" || activeApp == "files"))
@@ -562,7 +569,7 @@ namespace AstraCabin
             Fill(new Rect(0, 0, DesktopWidth, DesktopHeight), desktopColor);
             Fill(new Rect(0, 0, DesktopWidth, 34), new Color(0.025f, 0.08f, 0.075f));
             GUI.Label(new Rect(18, 0, 600, 34), "ASTRA / OS 3.1      •      CIVIL TERMINAL 04", lightLabel);
-            GUI.Label(new Rect(916, 0, 424, 34), "LOCAL MODE   |   [ ESC ] 保存并离开", lightLabel);
+            GUI.Label(new Rect(916, 0, 424, 34), activeApp == "combat" ? "LOCAL MODE   |   [ ESC ] 战斗菜单" : "LOCAL MODE   |   [ ESC ] 保存并离开", lightLabel);
             for (int lineIndex = 37; lineIndex < 736; lineIndex += 4) Fill(new Rect(0, lineIndex, DesktopWidth, 1), new Color(0, 0, 0, 0.045f));
             DrawDesktop();
             if (!string.IsNullOrEmpty(activeApp))
@@ -606,6 +613,7 @@ namespace AstraCabin
             DesktopIcon(28, 194, "editor", "文本编辑器", "TEXT EDITOR");
             DesktopIcon(28, 324, "browser", "离线浏览器", "EARTH MIRROR");
             DesktopIcon(28, 454, "trash", "垃圾堆", "RECYCLE BIN");
+            DesktopIcon(28, 584, "combat", "战斗模式", "COMBAT MODE");
             if (string.IsNullOrEmpty(activeApp))
             {
                 GUIStyle watermark = new GUIStyle(masthead); watermark.normal.textColor = new Color(0.26f, 0.40f, 0.32f); watermark.fontSize = 78;
@@ -642,6 +650,13 @@ namespace AstraCabin
                 for (int index = 0; index < 3; index++) Fill(new Rect(ix + 14 + index * 11, iy + 9, 2, 19), new Color(0.41f, 0.64f, 0.46f));
                 for (int index = 0; index < 2; index++) Fill(new Rect(ix + 11, iy + 13 + index * 10, 34, 1), new Color(0.41f, 0.64f, 0.46f));
                 Fill(new Rect(ix + 24, iy + 41, 7, 6), chromeColor); Fill(new Rect(ix + 15, iy + 47, 26, 4), chromeColor);
+            }
+            else if (app == "combat")
+            {
+                Bevel(new Rect(ix, iy, 55, 51), false, new Color(.08f, .17f, .13f));
+                Fill(new Rect(ix + 25, iy + 8, 6, 35), new Color(.54f, .9f, .68f));
+                Fill(new Rect(ix + 15, iy + 24, 26, 12), new Color(.54f, .9f, .68f));
+                Fill(new Rect(ix + 6, iy + 4, 7, 2), paperColor); Fill(new Rect(ix + 44, iy + 44, 7, 2), paperColor);
             }
             else
             {
@@ -684,12 +699,13 @@ namespace AstraCabin
             if (RetroButton(new Rect(width - 65, 8, 26, 23), "□")) toggleMaximize = true;
             if (RetroButton(new Rect(width - 34, 8, 26, 23), "×")) { SaveCurrentDocument(); runningApps.Remove(activeApp); activeApp = ""; }
             if (string.IsNullOrEmpty(activeApp)) return;
-            GUI.Label(new Rect(15, 37, 620, 24), "文件(F)      编辑(E)      查看(V)      帮助(H)", small);
-            GUI.Label(new Rect(width - 390, 37, 374, 24), "[ CTRL+S ] 保存     [ ESC ] 返回舱室", right);
+            GUI.Label(new Rect(15, 37, 620, 24), activeApp == "combat" ? "舰载战术重建  /  PROBE 04  /  独立演练任务" : "文件(F)      编辑(E)      查看(V)      帮助(H)", small);
+            GUI.Label(new Rect(width - 390, 37, 374, 24), activeApp == "combat" ? "[ P ] 暂停     [ ESC ] 战斗菜单" : "[ CTRL+S ] 保存     [ ESC ] 返回舱室", right);
             Fill(new Rect(8, 64, width - 16, 1), new Color(0.35f, 0.39f, 0.34f));
             bool wasEnabled = GUI.enabled;
             if (!string.IsNullOrEmpty(confirmationId)) GUI.enabled = false;
-            if (activeApp == "browser") DrawBrowser(width, height);
+            if (activeApp == "combat" && Combat) Combat.Draw(new Rect(12, 70, width - 24, height - 110), font);
+            else if (activeApp == "browser") DrawBrowser(width, height);
             else if (activeApp == "editor") DrawEditor(width, height);
             else DrawFiles(width, height, activeApp == "trash");
             GUI.enabled = wasEnabled;

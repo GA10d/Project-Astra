@@ -339,6 +339,23 @@ public static class CabinBuild
     public static void BuildEventRevision() { BuildTo("../BuildV5"); }
     public static void BuildEncounterRevision() { BuildTo("../BuildV6"); }
     public static void BuildPhasingWhaleRevision() { BuildTo("../BuildV7"); }
+    public static void BuildCombatRevision()
+    {
+        const string musicPath = Root + "/Resources/Computer/CombatMusic.wav";
+        AssetDatabase.ImportAsset(musicPath, ImportAssetOptions.ForceSynchronousImport);
+        var importer = AssetImporter.GetAtPath(musicPath) as AudioImporter;
+        if (!importer) throw new Exception("Missing combat BGM: " + musicPath);
+        var settings = importer.defaultSampleSettings;
+        settings.loadType = AudioClipLoadType.Streaming;
+        settings.compressionFormat = AudioCompressionFormat.Vorbis;
+        settings.quality = .75f;
+        settings.preloadAudioData = false;
+        importer.defaultSampleSettings = settings;
+        importer.loadInBackground = true;
+        importer.SaveAndReimport();
+        if (!AssetDatabase.LoadAssetAtPath<AudioClip>(musicPath)) throw new Exception("Combat BGM failed to decode.");
+        BuildTo("../BuildV8");
+    }
     static void BuildTo(string directory)
     {
         CreateScene(); Directory.CreateDirectory(directory);

@@ -39,6 +39,23 @@ namespace AstraCabin
         public float EmergencyPulse { get; private set; }
         private Color originalSky, originalEquator, originalGround;
         private float alarmClock;
+        private float combatBlackout, combatAlarm;
+        private bool combatFeedbackApplied;
+
+        public void SetCombatFeedback(float blackout, float alarm)
+        {
+            combatBlackout = Mathf.Clamp01(blackout); combatAlarm = Mathf.Clamp01(alarm);
+            if (combatFeedbackApplied && combatBlackout == 0 && combatAlarm == 0)
+            { combatFeedbackApplied = false; Refresh(); }
+        }
+
+        private void LateUpdate()
+        {
+            if (DamageLocked || (combatBlackout == 0 && combatAlarm == 0)) return;
+            combatFeedbackApplied = true;
+            SetLightGroup(cabinLights, MainPowerOn && LightsOn, 1 - combatBlackout);
+            SetLightGroup(emergencyLights, true, Mathf.Lerp(MainPowerOn ? .18f : 1, 5, combatAlarm));
+        }
 
         private readonly Dictionary<Light, float> initialIntensities = new Dictionary<Light, float>();
         private readonly Dictionary<Renderer, Color> indicatorColors = new Dictionary<Renderer, Color>();
