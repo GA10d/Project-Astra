@@ -20,7 +20,7 @@ namespace AstraCabin
             float grid = 160 * zoom;
             for (float x = Mathf.Repeat(-cameraPosition.x * zoom + field.width / 2, grid); x < field.width; x += grid) Fill(new Rect(x, 0, 1, field.height), new Color(.3f, .6f, .48f, .065f));
             for (float y = Mathf.Repeat(cameraPosition.y * zoom + field.height / 2, grid); y < field.height; y += grid) Fill(new Rect(0, y, field.width, 1), new Color(.3f, .6f, .48f, .065f));
-            Vector2 shake = reducedMotion ? Vector2.zero : new Vector2(Mathf.PerlinNoise(feedbackClock * 32, 5) - .5f, Mathf.PerlinNoise(1, feedbackClock * 37) - .5f) * sim.trauma * sim.trauma * 10;
+            Vector2 shake = !PhysicalFeedbackEnabled ? Vector2.zero : new Vector2(Mathf.PerlinNoise(feedbackClock * 32, 5) - .5f, Mathf.PerlinNoise(1, feedbackClock * 37) - .5f) * sim.trauma * sim.trauma * 10;
             foreach (var p in sim.particles)
             { Vector2 s = ToScreen(p.position, field) + shake; Color c = p.color; c.a = p.life / p.total; Fill(new Rect(s.x, s.y, p.size, p.size), c); }
             foreach (var e in sim.enemies)

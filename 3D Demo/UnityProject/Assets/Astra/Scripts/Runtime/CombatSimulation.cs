@@ -41,6 +41,7 @@ namespace AstraCabin
         public const float ArenaRadius = 1550;
         public const float CruiseSpeed = 235, BrakeSpeed = 95, ThrustSpeed = 355, BoostSpeed = 640;
         public const float TurnSpeed = 245;
+        public const float LockHalfAngle = 40;
         System.Random random = new System.Random(1943);
         float fireCooldown, sinceDamage, trailClock;
         int nextId;
@@ -152,7 +153,7 @@ namespace AstraCabin
             foreach (var e in enemies)
             {
                 Vector2 delta = e.position - position; float d = delta.magnitude;
-                if (d < distance && Mathf.Abs(Mathf.DeltaAngle(angle, Bearing(delta))) < 23) { best = e; distance = d; }
+                if (d < distance && Mathf.Abs(Mathf.DeltaAngle(angle, Bearing(delta))) < LockHalfAngle) { best = e; distance = d; }
             }
             if (best != lockedTarget) { lockedTarget = best; lockProgress = 0; }
             if (best != null) { float old = lockProgress; lockProgress = Mathf.Min(1, lockProgress + dt / .7f); if (old < 1 && lockProgress >= 1) cues.Add(new Cue("lock", .4f)); }

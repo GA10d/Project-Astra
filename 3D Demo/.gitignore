@@ -1,8 +1,28 @@
-UnityProject/Library/
-UnityProject/Temp/
-UnityProject/Obj/
-UnityProject/Logs/
-UnityProject/UserSettings/
+# Unity-generated project state
+UnityProject/[Ll]ibrary/
+UnityProject/[Tt]emp/
+UnityProject/[Oo]bj/
+UnityProject/[Ll]ogs/
+UnityProject/[Uu]ser[Ss]ettings/
+UnityProject/[Mm]emoryCaptures/
+UnityProject/[Rr]ecordings/
+
+# Generated IDE files
+UnityProject/.vs/
+UnityProject/.idea/
+UnityProject/.vscode/
+UnityProject/*.csproj
+UnityProject/*.sln
+UnityProject/*.suo
+UnityProject/*.user
+
+# Rebuildable releases and test artifacts
+Build/
+Backups/
+QA/
+Astra_Cabin_Windows.zip
+Logs/
+
+# Blender recovery files
 *.blend1
 *.blend2
-Logs/

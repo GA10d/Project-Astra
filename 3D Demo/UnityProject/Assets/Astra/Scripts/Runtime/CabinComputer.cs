@@ -551,6 +551,27 @@ namespace AstraCabin
             { Navigate(address); GUI.FocusControl(null); current.Use(); }
         }
 
+        // Apply the camera's combat pose once, outside every desktop/window clip.
+        // IMGUI then inverse-transforms mouse events through this same matrix.
+        // Positive camera roll appears clockwise on a screen with Y pointing down.
+        public Matrix4x4 DesktopMotionMatrix
+        {
+            get
+            {
+                if (!IsOpen || !Combat || !Combat.PhysicalFeedbackEnabled || !controller)
+                    return Matrix4x4.identity;
+                Vector3 euler = controller.combatEuler;
+                float fov = controller.viewCamera ? controller.viewCamera.fieldOfView : 74f;
+                float focal = Screen.height * .5f / Mathf.Tan(fov * .5f * Mathf.Deg2Rad);
+                Vector3 center = new Vector3(Screen.width * .5f, Screen.height * .5f, 0);
+                Vector3 offset = new Vector3(-Mathf.Tan(euler.y * Mathf.Deg2Rad) * focal,
+                    -Mathf.Tan(euler.x * Mathf.Deg2Rad) * focal, 0);
+                float fovScale = Mathf.Tan((fov - controller.combatFov) * .5f * Mathf.Deg2Rad) / Mathf.Tan(fov * .5f * Mathf.Deg2Rad);
+                return Matrix4x4.Translate(center + offset) * Matrix4x4.Rotate(Quaternion.Euler(0, 0, euler.z))
+                    * Matrix4x4.Scale(new Vector3(fovScale, fovScale, 1)) * Matrix4x4.Translate(-center);
+            }
+        }
+
         void OnGUI()
         {
             if (!IsOpen) return;
@@ -563,7 +584,7 @@ namespace AstraCabin
             float scale = Mathf.Min(Screen.width / 1600f, Screen.height / 900f);
             float x = (Screen.width / scale - DesktopWidth) * 0.5f;
             float y = (Screen.height / scale - DesktopHeight) * 0.5f;
-            GUI.matrix = Matrix4x4.TRS(new Vector3(x * scale, y * scale, 0), Quaternion.identity, new Vector3(scale, scale, 1));
+            GUI.matrix = DesktopMotionMatrix * Matrix4x4.TRS(new Vector3(x * scale, y * scale, 0), Quaternion.identity, new Vector3(scale, scale, 1));
             Fill(new Rect(-9, -9, DesktopWidth + 25, DesktopHeight + 26), new Color(0, 0, 0, 0.58f));
             Bevel(new Rect(-5, -5, DesktopWidth + 10, DesktopHeight + 10), false, new Color(0.18f, 0.21f, 0.18f));
             Fill(new Rect(0, 0, DesktopWidth, DesktopHeight), desktopColor);

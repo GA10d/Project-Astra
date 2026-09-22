@@ -11,6 +11,8 @@ namespace AstraCabin
         public bool automationMode, reducedMotion, muted;
         public bool IsVisible { get { return computer && computer.IsOpen && computer.CurrentApp == "combat"; } }
         public bool IsLive { get { return IsVisible && sim.phase == CombatSimulation.Phase.Running; } }
+        public bool PhysicalFeedbackEnabled { get { return IsLive && !sim.training && !reducedMotion; } }
+        public float FieldZoom { get { return zoom; } }
         CabinComputer computer;
         CabinController controller;
         CabinSystems systems;
@@ -36,7 +38,7 @@ namespace AstraCabin
         void OnApplicationFocus(bool value) { focused = value; if (!value && !automationMode) Suspend(); }
         void OnApplicationPause(bool value) { if (value) Suspend(); }
         public void StartSortie(bool practice)
-        { sim.Start(practice); accumulator = 0; armed = false; cameraPosition = sim.position; ClearFeedback(); sound.BeginSortie(); }
+        { sim.Start(practice); accumulator = 0; armed = false; cameraPosition = sim.position; zoom = .83f; ClearFeedback(); sound.BeginSortie(); }
         public void Suspend() { sim.Pause(); accumulator = 0; armed = false; ClearFeedback(); }
         public void HandleEscape() { if (sim.phase == CombatSimulation.Phase.Running) Suspend(); else if (sim.phase == CombatSimulation.Phase.Paused) sim.Resume(); else computer.Close(); }
         public void ReturnToMenu() { sim.ToMenu(); ClearFeedback(); }
@@ -44,7 +46,7 @@ namespace AstraCabin
         {
             roll = kick = lightTimer = 0;
             pendingBoost = pendingMissile = pendingFire = mouseOverField = false;
-            if (controller) { controller.combatEuler = Vector3.zero; controller.combatOffset = Vector3.zero; }
+            if (controller) { controller.combatEuler = Vector3.zero; controller.combatOffset = Vector3.zero; controller.combatFov = 0; }
             if (systems) systems.SetCombatFeedback(0, 0);
             if (sound) sound.SetActive(false, 0, muted);
         }
@@ -75,15 +77,24 @@ namespace AstraCabin
             }
             float dt = Mathf.Min(Time.unscaledDeltaTime, .05f); feedbackClock += dt;
             cameraPosition = Vector2.Lerp(cameraPosition, sim.position + sim.velocity * .36f, 1 - Mathf.Exp(-5 * dt));
-            zoom = Mathf.Lerp(zoom, sim.boostTime > 0 ? .65f : .83f, 1 - Mathf.Exp(-3 * dt));
+            // Acceleration changes the real camera FOV; do not stack a second zoom.
+            zoom = .83f;
             foreach (var cue in sim.cues)
             {
                 sound.Play(cue.name, cue.strength, muted);
-                if (cue.name == "shot") kick = Mathf.Min(1, kick + .18f);
-                if (cue.name == "damage") lightTimer = .85f;
+                if (PhysicalFeedbackEnabled && cue.name == "shot") kick = Mathf.Min(1, kick + .18f);
+                if (PhysicalFeedbackEnabled && cue.name == "damage") lightTimer = .85f;
             }
             sim.cues.Clear();
             if (!IsLive) { ClearFeedback(); return; }
+            if (!PhysicalFeedbackEnabled)
+            {
+                roll = kick = lightTimer = 0;
+                if (controller) { controller.combatEuler = controller.combatOffset = Vector3.zero; controller.combatFov = 0; }
+                if (systems) systems.SetCombatFeedback(0, 0);
+                sound.SetActive(true, sim.velocity.magnitude / CombatSimulation.BoostSpeed, muted);
+                return;
+            }
             kick = Mathf.Max(0, kick - dt * 5); lightTimer = Mathf.Max(0, lightTimer - dt);
             roll = Mathf.Lerp(roll, reducedMotion ? 0 : -Mathf.Clamp(sim.angularVelocity / 245, -1, 1) * 2.2f, 1 - Mathf.Exp(-5 * dt));
             float shake = reducedMotion ? 0 : sim.trauma * sim.trauma;
@@ -91,6 +102,10 @@ namespace AstraCabin
             {
                 controller.combatEuler = new Vector3((Mathf.PerlinNoise(feedbackClock * 21, 2) - .5f) * shake * 2.5f - (reducedMotion ? 0 : kick * .35f), 0, roll + (Mathf.PerlinNoise(3, feedbackClock * 18) - .5f) * shake * 1.8f);
                 controller.combatOffset = Vector3.zero;
+                float speed = sim.velocity.magnitude;
+                float fovTarget = 4 * Mathf.InverseLerp(CombatSimulation.CruiseSpeed, CombatSimulation.ThrustSpeed, speed)
+                    + 3 * Mathf.InverseLerp(CombatSimulation.ThrustSpeed, CombatSimulation.BoostSpeed, speed);
+                controller.combatFov = Mathf.Lerp(controller.combatFov, fovTarget, 1 - Mathf.Exp(-3 * dt));
             }
             if (systems) systems.SetCombatFeedback(reducedMotion ? 0 : lightTimer > .72f ? 1 : 0, reducedMotion ? 0 : lightTimer > 0 ? (.5f + .5f * Mathf.Sin(feedbackClock * 25)) : 0);
             sound.SetActive(true, sim.velocity.magnitude / CombatSimulation.BoostSpeed, muted);
@@ -171,7 +186,7 @@ namespace AstraCabin
                 }
                 DrawField(field); DrawRail(new Rect(w - 179, 69, 167, h - 121));
                 Label(new Rect(15, h - 44, w - 25, 20), "W 推进   S 刹车   A / D 调整方向   SHIFT 躲避   左键 子弹   右键 锁定导弹", 14, ink);
-                Label(new Rect(15, h - 23, w - 25, 17), "机头决定弹道 · 保持目标在前方完成锁定 · P 暂停 · M 静音 · ESC 战斗菜单", 12, dim);
+            Label(new Rect(15, h - 23, w - 25, 17), "机头决定弹道 · 前方 ±40° 锁定 · " + (sim.training ? "体感联动：关闭（练习）" : reducedMotion ? "体感联动：降低" : "体感联动：开启") + " · P 暂停 · M 静音", 12, dim);
                 if (sim.phase != CombatSimulation.Phase.Running) DrawOverlay(w, h);
             }
             GUI.EndGroup();
