@@ -86,7 +86,12 @@ namespace AstraCabin
             {
                 for(int i=0;i<=9;i++)
                     if(Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha0+i)) || Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad0+i)))
-                    { TriggerMode(i); break; }
+                    {
+                        if(computer.Navigation && computer.Navigation.PresentationPending)
+                            controller.ShowNotice("请先在导航模式完成当前事件，再使用演出调试快捷键");
+                        else TriggerMode(i);
+                        break;
+                    }
             }
             if(controller.IsPaused) return;
             ModeTime+=Time.deltaTime;

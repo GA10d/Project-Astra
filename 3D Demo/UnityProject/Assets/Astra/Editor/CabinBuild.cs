@@ -340,6 +340,19 @@ public static class CabinBuild
     public static void BuildEventRevision() { BuildTo("../BuildV5"); }
     public static void BuildEncounterRevision() { BuildTo("../BuildV6"); }
     public static void BuildPhasingWhaleRevision() { BuildTo("../BuildV7"); }
+    [MenuItem("Astra/Build navigation demo")]
+    public static void BuildNavigationRevision()
+    {
+        // Build the current scene to retain authored art and lighting fixes.
+        var campaign = JsonUtility.FromJson<AstraCabin.Navigation.Campaign>(AstraCabin.Navigation.NavigationStorage.ReadLimited("Assets/StreamingAssets/Navigation/campaign.json"));
+        var errors = AstraCabin.Navigation.CampaignValidator.Validate(campaign, AstraCabin.Navigation.EventRegistry.CreateDefault());
+        if (errors.Count > 0) throw new Exception(string.Join("; ", errors));
+        const string directory = "../BuildNavigation";
+        Directory.CreateDirectory(directory);
+        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = new[] { Root + "/Scenes/Cabin04.unity" }, locationPathName = directory + "/Astra Cabin.exe", target = BuildTarget.StandaloneWindows64, options = BuildOptions.None });
+        if (report.summary.result != BuildResult.Succeeded) throw new Exception("Build failed: " + report.summary.result);
+        Debug.Log("ASTRA_NAVIGATION_BUILD_SUCCEEDED " + report.summary.totalSize);
+    }
     public static void BuildCombatRevision()
     {
         const string musicPath = Root + "/Resources/Computer/CombatMusic.wav";

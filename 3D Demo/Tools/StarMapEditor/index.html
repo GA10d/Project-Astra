@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASTRA · 星域编辑器</title>
+<link rel="stylesheet" href="editor.css">
+<body>
+<header><div class="brand">A<span>／</span>04 <small>航路设计终端</small></div><div class="top-actions">
+<button id="load">打开配置</button><button id="undo" title="Ctrl+Z">撤销</button><button id="redo" title="Ctrl+Shift+Z">重做</button><button id="example">载入示例</button><button id="export" class="primary">导出到游戏 ↗</button>
+<input id="file" type="file" accept=".json,application/json" hidden></div></header>
+<main>
+<aside class="sidebar"><div class="eyebrow">CAMPAIGN / 航程</div><h1 id="campaign-title"></h1><button id="settings">航程与资源设置</button><div class="section-title">星域列表 <button id="add-sector" aria-label="新增星域">＋</button></div><div id="sectors"></div><div class="sidebar-note">拖拽节点调整位置<br>按住 Shift 点击两个节点连线<br>双击空白处新增信标<br><br>配置完全离线保存在本机。<br>导出文件后由游戏校验导入。</div><button id="help">导入游戏说明</button></aside>
+<section class="workspace"><div class="map-heading"><div><div class="eyebrow" id="sector-index"></div><h2 id="sector-title"></h2></div><div class="map-actions"><button id="sector-settings">星域设置</button><button id="add-node">＋ 新增信标</button><button id="event-library">事件库</button></div></div>
+<div class="map-wrap"><svg id="map" viewBox="0 0 1000 620" role="img" aria-label="可拖拽的星域航线图"></svg><div class="map-legend"><span class="dot start"></span>起点 <span class="dot event"></span>演出 <span class="dot choice"></span>抉择 <span class="dot exit"></span>出口 <span class="hint">箭头表示航行方向</span></div></div>
+<div class="validation"><div><strong id="validation-state">校验中</strong><span id="statistics"></span></div><ul id="errors"></ul></div>
+</section>
+<aside class="inspector"><div id="inspector"></div></aside>
+</main>
+<footer><span id="status" role="status">已载入默认航程</span><span>ASTRA / NAV EDITOR 1.0 · 离线工具</span></footer>
+<dialog id="modal"><div id="modal-body"></div><div class="dialog-actions"><button id="close-dialog">关闭</button></div></dialog>
+<script src="default-campaign.js"></script><script src="editor-core.js"></script><script src="editor.js"></script>
+</body></html>
