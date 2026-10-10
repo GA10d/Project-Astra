@@ -21,6 +21,29 @@ zyl 与 gzw 的目录、数据边界和交付步骤见 [星系开发交接](Sour
 | [QA](QA/) | 现有验证报告和截图 |
 | [Backups](Backups/) | 历史版本备份 |
 
+## 开发 zyl / gzw 关卡
+
+两位开发者各自拿一份完整工程，在自己的星系目录开发：
+
+| 星系 | 配置文件（相对 UnityProject） | 建议自有脚本目录 |
+| --- | --- | --- |
+| zyl | `Assets/StreamingAssets/Navigation/zyl/campaign.json` | `Assets/Astra/Scripts/Galaxies/Zyl/` |
+| gzw | `Assets/StreamingAssets/Navigation/gzw/campaign.json` | `Assets/Astra/Scripts/Galaxies/Gzw/` |
+
+1. 双击 `Tools/StarMapEditor/index.html` 打开关卡编辑器。用“打开配置”加载 `UnityProject/Assets/StreamingAssets/Navigation/test/campaign.json`，了解现有星域、节点、航线、事件与资源的结构。
+2. 按自己的关卡设计修改配置。普通节点关联事件，航线最终通向出口；事件至少保留一个无消耗选项。先处理工具显示的全部配置错误，再点击“导出到游戏”。
+3. 将导出的 `campaign.json` 放到上表中自己的星系目录。有效配置会自动接入对应星球，不需要修改星系选择器；尚无配置时显示待开发面板。
+4. 在 Unity 中运行主场景，进入 A 墙终端的导航模式，选择自己的星球验收。如果已经导入过旧配置，进入该星球点击“导入星域配置”，确认后用新配置开始航程。
+5. 检查节点跳转、资源消耗、事件结算、返回星系入口、退出后续玩，以及另一个星球的进度是否保持独立。
+
+关卡可以使用现有 `choice`（文字选择）、`setpiece`（舱内九种演出）和 `performance`（会议演出包）事件。配置字段、引用与存档规则见 [导航架构](Source/navigation_architecture.md)，编辑操作见 [星域编辑器说明](Tools/StarMapEditor/README.md)。
+
+## 修改玩法、资源与交付
+
+共享运行时代码在 `UnityProject/Assets/Astra/Scripts/Runtime/`，主场景在 `Assets/Astra/Scenes/Cabin04.unity`。各自的新增脚本使用 `AstraCabin.Galaxies.Zyl` 或 `AstraCabin.Galaxies.Gzw` 命名空间，资源也按星系分别组织。新增事件类型或修改共享场景、事件注册表和演出包索引时，两位开发者先协调同一份修改。
+
+合并交付时包含自己的 `campaign.json`、必要脚本和资源，以及 Unity 对应的 `.meta` 文件。`Library`、`Temp`、`Logs` 是本机生成内容，Git 已忽略这些目录；源码以 `Assets`、`Packages`、`ProjectSettings` 为准。分工与共享文件约定见 [星系开发交接](Source/galaxy_development.md)。
+
 ## 构建和检查
 
 在本目录打开 PowerShell，先关闭该工程的 Unity 编辑器，再运行：
