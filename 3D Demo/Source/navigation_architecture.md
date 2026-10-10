@@ -1,6 +1,14 @@
 # 导航与事件系统实现说明
 
-导航模式接入已有 CabinComputer，提供多星域、有向分支航路、事件处置、资源流转和独立航行存档。示例有 3 个星域、24 个节点、9 个演出事件和 3 个文字选择事件。数值是可玩的起始配置，仍需通过试玩校准资源稀缺程度与节奏。
+导航模式接入已有 CabinComputer，提供星系入口、多星域、有向分支航路、事件处置、资源流转和独立航行存档。原有全部关卡归入 test 星系，保留演出、文字选择及档案交接会议分支。数值是可玩的起始配置，仍需通过试玩校准资源稀缺程度与节奏。
+
+## 星系入口
+
+打开导航模式先选择 `test`、`zyl`、`gzw` 三颗星球，点击后带切换动画进入该星系的爬塔地图；地图内可返回星系入口。每颗星球对应独立的 Campaign，Campaign 内的 sector 仍表示航程中的星域。zyl、gzw 尚未配置时显示待开发面板。
+
+默认配置按 `Assets/StreamingAssets/Navigation/<星系>/campaign.json` 加载。test 包含原有地图，根目录 `Navigation/campaign.json` 保留作兼容副本；zyl 和 gzw 各自放入有效配置即可接入已有入口，无需每次修改中心注册表。导入操作只作用于当前星系；不同星系的 Campaign、事件 ID 可以重复，同一 Campaign 内的 ID 和引用约束保持不变。
+
+两位开发者的目录范围、配置交付和共享脚本约定见 [星系开发交接](galaxy_development.md)。
 
 ## 游戏流程
 
@@ -18,6 +26,7 @@
 | NavigationEngine.cs | 与场景隔离的确定性航行状态、资源事务、指令重放及存档 |
 | NavigationMode.cs | 配置加载、导入与重开、演出生命周期、OS 与场景桥接 |
 | NavigationModeView.cs | 星图、节点信息、事件选择、日志与舱内返回按钮 |
+| NavigationGalaxyView.cs | 星球图像、星系选择、待开放页与切换动效 |
 | NavigationVerification.cs | 仅命令行启用的模型、存储和独立玩家验收 |
 | Tools/StarMapEditor | 无需服务器的 HTML/SVG 可视化策划工具 |
 
@@ -25,7 +34,7 @@
 
 `IEventHandler` 定义 Type、NeedsObservation、Validate、Begin、IsComplete。新增类型时实现接口，并在 `EventRegistry.CreateDefault()` 中注册。新增类型可以通过自己的 Begin/IsComplete 接入战斗、扫描等玩法；结算继续走统一 Choice 的消耗与收益。需要新参数时扩展 EventDefinition 的序列化字段及验证规则，而不改航线算法。同步扩展编辑器的类型选项和校验，并增加对应验收。
 
-现有两种类型：`choice` 不需要场景演出，立即开放选项；`setpiece` 调用 1–9 演出，等待时长和维修门槛。继续增加演出编号时需更新 SetpieceDirector 的实现和 setpiece 处理器/编辑器的编号校验。当前独立战斗 APP 保持原玩法；不自动把导航资源绑定到战斗血量或武器库存。
+现有类型：`choice` 不需要场景演出，立即开放选项；`setpiece` 调用 1–9 演出，等待时长和维修门槛；`performance` 使用 `performanceId` 打开 ASTRA LINK 演出包，完成后自动结算唯一的无消耗选项。继续增加舱内演出编号时需更新 SetpieceDirector 的实现和 setpiece 处理器/编辑器的编号校验。performance 演出包注册表是共享资源，两个星系新增包 ID 时需协调，建议使用各自前缀。当前独立战斗 APP 保持原玩法；不自动把导航资源绑定到战斗血量或武器库存。
 
 ## 配置契约
 
@@ -39,7 +48,7 @@
 
 ## 存档与恢复
 
-正式数据位于 `%USERPROFILE%/AppData/LocalLow/Project Astra/ASTRA - Cabin 04/Navigation/`：
+正式数据根目录位于 `%USERPROFILE%/AppData/LocalLow/Project Astra/ASTRA - Cabin 04/Navigation/`。test 直接复用此根目录，兼容旧版进度；zyl 与 gzw 分别使用其下 `zyl/`、`gzw/` 子目录。各星系目录内包含：
 
 - `campaign.json`：最近导入并校验通过的配置快照。
 - `voyage.json`：schema、配置指纹和航行指令记录。
@@ -48,12 +57,16 @@
 
 存档重载会从起点重放整个指令序列，校验可达性、资源和事件状态，防止重复奖励或错误续接。指纹使用反序列化配置的规范序列化 SHA-256，格式缩进变化不会导致不匹配，内容改动会要求重新开始。无法读入的存档会阻止写入，保留原文件并显示原因；用户显式重开时先备份。
 
-导入先完整校验配置，再备份旧文件。配置替换后若新存档写入失败会回退配置；极端情况下进程在两个文件替换之间退出，下次启动通过指纹不匹配阻止错误续接，备份仍可用于恢复。首次没有导入快照时从 StreamingAssets 读取默认地图。存档与个人文档完全分开。
+导入先完整校验当前星系的配置，再备份该星系旧文件。配置替换后若新存档写入失败会回退配置；极端情况下进程在两个文件替换之间退出，下次启动通过指纹不匹配阻止错误续接，备份仍可用于恢复。首次没有导入快照时从对应星系的 StreamingAssets 目录读取默认地图；没有配置的预留星系不会伪造航程。切换星系不重置已有航程，导入或重开也不会改写其他星系的数据。存档与个人文档完全分开。
 
 在导航演出未结算期间，数字键演出调试和战斗 APP 的进入会被拦截，避免替换正在进行的维修或演出。暂停继续由原有舱室系统处理，不修改战斗的 A/D、推进、刹车和体感参数。
 
 ## 验证与构建
 
 Unity 菜单 `Astra > Build navigation demo` / 批处理入口 `CabinBuild.BuildNavigationRevision` 构建到 `BuildNavigation`，使用当前场景，不重新生成美术场景。`VerifyNavigation.ps1` 顺序运行导航、原电脑舱室、战斗、演出与渲染回归。
+
+星系版也可通过 `Astra > Build galaxy navigation demo` / `CabinBuild.BuildGalaxyRevision` 输出到 `BuildGalaxies`。两种入口都会校验 test 及已经交付的 zyl/gzw 配置；没有配置的预留星系不阻止构建，已交付的无效配置会明确报错。
+
+`VerifyGalaxies.ps1` 运行星系/导航、原电脑舱室与会议专项回归，包含 720p/900p 画面、三星系独立存档、转场中断、事件跨星系拦截和会议结束返回原地图。
 
 `--astra-navigation-qa "输出目录"` 使用输出目录内的 `storage` 隔离航行数据，电脑同样使用 QA 文件。额外加 `--astra-navigation-manual` 可关闭自动验收步骤，用于人工检查同一隔离环境。没有上述命令行参数时验收组件不会创建。

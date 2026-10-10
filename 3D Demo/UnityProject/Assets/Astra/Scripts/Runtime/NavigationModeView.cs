@@ -20,7 +20,7 @@ namespace AstraCabin
             navText = new GUIStyle(GUI.skin.label) { font = font, fontSize = 15, wordWrap = true, richText = false, padding = new RectOffset(0, 0, 0, 0) };
             navButton = new GUIStyle(GUI.skin.button) { font = font, fontSize = 15, wordWrap = true, richText = false };
         }
-        static void Block(Rect r, Color color) { var old = GUI.color; GUI.color = color; GUI.DrawTexture(r, Texture2D.whiteTexture); GUI.color = old; }
+        static void Block(Rect r, Color color) { var old = GUI.color; GUI.color = new Color(color.r * old.r, color.g * old.g, color.b * old.b, color.a * old.a); GUI.DrawTexture(r, Texture2D.whiteTexture); GUI.color = old; }
         void Label(Rect r, string value, int size = 15, Color? color = null, TextAnchor align = TextAnchor.UpperLeft)
         { navText.fontSize = size; navText.normal.textColor = color ?? paper; navText.alignment = align; GUI.Label(r, value, navText); }
         bool Button(Rect r, string title, bool enabled = true)
@@ -33,18 +33,24 @@ namespace AstraCabin
         }
         public void Draw(Rect bounds, Font font)
         {
-            Initialize(); Styles(font);
+            Initialize(); Styles(font); TickGalaxyTransition();
             GUI.BeginGroup(bounds);
             float w = bounds.width, h = bounds.height;
             Block(new Rect(0, 0, w, h), new Color(.035f, .065f, .053f));
-            Label(new Rect(18, 12, w - 550, 30), "NAV / 深空航路", 24);
-            if (Button(new Rect(w - 432, 12, 126, 30), showJournal ? "返回星图" : "航行日志")) showJournal = !showJournal;
-            if (Button(new Rect(w - 298, 12, 136, 30), "导入星域配置")) confirmation = "import";
-            if (Button(new Rect(w - 154, 12, 136, 30), "新航程", Session != null)) confirmation = "restart";
-            if (Session == null)
+            Color originalColor = GUI.color; bool originalEnabled = GUI.enabled;
+            GUI.color = new Color(originalColor.r, originalColor.g, originalColor.b, originalColor.a * GalaxyContentAlpha);
+            GUI.enabled = originalEnabled && !IsGalaxyTransitioning;
+            Label(new Rect(18, 12, Mathf.Max(150, w - 582), 30), IsGalaxyOverview ? "NAV / 星系总览" : "NAV / " + ActiveGalaxyId, 23);
+            float bx = w - 546;
+            if (Button(new Rect(bx, 12, 122, 30), "星系总览", !IsGalaxyOverview && confirmation == null)) RequestGalaxyOverview();
+            if (Button(new Rect(bx + 130, 12, 126, 30), showJournal ? "返回星图" : "航行日志", !IsGalaxyOverview && Session != null && confirmation == null)) showJournal = !showJournal;
+            if (Button(new Rect(bx + 264, 12, 136, 30), "导入星域配置", !IsGalaxyOverview && confirmation == null)) confirmation = "import";
+            if (Button(new Rect(bx + 408, 12, 120, 30), "新航程", !IsGalaxyOverview && Session != null && confirmation == null)) confirmation = "restart";
+            if (IsGalaxyOverview) DrawGalaxyOverview(w, h);
+            else if (Session == null)
             {
-                Label(new Rect(24, 90, w - 48, 150), Message, 18, amber);
-                Label(new Rect(24, 258, w - 48, 100), "将有效 campaign.json 放入以下路径，再点击「导入星域配置」：\n" + ImportPath);
+                if (IsGalaxyReserved) DrawGalaxyWaiting(w, h);
+                else DrawGalaxyConfigError(w, h);
             }
             else
             {
@@ -69,6 +75,8 @@ namespace AstraCabin
                 Label(new Rect(18, h - 54, w - 36, 47), Session.Blocked ? Session.Error : Message, 14, Session.Blocked ? amber : muted);
             }
             if (confirmation != null) DrawConfirmation(w, h);
+            GUI.color = originalColor; GUI.enabled = originalEnabled;
+            if (IsGalaxyTransitioning) DrawGalaxyTransition(w, h);
             GUI.EndGroup();
         }
         Vector2 NodePoint(Rect area, MapNode n) { return new Vector2(area.x + 54 + n.x * (area.width - 108), area.y + 42 + n.y * (area.height - 105)); }
@@ -101,7 +109,8 @@ namespace AstraCabin
                 Color color = current ? amber : reachable ? signal : visited ? muted : new Color(.36f, .47f, .39f);
                 if (selectedId == n.id) { Block(new Rect(p.x - 19, p.y - 19, 38, 38), color); Block(new Rect(p.x - 17, p.y - 17, 34, 34), new Color(.04f, .08f, .06f)); }
                 Block(new Rect(p.x - 11, p.y - 11, 22, 22), color);
-                string symbol = current ? "◆" : n.exit ? ">" : visited ? "·" : !string.IsNullOrEmpty(n.eventId) && Campaign.events.First(v => v.id == n.eventId).type == "setpiece" ? "!" : "+";
+                bool isMeeting=!string.IsNullOrEmpty(n.eventId)&&Campaign.events.First(v=>v.id==n.eventId).type=="performance";
+                string symbol = current ? "◆" : n.exit ? ">" : visited ? "·" : isMeeting ? "▣" : !string.IsNullOrEmpty(n.eventId) && Campaign.events.First(v => v.id == n.eventId).type == "setpiece" ? "!" : "+";
                 Label(new Rect(p.x - 12, p.y - 14, 24, 28), symbol, 19, new Color(.04f, .08f, .05f), TextAnchor.MiddleCenter);
                 Label(new Rect(p.x - 57, p.y + 23, 114, 39), n.name, 13, color, TextAnchor.UpperCenter);
                 if (GUI.Button(new Rect(p.x - 24, p.y - 24, 48, 62), new GUIContent("", n.name), GUIStyle.none)) { selectedId = n.id; detailScroll = Vector2.zero; }
@@ -123,10 +132,16 @@ namespace AstraCabin
             }
             else if (e.Pending != null)
             {
-                var ev = e.Pending; Label(new Rect(0, y, contentWidth, 26), "事件待处置 / " + (ev.type == "setpiece" ? "演出" : "抉择"), 13, amber); y += 31;
+                var ev = e.Pending; Label(new Rect(0, y, contentWidth, 26), "事件待处置 / " + (ev.type == "performance" ? "视频会议" : ev.type == "setpiece" ? "演出" : "抉择"), 13, amber); y += 31;
                 Label(new Rect(0, y, contentWidth, 45), ev.title, 23); y += 47;
                 navText.fontSize = 15; float dh = navText.CalcHeight(new GUIContent(ev.description), contentWidth);
                 Label(new Rect(0, y, contentWidth, dh + 8), ev.description); y += dh + 23;
+                if(ev.type=="performance")
+                {
+                    Label(new Rect(0,y,contentWidth,64),"接入 ASTRA LINK 会议，完成交互演出后自动返回星图。关闭窗口会暂停会议。",15,amber);y+=76;
+                    if(Button(new Rect(0,y,contentWidth,44),computer.Meeting.HasSession?"返回会议 / 继续":"接入视频会议"))BeginPresentation();
+                    y+=58;detailHeight=y+24;GUI.EndScrollView();return;
+                }
                 if (Registry.Find(ev.type).NeedsObservation)
                 {
                     string state = e.Observed ? "演出已完成 / 可结算" : OwnsPresentation ? (ev.setpiece == 3 ? "等待修复全部三处裂痕" : "演出进行中 / " + Mathf.FloorToInt(Director.ModeTime) + " 秒") : "待观看 / 可继续未完成演出";
@@ -199,6 +214,7 @@ namespace AstraCabin
         void OnGUI()
         {
             if (!loaded || !OwnsPresentation || computer.IsOpen || controller.IsPaused || Session == null) return;
+            if(Session.Engine.Pending!=null && Session.Engine.Pending.type=="performance")return;
             if (navText == null) return;
             var old = GUI.matrix; float scale = Mathf.Min(Screen.width / 1360f, Screen.height / 780f);
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1360 * scale) / 2, (Screen.height - 780 * scale) / 2, 0), Quaternion.identity, Vector3.one * scale);

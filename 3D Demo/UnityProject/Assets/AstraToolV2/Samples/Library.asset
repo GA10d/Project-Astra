@@ -1,0 +1,204 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 40982061ed83851428cc4f7797e9ce77, type: 3}
+  m_Name: Library
+  m_EditorClassIdentifier: 
+  characters:
+  - {fileID: 11400000, guid: c2aa0aa0b1cc07d4199332c3e1fec9eb, type: 2}
+  - {fileID: 11400000, guid: 5fc93f54a067a1b43b6773b0d89d1441, type: 2}
+  - {fileID: 11400000, guid: db3cd8ff4c28fc24fbb4a739e2c36d63, type: 2}
+  - {fileID: 11400000, guid: 3fc152b79175fa549a3e567ebfadffca, type: 2}
+  - {fileID: 11400000, guid: a0e781dc84ba3774894cbda88b64b71f, type: 2}
+  - {fileID: 11400000, guid: 842b51e4e6ed3564b9850898ada167d0, type: 2}
+  - {fileID: 11400000, guid: d05a665f88ce7a140885d1d1b7987719, type: 2}
+  - {fileID: 11400000, guid: e374873268e390b4c95e4fda1eaa8e32, type: 2}
+  - {fileID: 11400000, guid: 9048c4ee6bbdb98478b9f38ea69af775, type: 2}
+  - {fileID: 11400000, guid: c700cef10a01a9648af036f052da8ba0, type: 2}
+  - {fileID: 11400000, guid: 8fe5c7970a47c4c439bc96e13ee8219f, type: 2}
+  - {fileID: 11400000, guid: 23805da03dd56e641ad31361df0a73c6, type: 2}
+  - {fileID: 11400000, guid: 4381a6a3b99c5f542848df9661d29749, type: 2}
+  - {fileID: 11400000, guid: ca42824086568d04abab071a9abb4374, type: 2}
+  - {fileID: 11400000, guid: 60265f5d3063aa246b15ef65a2b40a06, type: 2}
+  - {fileID: 11400000, guid: 7781b73f19d630d4fbc03697c9d56bce, type: 2}
+  - {fileID: 11400000, guid: ca0d9a3053e636f4da1eedaf26ba650e, type: 2}
+  - {fileID: 11400000, guid: 68d946bd7c029914db877fc1625322a4, type: 2}
+  - {fileID: 11400000, guid: 75b8454df0d98fa488695e697c4945e0, type: 2}
+  - {fileID: 11400000, guid: dfb6e977ef671a24bb5143b1f1384e2d, type: 2}
+  - {fileID: 11400000, guid: 45681b1e56f95a447a025cbf1cb14ae6, type: 2}
+  - {fileID: 11400000, guid: 0961f834b5180764c8f3dc6fbecf81e4, type: 2}
+  - {fileID: 11400000, guid: bd9c3a074f1282743932b48aee544359, type: 2}
+  - {fileID: 11400000, guid: afd1eca48b0b3ba4fbd5597db46cf59a, type: 2}
+  - {fileID: 11400000, guid: a203f11febaae3d428242820c1f039fd, type: 2}
+  - {fileID: 11400000, guid: cef34646e35001f4bb0a3586a71d6edf, type: 2}
+  - {fileID: 11400000, guid: 00781ae76ccc07a4396941d44ae1fc42, type: 2}
+  - {fileID: 11400000, guid: 74f457ac368544b48b0718832874e1c0, type: 2}
+  - {fileID: 11400000, guid: 317fded5fb407cf489d3384496fdac80, type: 2}
+  - {fileID: 11400000, guid: 8336ed75a9b8e074cb4b7bc08a585398, type: 2}
+  - {fileID: 11400000, guid: 89ef915cee3dcec4f965171b4dc6bb91, type: 2}
+  - {fileID: 11400000, guid: 9701ea459bf8c864491103a72e039209, type: 2}
+  - {fileID: 11400000, guid: 62478399736845b4d8259e27b0a1aa9a, type: 2}
+  - {fileID: 11400000, guid: b89f3f2c7ce29da4880e8d25d9093b70, type: 2}
+  - {fileID: 11400000, guid: 1c11acce6ae1adb44bed2169a6ad0d9b, type: 2}
+  - {fileID: 11400000, guid: 7b26b8238d2e4f54999852edcc2a7204, type: 2}
+  - {fileID: 11400000, guid: 53129fe9843042149b7c29dc3d33f1e4, type: 2}
+  - {fileID: 11400000, guid: 947a24763af6462419177c57eceadd73, type: 2}
+  - {fileID: 11400000, guid: 0d3af42d4bb9d9940a2332b92133acc0, type: 2}
+  - {fileID: 11400000, guid: 8857ce743a1f1cc47add801b2b760d06, type: 2}
+  - {fileID: 11400000, guid: 91596794c8377a546bab31126d7c856c, type: 2}
+  - {fileID: 11400000, guid: e4276c954ed6a424fb0642d3f319c9e1, type: 2}
+  - {fileID: 11400000, guid: 34173345e52e0614788c68e6b2bdcc0c, type: 2}
+  - {fileID: 11400000, guid: 90c130a3f2ec53b4b85560c924eacaef, type: 2}
+  - {fileID: 11400000, guid: 3002de37d9599a940a8b27b2514f645b, type: 2}
+  - {fileID: 11400000, guid: 12370bfd4f4e48048a80d2ac4b62c25d, type: 2}
+  actions:
+  - id: Idle_Loop
+    displayName: "\u5F85\u673A"
+    length: 2.5000002
+    loop: 1
+    crawlerAllowed: 0
+  - id: Idle_Talking_Loop
+    displayName: "\u8BF4\u8BDD"
+    length: 2.9333334
+    loop: 1
+    crawlerAllowed: 0
+  - id: Walk_Loop
+    displayName: "\u884C\u8D70"
+    length: 1.3333334
+    loop: 1
+    crawlerAllowed: 0
+  - id: Walk_Formal_Loop
+    displayName: "\u6B63\u5F0F\u884C\u8D70"
+    length: 1.3333334
+    loop: 1
+    crawlerAllowed: 0
+  - id: PickUp_Table
+    displayName: "\u53D6\u7269"
+    length: 0.8333334
+    loop: 0
+    crawlerAllowed: 0
+  - id: Interact
+    displayName: "\u64CD\u4F5C\u8BBE\u5907"
+    length: 2
+    loop: 0
+    crawlerAllowed: 0
+  - id: Fixing_Kneeling
+    displayName: "\u8DEA\u59FF\u7EF4\u4FEE"
+    length: 5.2000003
+    loop: 0
+    crawlerAllowed: 0
+  - id: Sitting_Enter
+    displayName: "\u5750\u4E0B"
+    length: 1.3000001
+    loop: 0
+    crawlerAllowed: 0
+  - id: Sitting_Idle_Loop
+    displayName: "\u5750\u59FF\u5F85\u673A"
+    length: 1.6666667
+    loop: 1
+    crawlerAllowed: 0
+  - id: Sitting_Talking_Loop
+    displayName: "\u5750\u59FF\u8BF4\u8BDD"
+    length: 2.9333334
+    loop: 1
+    crawlerAllowed: 0
+  - id: Sitting_Exit
+    displayName: "\u8D77\u8EAB"
+    length: 1.0333334
+    loop: 0
+    crawlerAllowed: 0
+  - id: Push_Loop
+    displayName: "\u63A8\u538B"
+    length: 2.6666667
+    loop: 1
+    crawlerAllowed: 0
+  - id: Crouch_Idle_Loop
+    displayName: "\u8E72\u4F0F"
+    length: 2.9333334
+    loop: 1
+    crawlerAllowed: 0
+  - id: Hit_Chest
+    displayName: "\u62CD\u80F8"
+    length: 0.33333334
+    loop: 0
+    crawlerAllowed: 0
+  - id: Hit_Head
+    displayName: "\u89E6\u5934"
+    length: 0.43333337
+    loop: 0
+    crawlerAllowed: 0
+  - id: Jog_Fwd_Loop
+    displayName: "\u6162\u8DD1"
+    length: 0.9333334
+    loop: 1
+    crawlerAllowed: 0
+  - id: Dance_Loop
+    displayName: "\u821E\u52A8"
+    length: 1
+    loop: 1
+    crawlerAllowed: 0
+  cameras:
+  - shot: 0
+    displayName: "\u5168\u666F"
+    moving: 0
+    fov: 36
+  - shot: 1
+    displayName: "\u4E2D\u666F"
+    moving: 0
+    fov: 36
+  - shot: 2
+    displayName: "\u8FD1\u666F"
+    moving: 0
+    fov: 36
+  - shot: 3
+    displayName: "\u53CC\u4EBA"
+    moving: 0
+    fov: 42
+  - shot: 4
+    displayName: "\u8FC7\u80A9"
+    moving: 0
+    fov: 36
+  - shot: 5
+    displayName: "\u4FA7\u9762"
+    moving: 0
+    fov: 36
+  - shot: 6
+    displayName: "\u4F4E\u673A\u4F4D"
+    moving: 0
+    fov: 36
+  - shot: 7
+    displayName: "\u8BBE\u5907\u63D2\u5165"
+    moving: 0
+    fov: 36
+  - shot: 8
+    displayName: "\u8DDF\u62CD"
+    moving: 1
+    fov: 36
+  - shot: 9
+    displayName: "\u81EA\u5B9A\u4E49"
+    moving: 1
+    fov: 36
+  scenes:
+  - id: archive
+    displayName: "\u6863\u6848\u8231"
+    wall: {r: 0.28, g: 0.31, b: 0.26, a: 1}
+    floor: {r: 0.13, g: 0.15, b: 0.12, a: 1}
+    light: {r: 1, g: 0.82, b: 0.59, a: 1}
+  - id: relay
+    displayName: "\u65E7\u4E2D\u7EE7\u7AD9"
+    wall: {r: 0.23, g: 0.29, b: 0.29, a: 1}
+    floor: {r: 0.12, g: 0.15, b: 0.17, a: 1}
+    light: {r: 0.75, g: 0.83, b: 1, a: 1}
+  - id: alarm
+    displayName: "\u6545\u969C\u8B66\u62A5"
+    wall: {r: 0.25, g: 0.19, b: 0.17, a: 1}
+    floor: {r: 0.16, g: 0.11, b: 0.1, a: 1}
+    light: {r: 1, g: 0.35, b: 0.24, a: 1}

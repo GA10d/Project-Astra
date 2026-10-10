@@ -34,6 +34,7 @@ namespace AstraCabin.Navigation
     [Serializable] public sealed class EventDefinition
     {
         public string id, type, title, description;
+        public string performanceId;
         public int setpiece;
         public float duration;
         public Choice[] choices;
@@ -43,7 +44,7 @@ namespace AstraCabin.Navigation
         public string id, text, result;
         public Amount[] costs, rewards;
     }
-    [Serializable] public sealed class Command { public string kind, id; }
+    [Serializable] public sealed class Command { public string kind, id, outcome; }
     [Serializable] public sealed class VoyageSave
     {
         public int schemaVersion = 1;
@@ -73,7 +74,7 @@ namespace AstraCabin.Navigation
         public IEventHandler Find(string type) { IEventHandler value; return type != null && handlers.TryGetValue(type, out value) ? value : null; }
         public static EventRegistry CreateDefault()
         {
-            var registry = new EventRegistry(); registry.Register(new ChoiceEventHandler()); registry.Register(new SetpieceEventHandler()); return registry;
+            var registry = new EventRegistry(); registry.Register(new ChoiceEventHandler()); registry.Register(new SetpieceEventHandler()); registry.Register(new PerformanceEventHandler()); return registry;
         }
     }
     public sealed class ChoiceEventHandler : IEventHandler
@@ -109,7 +110,10 @@ namespace AstraCabin.Navigation
         static bool Text(string value, int max) { return !string.IsNullOrWhiteSpace(value) && value.Length <= max; }
         public static string Fingerprint(Campaign campaign)
         {
-            using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(JsonUtility.ToJson(campaign)))).Replace("-", "");
+            // Preserve old configuration hashes when the optional integration field is empty.
+            string json=JsonUtility.ToJson(campaign);
+            json=Regex.Replace(json, @",""performanceId"":(?:""""|null)", "");
+            using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(json))).Replace("-", "");
         }
         public static List<string> Validate(Campaign c, EventRegistry registry)
         {

@@ -1,3 +1,49 @@
+# 开发交接入口
+
+开发工程就在本目录的 [UnityProject](UnityProject/) 中。将整个 `3D Demo` 文件夹交给开发者即可，`Build` 和 `Astra_Cabin_Windows.zip` 是试玩包。
+
+## 打开工程
+
+1. 安装 Unity **2022.3.62f1**，在 Unity Hub 中选择添加现有项目，指向本目录的 `UnityProject`。
+2. 打开 `Assets/Astra/Scenes/Cabin04.unity`，点击 **Play**。
+3. 点击 A 墙绿色终端，打开 **导航模式**，先选择 `test`、`zyl` 或 `gzw`。`test` 包含当前完整爬塔关卡；另外两个星系已预留开发入口。
+
+zyl 与 gzw 的目录、数据边界和交付步骤见 [星系开发交接](Source/galaxy_development.md)。两位开发者分别维护自己的星系目录；现有 test 作为可运行的参考。
+
+## 本目录怎么用
+
+| 目录 | 职责 |
+| --- | --- |
+| [UnityProject](UnityProject/) | 正式 Unity 源码、场景、资源、关卡配置；日常开发从这里开始 |
+| [Source](Source/) | Blender 源模型、生成脚本、架构与开发交接文档 |
+| [Tools/StarMapEditor](Tools/StarMapEditor/README.md) | 关卡配置编辑器；双击 `index.html` 可离线使用 |
+| [Build](Build/) | 当前 Windows 试玩版与星域编辑器；分发时保留整个目录 |
+| [QA](QA/) | 现有验证报告和截图 |
+| [Backups](Backups/) | 历史版本备份 |
+
+## 构建和检查
+
+在本目录打开 PowerShell，先关闭该工程的 Unity 编辑器，再运行：
+
+```powershell
+.\Rebuild.ps1
+.\VerifyGalaxies.ps1
+```
+
+默认构建当前 `Cabin04.unity`，校验星系配置，输出到 `Build`，保留开发者对场景的修改。Unity 中对应菜单为 **Astra > Build current scene (development)**。`VerifyGalaxies.ps1` 验证星系、基础舱室和会议分支；完整导航、舱室、战斗、演出和渲染回归可运行 `VerifyNavigation.ps1`，两者默认检查 `Build`。
+
+脚本会查找本机的 Unity 2022.3.62f1。换电脑后也可以显式指定编辑器：
+
+```powershell
+.\Rebuild.ps1 -UnityEditor 'C:\Program Files\Unity\Hub\Editor\2022.3.62f1\Editor\Unity.exe'
+```
+
+`-RebuildScene` 会重新生成主场景；`-RegenerateModel` 会重新生成 Blender 模型、FBX 和主场景，需安装 Blender 并可用 `-Blender` 指定路径。这两种操作会覆盖相应生成文件，手工修改前请另存副本。
+
+[SyncPerformance.ps1](SyncPerformance.ps1) 用于可选的外部演出工具同步，需要显式传入 `-ToolRoot`。现有会议演出资源已包含在 Unity 工程里，直接开发和构建无需外部工具。
+
+---
+
 # ASTRA · CABIN 04 — 四面墙飞船舱室 Demo
 
 根据项目 A/B/C/D 四面墙概念图制作的全 3D、固定中央视角、苏联潜艇风格原型。场景不是把四张图片贴在墙上：舱壁、管道、仪表、工具、柜子、窗框和控制器均为真实网格；窗外是独立的程序化 3D 星空与缓慢旋转的行星。
@@ -56,15 +102,17 @@
 
 ### 导航模式与事件系统
 
-进入 A 墙电脑，点击左侧 **导航模式**。选择绿色可达信标，点击跃迁，沿分支路线穿越三个星域。示例包含 24 个节点、九种舱内演出和三种资源选择事件，燃料、补给、材料、观测数据会随航行和处置选项流转。抵达最后出口后完成航程。
+进入 A 墙电脑，点击左侧 **导航模式**，先在星球面板选择 **test / zyl / gzw**。点击 **test** 会带切换动画进入现有完整爬塔地图，包括原来的档案交接会议分支；zyl、gzw 已预留独立入口，尚未配置时显示待开发面板。地图内可返回星系选择，切换星系会保留各自航程。
+
+进入 test 后选择绿色可达信标，点击跃迁，沿分支路线穿越星域。燃料、补给、材料、观测数据会随航行和处置选项流转。抵达最后出口后完成航程。
 
 演出事件会退出终端，让玩家自行 Q/E 观察；撞击事件必须拿锤修复三处裂痕。演出完成后点击舱内底部的“返回导航模式”，或重新点击 A 墙电脑，选择处置方案再继续。事件未结算时不能使用数字键替换演出或启动战斗。正常舱室中 0–9 调试演出仍可使用。
 
 航行自动保存，可退出续玩；尚未完成的演出在重开游戏后可重新播放，不重复扣除跃迁消耗。日志记录选择和实际资源收支。资源不足会禁用无法支付的选项或跃迁；“新航程”会备份旧记录并重开。此模块使用独立的导航资源，不等同于完整生存系统，也不改变战斗 APP 的武器库存。
 
-策划工具位于 **`Tools/StarMapEditor/index.html`**，双击用浏览器打开即可。支持星域命名、节点拖拽、Shift 连线、事件库、资源与选项配置、撤销/重做、JSON 导入导出及错误校验。导出的 `campaign.json` 放到 `Astra Cabin_Data/StreamingAssets/Navigation/` 后，在游戏导航界面点击“导入星域配置”使用；导入会备份并重置航程。修改文件后不会自动替换已在进行中的航程。
+策划工具位于 **`Tools/StarMapEditor/index.html`**，双击用浏览器打开即可。支持星域命名、节点拖拽、Shift 连线、事件库、资源与选项配置、撤销/重做、JSON 导入导出及错误校验。导出的 `campaign.json` 放到 `Astra Cabin_Data/StreamingAssets/Navigation/<星系>/` 后，进入该星球并点击“导入星域配置”使用；导入只备份并重置当前星系的航程。修改文件后不会自动替换已在进行中的航程。
 
-策划操作细节见 `Tools/StarMapEditor/README.md`，数据契约、存档恢复和新增事件类型说明见 `Source/navigation_architecture.md`。构建入口是 `CabinBuild.BuildNavigationRevision`，输出到 `BuildNavigation`，正式分发仍使用 `Build`。完整回归入口为 `VerifyNavigation.ps1`。
+策划操作细节见 [星域编辑器](Tools/StarMapEditor/README.md)，数据契约、存档恢复和新增事件类型说明见 [导航架构](Source/navigation_architecture.md)。zyl 与 gzw 两位开发者的独立目录和交付步骤见 [星系开发交接](Source/galaxy_development.md)。开发构建入口是 `CabinBuild.BuildDevelopment`，校验星系配置并将当前场景输出到 `Build`。`BuildGalaxyRevision` 和 `BuildNavigationRevision` 保留为辅助入口，分别输出到 `BuildGalaxies` 和 `BuildNavigation`。完整回归入口为 `VerifyNavigation.ps1`，默认检查 `Build`。
 
 ### 战斗模式（v8）
 
@@ -129,11 +177,11 @@ Unity 批处理入口 CabinBuild.BuildCombatRevision 将 v8 构建到 BuildV8；
 - `Source/apply_materials.py`：只刷新 Blender 材质、不修改几何的脚本；纹理已打包在交付的 `.blend` 内。
 - `Source/upgrade_gauge_pivots.py`：将旧模型的四根仪表针升级为独立转轴；当前交付源文件已完成升级，不必重复运行。`gauge_upgrade_report.json` 记录无几何位移、材质保留的检查结果。
 
-Unity 菜单 `Astra > Rebuild cabin scene` 会重新生成本原型主场景。若已手工修改场景，请先另存副本；重建会覆盖 `Cabin04.unity`。菜单 `Astra > Build Windows demo` 会重新生成场景并打包到 `Build`。
+Unity 菜单 `Astra > Rebuild cabin scene` 会重新生成本原型主场景。若已手工修改场景，请先另存副本；重建会覆盖 `Cabin04.unity`。菜单 `Astra > Build Windows demo` 也会重新生成场景并打包到 `Build`；日常开发使用 `Astra > Build current scene (development)` 来构建当前场景。
 
 ## 重建
 
-在 PowerShell 执行 `Rebuild.ps1`。默认只重建 Unity 场景与 exe；加 `-RegenerateModel` 会先运行 Blender 重新生成源模型和 FBX。手改生成结果后再次重建会覆盖这些生成结果，请先另存副本。
+在本目录的 PowerShell 执行 `Rebuild.ps1`。默认校验星系配置并构建当前主场景与 exe，不重新生成场景。加 `-RebuildScene` 会重新生成主场景；加 `-RegenerateModel` 会先运行 Blender 重新生成源模型和 FBX，并重新生成主场景。手改生成结果后使用这两个选项会覆盖相关文件，请先另存副本。
 
 ## 范围
 

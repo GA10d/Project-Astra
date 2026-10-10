@@ -1,0 +1,76 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 265bc44c617cace4d90063e750f496a4, type: 3}
+  m_Name: Meeting_Opening
+  m_EditorClassIdentifier: 
+  id: Meeting_Opening
+  duration: 19
+  actors:
+  - id: speaker
+    character: {fileID: 11400000, guid: c2aa0aa0b1cc07d4199332c3e1fec9eb, type: 2}
+    start: 0
+    duration: 19
+  actions:
+  - actorId: speaker
+    actionId: Idle_Talking_Loop
+    start: 0
+    duration: 19
+    speed: 1
+  dialogue:
+  - actorId: speaker
+    kind: 0
+    text: "\u63A2\u6D4B\u8231 04\uFF0C\u8FD9\u91CC\u662F\u4E2D\u7EE7\u7AD9\u3002\u4FE1\u53F7\u786E\u8BA4\uFF0C\u51C6\u5907\u4EA4\u63A5\u5730\u7403\u6863\u6848\u3002"
+    start: 0.3
+    charactersPerSecond: 15
+    hold: 1
+    patienceSeconds: 6
+    choices: []
+  - actorId: speaker
+    kind: 1
+    text: "中继电源不足。要消耗两张维修券恢复链路吗？"
+    start: 5
+    charactersPerSecond: 18
+    hold: 0.7
+    patienceSeconds: 14
+    choices:
+    - id: repair
+      text: "使用维修券，恢复中继"
+      condition:
+        key: credits
+        compare: 3
+        value: 2
+      hasCondition: 1
+      effects:
+      - key: credits
+        delta: -2
+    - id: inspect
+      text: "请值班员检查备用线路"
+      condition:
+        key: credits
+        compare: 3
+        value: 0
+      hasCondition: 0
+      effects: []
+  scenes:
+  - sceneId: archive
+    start: 0
+    duration: 19
+  cameras:
+  - shot: 1
+    fx: 0
+    actorId: speaker
+    partnerId: 
+    start: 0
+    duration: 19
+    customPosition: {x: 0.2, y: 1.6, z: -2.6}
+    customEuler: {x: 3, y: 0, z: 0}
+    customFov: 36

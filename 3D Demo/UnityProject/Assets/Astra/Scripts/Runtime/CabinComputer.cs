@@ -45,6 +45,7 @@ namespace AstraCabin
         public bool IsOpen { get; private set; }
         public CombatMode Combat { get; private set; }
         public NavigationMode Navigation { get; private set; }
+        public ConferenceMode Meeting { get; private set; }
         public string CurrentApp { get { return activeApp; } }
         public string CurrentDocumentId { get { return editorDocumentId; } }
         public string CurrentDocumentText { get { return editorBody; } }
@@ -101,6 +102,7 @@ namespace AstraCabin
             Initialize();
             Combat = GetComponent<CombatMode>() ?? gameObject.AddComponent<CombatMode>();
             Navigation = GetComponent<NavigationMode>() ?? gameObject.AddComponent<NavigationMode>();
+            Meeting = GetComponent<ConferenceMode>() ?? gameObject.AddComponent<ConferenceMode>();
         }
 
         void Initialize()
@@ -112,7 +114,8 @@ namespace AstraCabin
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-combat-qa") >= 0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-art-qa") >= 0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-render-qa") >= 0 ||
-                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-navigation-qa") >= 0;
+                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-navigation-qa") >= 0 ||
+                Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-meeting-qa") >= 0;
             LoadArchive();
             ReloadStore();
             runningApps.Add("browser");
@@ -392,6 +395,10 @@ namespace AstraCabin
             editorScroll = Vector2.zero;
         }
 
+        public void FinishMeeting()
+        {
+            runningApps.Remove("meeting");OpenApp("navigation");
+        }
         public void OpenApp(string app)
         {
             Initialize();
@@ -399,7 +406,8 @@ namespace AstraCabin
             if (app == "filemanager" || app == "documents") app = "files";
             if (app == "text" || app == "notepad") app = "editor";
             if (app == "recyclebin") app = "trash";
-            if (app != "files" && app != "editor" && app != "browser" && app != "trash" && app != "combat" && app != "navigation") return;
+            if (app != "files" && app != "editor" && app != "browser" && app != "trash" && app != "combat" && app != "navigation" && app != "meeting") return;
+            if(app=="meeting" && (!Meeting || !Meeting.HasSession))return;
             if (app == "combat" && Navigation && Navigation.PresentationPending) { SetStatus("请先在导航模式完成当前演出事件。", true); return; }
             if (activeApp == "combat" && app != "combat" && Combat) Combat.Suspend();
             SaveCurrentDocument();
@@ -409,9 +417,10 @@ namespace AstraCabin
                 if (available != null) LoadEditor(available);
             }
             if (!runningApps.Contains(app)) runningApps.Add(app);
+            if (app == "navigation" && activeApp != "navigation" && activeApp != "meeting" && Navigation) Navigation.OnAppOpened();
             activeApp = app;
             if (IsOpen) Input.imeCompositionMode = app == "combat" ? IMECompositionMode.Off : IMECompositionMode.On;
-            if ((app == "combat" || app == "navigation") && !maximized) { restoreRect = windowRect; windowRect = new Rect(154, 42, 1198, 684); maximized = true; }
+            if ((app == "combat" || app == "navigation" || app == "meeting") && !maximized) { restoreRect = windowRect; windowRect = new Rect(154, 42, 1198, 684); maximized = true; }
             confirmationId = "";
             GUIUtility.keyboardControl = 0;
             SetStatus(AppName(app) + " / 就绪");
@@ -466,7 +475,7 @@ namespace AstraCabin
         void PlayClick() { if (CabinAudio.Instance) CabinAudio.Instance.Play(CabinSound.Click, controller ? controller.centerPosition : transform.position); }
         static string AppName(string app)
         {
-            switch (app) { case "navigation": return "导航模式"; case "combat": return "战斗模式"; case "files": return "文件管理"; case "editor": return "文本编辑器"; case "trash": return "垃圾堆"; default: return "离线浏览器"; }
+            switch (app) { case "meeting": return "ASTRA LINK · 视频会议"; case "navigation": return "导航模式"; case "combat": return "战斗模式"; case "files": return "文件管理"; case "editor": return "文本编辑器"; case "trash": return "垃圾堆"; default: return "离线浏览器"; }
         }
 
         void EnsureStyles()
@@ -715,7 +724,7 @@ namespace AstraCabin
             float x = 148;
             foreach (string app in runningApps.ToArray())
             {
-                if (RetroButton(new Rect(x, 744, 151, 29), AppName(app), true, activeApp == app))
+                if (RetroButton(new Rect(x, 744, 151, 29), app=="meeting"?"视频会议":AppName(app), true, activeApp == app))
                 { if (activeApp == app) { SaveCurrentDocument(); activeApp = ""; } else OpenApp(app); }
                 x += 157;
             }
@@ -734,9 +743,15 @@ namespace AstraCabin
             GUI.Label(new Rect(13, 4, width - 133, 31), "▣  " + windowName, title);
             if (RetroButton(new Rect(width - 96, 8, 26, 23), "_")) { SaveCurrentDocument(); activeApp = ""; }
             if (RetroButton(new Rect(width - 65, 8, 26, 23), "□")) toggleMaximize = true;
-            if (RetroButton(new Rect(width - 34, 8, 26, 23), "×")) { SaveCurrentDocument(); runningApps.Remove(activeApp); activeApp = ""; }
+            if (RetroButton(new Rect(width - 34, 8, 26, 23), "×")) { SaveCurrentDocument(); if(activeApp=="meeting")FinishMeeting();else {runningApps.Remove(activeApp); activeApp = "";} }
             if (string.IsNullOrEmpty(activeApp)) return;
-            GUI.Label(new Rect(15, 37, 620, 24), activeApp == "navigation" ? "信标导航  /  PROBE 04  /  航行进度自动保存" : activeApp == "combat" ? "舰载战术重建  /  PROBE 04  /  独立演练任务" : "文件(F)      编辑(E)      查看(V)      帮助(H)", small);
+            if(activeApp=="meeting" && Meeting)
+            {
+                Meeting.Draw(new Rect(8,39,width-16,height-45),font);
+                if(!maximized)GUI.DragWindow(new Rect(4,4,width-106,31));
+                return;
+            }
+            GUI.Label(new Rect(15, 37, 620, 24), activeApp == "meeting" ? "ASTRA LINK  /  加密中继通话  /  交互会议" : activeApp == "navigation" ? "信标导航  /  PROBE 04  /  航行进度自动保存" : activeApp == "combat" ? "舰载战术重建  /  PROBE 04  /  独立演练任务" : "文件(F)      编辑(E)      查看(V)      帮助(H)", small);
             GUI.Label(new Rect(width - 390, 37, 374, 24), activeApp == "combat" ? "[ P ] 暂停     [ ESC ] 战斗菜单" : "[ CTRL+S ] 保存     [ ESC ] 返回舱室", right);
             Fill(new Rect(8, 64, width - 16, 1), new Color(0.35f, 0.39f, 0.34f));
             bool wasEnabled = GUI.enabled;

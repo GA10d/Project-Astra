@@ -58,6 +58,10 @@ campaign = dict(schemaVersion=1, id='astra_first_voyage', name='探测任务 04 
     dict(id='fuel', name='燃料', initial=10, capacity=24), dict(id='supplies', name='补给', initial=18, capacity=30),
     dict(id='scrap', name='材料', initial=8, capacity=99), dict(id='data', name='数据', initial=0, capacity=99)
 ], travelCosts=[amount('fuel', 1), amount('supplies', 1)], sectors=sectors, events=events)
+sectors[0]["nodes"][0]["next"].append("conference")
+sectors[0]["nodes"][2]["y"] = .36
+sectors[0]["nodes"].append({'id': 'conference', 'name': '中继视频会议', 'x': 0.25, 'y': 0.64, 'eventId': 'relay_meeting', 'next': ['salvage', 'trade'], 'exit': False})
+events.append({'id': 'relay_meeting', 'type': 'performance', 'performanceId': 'relay', 'title': '中继站 · 档案交接会议', 'description': '中继站请求接入加密视频会议。跃迁后自动打开 ASTRA LINK，与站内值班员完成档案交接。', 'setpiece': 0, 'duration': 0, 'choices': [{'id': 'complete', 'text': '会议完成', 'result': '交接记录已归档，会议连接关闭。', 'costs': [], 'rewards': [{'resourceId': 'data', 'amount': 3}]}]})
 encoded = json.dumps(campaign, ensure_ascii=False, indent=2)
 path = ROOT/'UnityProject/Assets/StreamingAssets/Navigation/campaign.json'
 path.parent.mkdir(parents=True, exist_ok=True); path.write_text(encoded, encoding='utf-8')
@@ -65,4 +69,4 @@ editor = ROOT/'Tools/StarMapEditor'
 editor.mkdir(parents=True, exist_ok=True)
 (editor/'default-campaign.js').write_text('window.DEFAULT_CAMPAIGN = ' + encoded + ';\n', encoding='utf-8')
 (editor/'campaign.json').write_text(encoded, encoding='utf-8')
-print('Created sample: 3 sectors, 24 nodes, 12 events, 9 setpieces.')
+print('Created sample: 3 sectors, 25 nodes, 13 events, 9 setpieces, 1 Tool V2 meeting.')

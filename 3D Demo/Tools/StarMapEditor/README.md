@@ -11,11 +11,13 @@
 ## 导入游戏
 
 1. 处理地图下方的全部配置错误，点击“导出到游戏”，得到 `campaign.json`。
-2. 将文件复制到游戏目录中的 `Astra Cabin_Data/StreamingAssets/Navigation/campaign.json`。
-3. 在游戏 A 墙电脑打开“导航模式”，点击“导入星域配置”，确认校验并导入。
-4. 导入成功后开始新航程，之前的配置与存档保留备份。导入失败会显示原因，不能带着无效配置继续航行。
+2. 将文件复制到游戏目录中的 `Astra Cabin_Data/StreamingAssets/Navigation/<星系>/campaign.json`，`<星系>` 为 `test`、`zyl` 或 `gzw`。
+3. 在游戏 A 墙电脑打开“导航模式”，先选择对应星球，再点击“导入星域配置”，确认校验并导入。
+4. 导入成功后当前星系开始新航程，其之前的配置与存档保留备份，其他星系进度不变。导入失败会显示原因，不能带着无效配置继续航行。
 
-Unity 工程使用 `Assets/StreamingAssets/Navigation/campaign.json`。运行中的航程使用独立的已导入配置快照，所以替换导出文件后需要在导航模式中再次导入。普通重启会继续现有航程。
+Unity 工程使用 `Assets/StreamingAssets/Navigation/<星系>/campaign.json`。test 是现有完整地图，根目录旧 `Navigation/campaign.json` 保留作兼容副本；zyl、gzw 预留目录收到有效的 `schemaVersion: 1` 配置后即可接入，无需修改选择器或航行引擎。运行中的航程使用各星系独立的已导入配置快照，所以替换导出文件后需要进入该星球再次导入。普通重启会继续现有航程。
+
+两位开发者的独立文件范围、存档路径和共享脚本约定见 [星系开发交接](../../Source/galaxy_development.md)。
 
 ## 草稿与撤销
 

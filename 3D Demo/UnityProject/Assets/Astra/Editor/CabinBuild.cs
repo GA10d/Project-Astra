@@ -341,13 +341,26 @@ public static class CabinBuild
     public static void BuildEncounterRevision() { BuildTo("../BuildV6"); }
     public static void BuildPhasingWhaleRevision() { BuildTo("../BuildV7"); }
     [MenuItem("Astra/Build navigation demo")]
-    public static void BuildNavigationRevision()
+    public static void BuildNavigationRevision() { BuildNavigationTo("../BuildNavigation"); }
+    [MenuItem("Astra/Build current scene (development)")]
+    public static void BuildDevelopment() { BuildNavigationTo("../Build"); }
+    [MenuItem("Astra/Build galaxy navigation demo")]
+    public static void BuildGalaxyRevision() { BuildNavigationTo("../BuildGalaxies"); }
+    static void BuildNavigationTo(string directory)
     {
         // Build the current scene to retain authored art and lighting fixes.
-        var campaign = JsonUtility.FromJson<AstraCabin.Navigation.Campaign>(AstraCabin.Navigation.NavigationStorage.ReadLimited("Assets/StreamingAssets/Navigation/campaign.json"));
-        var errors = AstraCabin.Navigation.CampaignValidator.Validate(campaign, AstraCabin.Navigation.EventRegistry.CreateDefault());
-        if (errors.Count > 0) throw new Exception(string.Join("; ", errors));
-        const string directory = "../BuildNavigation";
+        foreach (string galaxy in NavigationMode.GalaxyIds)
+        {
+            string path = "Assets/StreamingAssets/Navigation/" + galaxy + "/campaign.json";
+            if (!File.Exists(path) && galaxy == "test") path = "Assets/StreamingAssets/Navigation/campaign.json";
+            if (!File.Exists(path)) { if (galaxy == "test") throw new Exception("Missing test campaign"); else continue; }
+            var campaign = JsonUtility.FromJson<AstraCabin.Navigation.Campaign>(AstraCabin.Navigation.NavigationStorage.ReadLimited(path));
+            var errors = AstraCabin.Navigation.CampaignValidator.Validate(campaign, AstraCabin.Navigation.EventRegistry.CreateDefault());
+            if (errors.Count > 0) throw new Exception(galaxy + ": " + string.Join("; ", errors));
+            foreach (var ev in campaign.events.Where(e => e.type == "performance"))
+                errors.AddRange(Astra.PerformanceToolV2.ToolValidation.Package(Resources.Load<Astra.PerformanceToolV2.ToolPackage>("Performances/" + ev.performanceId)));
+            if (errors.Count > 0) throw new Exception(galaxy + ": " + string.Join("; ", errors));
+        }
         Directory.CreateDirectory(directory);
         var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = new[] { Root + "/Scenes/Cabin04.unity" }, locationPathName = directory + "/Astra Cabin.exe", target = BuildTarget.StandaloneWindows64, options = BuildOptions.None });
         if (report.summary.result != BuildResult.Succeeded) throw new Exception("Build failed: " + report.summary.result);

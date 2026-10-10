@@ -1,6 +1,7 @@
-param([string]$BuildFolder = 'BuildNavigation', [ValidateRange(0,4)][int]$StartAt = 0)
+param([string]$BuildFolder = 'Build', [ValidateRange(0,4)][int]$StartAt = 0)
 $ErrorActionPreference = 'Stop'
 $executable = Join-Path $PSScriptRoot ($BuildFolder + '\Astra Cabin.exe')
+if (!(Test-Path -LiteralPath $executable -PathType Leaf)) { throw ('Build executable not found: ' + $executable) }
 $suites = @(
     @{Name='Navigation-final'; Flag='--astra-navigation-qa'; Report='navigation-verification.txt'},
     @{Name='Navigation-base'; Flag='--astra-qa'; Report='verification.txt'},

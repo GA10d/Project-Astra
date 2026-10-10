@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 741a8b1b66e146640a93077cfbaee2cf, type: 3}
+  m_Name: Original_Voss
+  m_EditorClassIdentifier: 
+  id: voss
+  displayName: "\u6C83\u65AF \xB7 \u65E7\u822A\u8DEF"
+  species: 0
+  sourceModel: {fileID: 919132149155446097, guid: 45060b2152cf2f94eb17c038c39ebb68, type: 3}
+  catalog: {fileID: 11400000, guid: 79ead10ad7d84f14e828326cf360d949, type: 2}
+  look:
+    creatorEnabled: 0
+    faceShape: 0
+    eyeShape: 0
+    browShape: 0
+    noseShape: 0
+    mouthShape: 0
+    hairStyle: 0
+    bodyType: 0
+    outfitStyle: 0
+    legStyle: 0
+    footStyle: 0
+    jawWidth: 0
+    faceAccessory: 0
+    gearAccessory: 0
+    facialMark: 0
+    faceWidth: 1
+    bodyScale: 1
+    hairOrHeadgear: 0
+    accessory: 0
+    skin: {r: 0.65, g: 0.53, b: 0.4, a: 1}
+    suit: {r: 0.36, g: 0.4, b: 0.34, a: 1}
+    hair: {r: 0.18, g: 0.15, b: 0.12, a: 1}
+    eyes: {r: 0.16, g: 0.27, b: 0.2, a: 1}
+    accent: {r: 0.64, g: 0.52, b: 0.31, a: 1}

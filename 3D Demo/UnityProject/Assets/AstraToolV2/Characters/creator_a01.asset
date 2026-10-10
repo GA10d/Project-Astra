@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 741a8b1b66e146640a93077cfbaee2cf, type: 3}
+  m_Name: creator_a01
+  m_EditorClassIdentifier: 
+  id: creator_a01
+  displayName: "\u5916\u661F\u4EBA \xB7 \u6863\u6848\u5458"
+  species: 1
+  sourceModel: {fileID: 919132149155446097, guid: 8c5ac9137c9a53d438bf5948a03802ae, type: 3}
+  catalog: {fileID: 11400000, guid: 79ead10ad7d84f14e828326cf360d949, type: 2}
+  look:
+    creatorEnabled: 1
+    faceShape: 1
+    eyeShape: 4
+    browShape: 0
+    noseShape: 5
+    mouthShape: 1
+    hairStyle: 1
+    bodyType: 4
+    outfitStyle: 1
+    legStyle: 1
+    footStyle: 1
+    jawWidth: 0
+    faceAccessory: 1
+    gearAccessory: 1
+    facialMark: 1
+    faceWidth: 1
+    bodyScale: 1
+    hairOrHeadgear: 0
+    accessory: 0
+    skin: {r: 0.63, g: 0.56, b: 0.42, a: 1}
+    suit: {r: 0.39, g: 0.3, b: 0.35, a: 1}
+    hair: {r: 0.43, g: 0.2, b: 0.15, a: 1}
+    eyes: {r: 0.1375, g: 0.2035, b: 0.17050001, a: 1}
+    accent: {r: 0.49, g: 0.44, b: 0.32, a: 1}

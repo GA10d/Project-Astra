@@ -68,9 +68,15 @@ namespace AstraCabin.Navigation
                     Pending = string.IsNullOrEmpty(Node.eventId) ? null : Campaign.events.First(e => e.id == Node.eventId); Observed = false;
                     Journal.Add("抵达 · " + Node.name + " / 消耗 " + Amounts(Campaign.travelCosts, "-")); return true;
                 case "observed":
-                    if (Pending == null || Pending.id != command.id || Observed || !Registry.Find(Pending.type).NeedsObservation)
+                    if (Pending == null || Pending.id != command.id || Pending.type=="performance" || Observed || !Registry.Find(Pending.type).NeedsObservation)
                     { error = "演出结算状态不匹配"; return false; }
                     Observed = true; Journal.Add("演出完成 · " + Pending.title); return true;
+                case "performance":
+                    if(Pending==null || Pending.type!="performance" || Pending.id!=command.id || string.IsNullOrWhiteSpace(command.outcome) || command.outcome.Length>256)
+                    { error="会议结算状态不匹配";return false; }
+                    Observed=true;
+                    Journal.Add("会议完成 · "+Pending.title+" / 结局 "+command.outcome);
+                    return Apply(new Command{kind="choose",id=Pending.choices[0].id},out error);
                 case "choose":
                     error = ChoiceError(command.id); if (error != null) return false;
                     var choice = Pending.choices.First(o => o.id == command.id); Pay(choice.costs);
@@ -143,13 +149,13 @@ namespace AstraCabin.Navigation
             foreach (var command in save.commands) { string why; if (!candidate.Apply(command, out why)) throw new InvalidDataException(why); }
             return candidate;
         }
-        public bool Commit(string kind, string id)
+        public bool Commit(string kind, string id, string outcome = null)
         {
             if (Blocked) return false;
             try
             {
                 var candidate = new VoyageSave { fingerprint = Save.fingerprint, commands = new List<Command>(Save.commands) };
-                candidate.commands.Add(new Command { kind = kind, id = id });
+                candidate.commands.Add(new Command { kind = kind, id = id, outcome = outcome });
                 var next = Replay(candidate);
                 // Commit durable data before exposing a world action or a reward.
                 NavigationStorage.WriteAtomic(Path, JsonUtility.ToJson(candidate, true));

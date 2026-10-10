@@ -46,4 +46,8 @@ check('self-link rejected',()=>assert.throws(()=>C.toggleEdge(source.sectors[0],
 check('exit-link rejected',()=>assert.throws(()=>C.toggleEdge(source.sectors[0],'exit','entry')));
 check('malformed JSON rejected',()=>assert.throws(()=>C.parse('{broken')));
 check('oversized JSON rejected',()=>assert.throws(()=>C.parse(' '.repeat(2*1024*1024+1))));
+invalid('meeting missing package ID', c => c.events.find(e=>e.type==='performance').performanceId='');
+invalid('meeting invalid package path', c => c.events.find(e=>e.type==='performance').performanceId='../relay');
+invalid('meeting multiple settlements', c => { const e=c.events.find(e=>e.type==='performance');e.choices.push({...e.choices[0],id:'second'}); });
+invalid('meeting settlement has cost', c => c.events.find(e=>e.type==='performance').choices[0].costs=[{resourceId:'fuel',amount:1}]);
 console.log(`RESULT PASS checks=${checks}`);

@@ -56,7 +56,8 @@ window.DEFAULT_CAMPAIGN = {
           "next": [
             "signal_a",
             "signal_b",
-            "signal_c"
+            "signal_c",
+            "conference"
           ],
           "exit": false
         },
@@ -76,7 +77,7 @@ window.DEFAULT_CAMPAIGN = {
           "id": "signal_b",
           "name": "陌生访客",
           "x": 0.25,
-          "y": 0.5,
+          "y": 0.36,
           "eventId": "show_2",
           "next": [
             "salvage",
@@ -137,6 +138,18 @@ window.DEFAULT_CAMPAIGN = {
           "eventId": "",
           "next": [],
           "exit": true
+        },
+        {
+          "id": "conference",
+          "name": "中继视频会议",
+          "x": 0.25,
+          "y": 0.64,
+          "eventId": "relay_meeting",
+          "next": [
+            "salvage",
+            "trade"
+          ],
+          "exit": false
         }
       ]
     },
@@ -820,6 +833,29 @@ window.DEFAULT_CAMPAIGN = {
           "result": "中继信号逐渐远去。",
           "costs": [],
           "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "relay_meeting",
+      "type": "performance",
+      "performanceId": "relay",
+      "title": "中继站 · 档案交接会议",
+      "description": "中继站请求接入加密视频会议。跃迁后自动打开 ASTRA LINK，与站内值班员完成档案交接。",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "complete",
+          "text": "会议完成",
+          "result": "交接记录已归档，会议连接关闭。",
+          "costs": [],
+          "rewards": [
+            {
+              "resourceId": "data",
+              "amount": 3
+            }
+          ]
         }
       ]
     }

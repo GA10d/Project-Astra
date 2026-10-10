@@ -24,7 +24,7 @@ namespace AstraCabin
         }
         void Check(string name, bool value) { report.Add((value ? "PASS " : "FAIL ") + name); if (!value) failures++; }
         void Log(string text, string trace, LogType type) { if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert) { errors++; report.Add("ERROR " + text + "\n" + trace); } }
-        void Update() { if (output != null && !finished && Time.realtimeSinceStartup - started > 240) { Check("watchdog", false); Finish(); } }
+        void Update() { if (output != null && !finished && Time.realtimeSinceStartup - started > 300) { Check("watchdog", false); Finish(); } }
         void Finish()
         {
             if (finished) return; finished = true;
@@ -105,6 +105,119 @@ namespace AstraCabin
             var diskFailure = new NavigationSession(c, r, failPath);
             Check("Failed disk commit leaves state unchanged", !diskFailure.Commit("travel", "signal_a") && diskFailure.Engine.Node.id == "entry" && diskFailure.Save.commands.Count == 0);
         }
+        IEnumerator GalaxyTests(NavigationMode app, CabinComputer computer)
+        {
+            string testSave = app.SavePath, testConfig = app.ConfigPath;
+            Check("Navigation initially opens the galaxy selector", app.IsGalaxyOverview);
+            Check("Exactly the requested galaxy slots exist", NavigationMode.GalaxyIds.SequenceEqual(new[] { "test", "zyl", "gzw" }));
+            Check("test uses canonical campaign and original voyage paths", app.ImportPath == Path.Combine(Application.streamingAssetsPath, "Navigation", "test", "campaign.json") && testSave == Path.Combine(output, "storage", "voyage.json") && testConfig == Path.Combine(output, "storage", "campaign.json"));
+            Check("test content exists and developer slots are empty", app.GalaxyHasContent("test") && !app.GalaxyHasContent("zyl") && !app.GalaxyHasContent("gzw"));
+            Screen.SetResolution(1600, 900, false); yield return new WaitForSecondsRealtime(.6f);
+            yield return Capture("00_Galaxies_900p");
+            Screen.SetResolution(1280, 720, false); yield return new WaitForSecondsRealtime(.3f);
+            yield return Capture("00_Galaxies_720p");
+            Screen.SetResolution(1600, 900, false); yield return new WaitForSecondsRealtime(.3f);
+            app.RequestEnterGalaxy("test");
+            Check("Selecting a planet starts the same UI transition", app.IsGalaxyTransitioning);
+            Check("Rapid planet clicks cannot replace an active transition", !app.RequestEnterGalaxy("zyl") && !app.RequestGalaxyOverview());
+            yield return new WaitForSecondsRealtime(.15f); yield return Capture("00_Enter_Test_Transition");
+            yield return new WaitForSecondsRealtime(.8f);
+            Check("test transition opens the existing tower", !app.IsGalaxyTransitioning && !app.IsGalaxyOverview && app.ActiveGalaxyId == "test" && app.Session != null);
+            app.Restart();
+            string preservedTest = File.ReadAllText(testSave);
+            var source = Clone(app.Campaign);
+            app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+            app.RequestEnterGalaxy("gzw"); computer.OpenApp("browser"); computer.OpenApp("navigation");
+            yield return new WaitForSecondsRealtime(.8f);
+            Check("Reopening navigation cancels an interrupted transition", app.IsGalaxyOverview && !app.IsGalaxyTransitioning && app.ActiveGalaxyId == "test" && File.ReadAllText(testSave) == preservedTest);
+            bool originalMotion = computer.Combat.reducedMotion; computer.Combat.reducedMotion = true;
+            Check("Reduced motion still starts a galaxy transition", app.RequestEnterGalaxy("test") && app.IsGalaxyTransitioning);
+            yield return new WaitForSecondsRealtime(.06f); yield return Capture("00_Reduced_Motion_Transition");
+            yield return new WaitForSecondsRealtime(.4f);
+            Check("Reduced motion finishes entering the same test tower", !app.IsGalaxyTransitioning && !app.IsGalaxyOverview && app.ActiveGalaxyId == "test" && File.ReadAllText(testSave) == preservedTest);
+            app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.4f);
+            Check("Reduced motion returns to the same selector", app.IsGalaxyOverview && !app.IsGalaxyTransitioning);
+            computer.Combat.reducedMotion = originalMotion;
+            var slotConfig = new Dictionary<string, string>(); var slotSave = new Dictionary<string, string>(); var slotData = new Dictionary<string, string>();
+            foreach (string slot in new[] { "zyl", "gzw" })
+            {
+                app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+                Check("Returning from tower opens the selector " + slot, app.IsGalaxyOverview && !app.IsGalaxyTransitioning);
+                app.RequestEnterGalaxy(slot); yield return new WaitForSecondsRealtime(.8f);
+                Check("Empty slot has no fabricated levels " + slot, app.ActiveGalaxyId == slot && !app.IsGalaxyOverview && app.Session == null && app.Campaign == null);
+                Check("Each slot has its own configuration and voyage paths " + slot, app.ConfigPath == Path.Combine(output, "storage", slot, "campaign.json") && app.SavePath == Path.Combine(output, "storage", slot, "voyage.json") && app.ImportPath == Path.Combine(Application.streamingAssetsPath, "Navigation", slot, "campaign.json"));
+                Check("Empty slot actions do not create a voyage " + slot, !app.Travel("signal_a") && !app.Restart() && !File.Exists(app.SavePath) && !File.Exists(app.ConfigPath));
+                slotConfig[slot] = app.ConfigPath; slotSave[slot] = app.SavePath;
+                yield return Capture("00_Reserved_" + slot);
+                Check("Reserved slot rejects invalid import with feedback " + slot, !app.ImportCampaign("{}") && app.Session == null && app.IsGalaxyReserved && app.Message.StartsWith("导入失败") && !File.Exists(app.ConfigPath) && !File.Exists(app.SavePath));
+                if (slot == "gzw") yield return Capture("00_Reserved_Import_Error");
+            }
+            NavigationStorage.WriteAtomic(slotConfig["zyl"], "{}");
+            app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+            app.RequestEnterGalaxy("zyl"); yield return new WaitForSecondsRealtime(.8f);
+            Check("Invalid configured slot shows an error instead of reserved content", app.Session == null && !app.IsGalaxyReserved && app.Message.StartsWith("导航配置无法载入") && File.ReadAllText(slotConfig["zyl"]) == "{}" && !File.Exists(slotSave["zyl"]));
+            yield return Capture("00_Invalid_Galaxy_Config");
+            File.Delete(slotConfig["zyl"]);
+            app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+            app.RequestEnterGalaxy("gzw"); yield return new WaitForSecondsRealtime(.8f);
+            app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+            app.RequestEnterGalaxy("zyl"); yield return new WaitForSecondsRealtime(.8f);
+            Check("Removing only the QA error fixture restores the reserved slot", app.Session == null && app.IsGalaxyReserved && !app.GalaxyHasContent("zyl"));
+            app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+            app.RequestEnterGalaxy("test"); yield return new WaitForSecondsRealtime(.8f);
+            Check("Returning to test restores its existing save", app.Session != null && app.SavePath == testSave && app.ConfigPath == testConfig && File.ReadAllText(testSave) == preservedTest && app.Session.Engine.Node.id == "entry");
+            foreach (string slot in new[] { "zyl", "gzw" })
+            {
+                app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+                app.RequestEnterGalaxy(slot); yield return new WaitForSecondsRealtime(.8f);
+                var fixture = Clone(source); fixture.id = "qa_" + slot; fixture.name = "QA " + slot;
+                Check("Developer campaign imports into only its selected slot " + slot, app.ImportCampaign(JsonUtility.ToJson(fixture)) && app.GalaxyHasContent(slot) && app.Campaign.id == fixture.id);
+                string node = slot == "zyl" ? "signal_a" : "signal_b";
+                Check("Developer slot commits its own progress " + slot, app.Session.Commit("travel", node) && app.Session.Commit("observed", app.Session.Engine.Pending.id) && app.Session.Commit("choose", app.Session.Engine.Pending.choices.Last().id));
+                slotData[slot] = File.ReadAllText(slotSave[slot]);
+                Check("Developer progress leaves test save untouched " + slot, File.ReadAllText(testSave) == preservedTest);
+            }
+            foreach (string slot in new[] { "test", "zyl", "gzw" })
+            {
+                app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+                app.RequestEnterGalaxy(slot); yield return new WaitForSecondsRealtime(.8f);
+                string node = slot == "test" ? "entry" : slot == "zyl" ? "signal_a" : "signal_b";
+                Check("Switching galaxies restores independent progress " + slot, app.Session != null && app.Session.Engine.Node.id == node && File.ReadAllText(app.SavePath) == (slot == "test" ? preservedTest : slotData[slot]));
+            }
+            // Only remove fixtures created by this suite in its isolated storage directory.
+            foreach (string slot in new[] { "zyl", "gzw" }) { File.Delete(slotConfig[slot]); File.Delete(slotSave[slot]); }
+            app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+            app.RequestEnterGalaxy("test"); yield return new WaitForSecondsRealtime(.8f);
+            Check("Removing QA fixtures restores both reserved slots", !app.GalaxyHasContent("zyl") && !app.GalaxyHasContent("gzw") && File.ReadAllText(testSave) == preservedTest);
+            Check("Unknown galaxy cannot replace the active session", !app.EnterGalaxy("missing") && app.ActiveGalaxyId == "test" && app.Session != null);
+        }
+        IEnumerator MeetingGalaxyTests(NavigationMode app, CabinComputer computer)
+        {
+            app.Restart();
+            Check("Existing meeting branch opens inside the terminal", app.Travel("conference") && computer.CurrentApp == "meeting" && computer.Meeting.HasSession && !app.CanSwitchGalaxy);
+            if (!computer.Meeting.HasSession) yield break;
+            var player = computer.Meeting.Player; var session = app.Session;
+            string save = File.ReadAllText(app.SavePath); int data = app.Session.Engine.Balances["data"];
+            computer.OpenApp("navigation");
+            Check("Returning from meeting opens its current tower", !app.IsGalaxyOverview && app.ActiveGalaxyId == "test");
+            app.RequestGalaxyOverview(); yield return new WaitForSecondsRealtime(.8f);
+            app.RequestEnterGalaxy("zyl"); yield return new WaitForSecondsRealtime(.8f);
+            Check("Pending meeting cannot switch galaxies or replace its save", app.ActiveGalaxyId == "test" && ReferenceEquals(app.Session, session) && computer.Meeting.Player == player && File.ReadAllText(app.SavePath) == save && !app.CanSwitchGalaxy);
+            app.RequestEnterGalaxy("test"); yield return new WaitForSecondsRealtime(.8f);
+            Check("Selecting test resumes the pending meeting tower", !app.IsGalaxyOverview && app.Session.Engine.Pending.id == "relay_meeting");
+            Check("Meeting continues the same player after galaxy navigation", app.BeginPresentation() && computer.CurrentApp == "meeting" && computer.Meeting.Player == player);
+            yield return Capture("00_Test_Meeting_Resume");
+            // Follow the authored silence branch to its real End node; reward is durable.
+            player.Seek(18.9f); yield return new WaitForSecondsRealtime(.3f);
+            Check("Meeting retains its authored alternate branch", player.CurrentNodeId == "contact");
+            player.Seek(6.9f); yield return new WaitForSecondsRealtime(.3f);
+            Check("Meeting reaches the final interactive choice", player.CurrentNodeId == "archive" && player.IsChoosing);
+            player.Tick(25); yield return null; yield return null;
+            Check("Meeting End returns to test tower without losing galaxy selection", computer.CurrentApp == "navigation" && !app.IsGalaxyOverview && app.ActiveGalaxyId == "test" && !computer.Meeting.HasSession && app.Session.Engine.Pending == null && app.CanSwitchGalaxy);
+            Check("Meeting reward remains committed exactly once", app.Session.Engine.Balances["data"] == data + 3 && app.Session.Save.commands.Last().outcome == "deferred" && !app.Session.Commit("performance", "relay_meeting", "deferred"));
+            yield return Capture("00_Test_Meeting_Return");
+            app.Restart();
+        }
         IEnumerator Start()
         {
             var args = Environment.GetCommandLineArgs(); int index = Array.IndexOf(args, "--astra-navigation-qa");
@@ -116,9 +229,10 @@ namespace AstraCabin
             controller.automationMode = true; app.automationMode = true; app.Initialize();
             Check("Navigation component and valid content", app.Session != null); if (app.Session == null) { Finish(); yield break; }
             Check("QA isolated from player documents and voyage", computer.IsTestStorage && app.SavePath.StartsWith(output));
-            ModelTests(app.Campaign, app.Registry);
             app.Restart(); controller.SnapToWall(0); computer.Open(); computer.OpenApp("navigation");
             Check("Navigation registered in OS", computer.IsOpen && computer.CurrentApp == "navigation");
+            yield return GalaxyTests(app, computer);
+            ModelTests(app.Campaign, app.Registry);
             // Recreate the player surface after a hidden/background launch before readback.
             Screen.SetResolution(1600, 900, false); yield return new WaitForSecondsRealtime(.6f);
             yield return Capture("01_Navigation_Map");
@@ -126,15 +240,22 @@ namespace AstraCabin
             Screen.SetResolution(1600, 900, false); yield return new WaitForSecondsRealtime(.3f);
             string original = File.ReadAllText(app.SavePath); var activeCampaign = app.Campaign;
             Check("Invalid import leaves active campaign and save intact", !app.ImportCampaign("{}") && ReferenceEquals(app.Campaign, activeCampaign) && File.ReadAllText(app.SavePath) == original);
+            yield return MeetingGalaxyTests(app, computer);
             for (int branch = 0; branch < 3; branch++)
             {
                 app.Restart();
                 for (int sector = 0; sector < 3; sector++)
                 {
                     computer.Open(); computer.OpenApp("navigation");
+                    if (app.IsGalaxyOverview) { app.RequestEnterGalaxy("test"); yield return new WaitForSecondsRealtime(.8f); }
                     int mode = sector * 3 + branch + 1;
                     Check("Navigation triggers real show " + mode, app.Travel("signal_" + (char)('a' + branch)) && app.Director.ActiveMode == mode && !computer.IsOpen);
                     Check("No early show reward " + mode, !app.Choose(app.Session.Engine.Pending.choices.Last().id));
+                    if (mode == 1)
+                    {
+                        var pendingSession = app.Session; string pendingSave = File.ReadAllText(app.SavePath);
+                        Check("Pending physical show blocks cross-galaxy switching", !app.CanSwitchGalaxy && !app.EnterGalaxy("gzw") && ReferenceEquals(app.Session, pendingSession) && app.ActiveGalaxyId == "test" && File.ReadAllText(app.SavePath) == pendingSave);
+                    }
                     controller.SnapToWall(1);
                     if (mode == 3)
                     {
@@ -148,11 +269,20 @@ namespace AstraCabin
                     Check("Show completion gate " + mode, app.Session.Engine.Observed);
                     yield return Capture("Show_" + mode);
                     controller.SnapToWall(0); computer.Open(); computer.OpenApp("navigation");
+                    Check("Returning from physical show preserves the test tower " + mode, !app.IsGalaxyOverview && app.ActiveGalaxyId == "test");
                     // Existing OS alerts have their own ACK overlay; preserve their actual state.
                     if (mode == 1) yield return Capture("03_Event_Choices");
                     computer.OpenApp("combat"); Check("Pending navigation show blocks competing combat " + mode, computer.CurrentApp == "navigation");
                     Check("Settle event and restore cabin " + mode, app.Choose(app.Session.Engine.Pending.choices.Last().id) && !app.OwnsPresentation && app.Director.ActiveMode == 0 && !app.Director.CrisisActive && computer.IsOpen);
-                    app.Travel("salvage"); if (mode == 1) yield return Capture("04_Resource_Choice"); app.Choose("fuel");
+                    Check("Settling physical show keeps its tower visible " + mode, !app.IsGalaxyOverview && app.ActiveGalaxyId == "test");
+                    app.Travel("salvage");
+                    if (mode == 1)
+                    {
+                        yield return Capture("04_Resource_Choice");
+                        var pendingChoice = app.Session;
+                        Check("Pending text choice also blocks cross-galaxy switching", !app.CanSwitchGalaxy && !app.EnterGalaxy("zyl") && ReferenceEquals(app.Session, pendingChoice) && app.Session.Engine.Pending.id == "salvage");
+                    }
+                    app.Choose("fuel");
                     app.Travel("relay"); app.Choose("keep"); app.Travel("exit"); app.Advance();
                 }
                 Check("Integrated full voyage " + branch, app.Session.Engine.Complete);

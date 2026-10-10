@@ -29,3 +29,16 @@ Logs/
 
 # Rebuildable industrial art sample
 BuildArt/
+
+BuildMeeting/
+QA-Meeting/
+QA-Meeting-build.log
+
+# Alternate development builds and verification output
+/BuildGalaxies/
+/BuildNavigation/
+/QA-Galaxies/
+/QA-Galaxies-base/
+/QA-Galaxies-meeting/
+/QA-Navigation-*/
+/unity-build.log

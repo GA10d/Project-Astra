@@ -1,0 +1,148 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad8a2f8e4a58fbb458cabfa0b14f630f, type: 3}
+  m_Name: MeetingGraph
+  m_EditorClassIdentifier: 
+  entryNode: opening
+  nodes:
+  - id: opening
+    kind: 0
+    position: {x: 30, y: 100}
+    unit: {fileID: 11400000, guid: 649f3ffd4fa9d6e44a5ad9fdbb6b4360, type: 2}
+    condition:
+      key: credits
+      compare: 3
+      value: 0
+    prompt: "\u8BF7\u9009\u62E9"
+    patienceSeconds: 6
+    choices: []
+    edges:
+    - slot: repair
+      target: power
+    - slot: inspect
+      target: contact
+    - slot: silence
+      target: contact
+  - id: power
+    kind: 1
+    position: {x: 330, y: 20}
+    unit: {fileID: 0}
+    condition:
+      key: power
+      compare: 3
+      value: 1
+    prompt: "\u8BF7\u9009\u62E9"
+    patienceSeconds: 6
+    choices: []
+    edges:
+    - slot: yes
+      target: repair
+    - slot: no
+      target: contact
+  - id: repair
+    kind: 0
+    position: {x: 630, y: 20}
+    unit: {fileID: 11400000, guid: 01da7c49d10ced445868d30435aa6cca, type: 2}
+    condition:
+      key: credits
+      compare: 3
+      value: 0
+    prompt: "\u8BF7\u9009\u62E9"
+    patienceSeconds: 6
+    choices: []
+    edges:
+    - slot: next
+      target: archive
+  - id: contact
+    kind: 0
+    position: {x: 630, y: 250}
+    unit: {fileID: 11400000, guid: 1ec5105df3713c64992874f3696b2f11, type: 2}
+    condition:
+      key: credits
+      compare: 3
+      value: 0
+    prompt: "\u8BF7\u9009\u62E9"
+    patienceSeconds: 6
+    choices: []
+    edges:
+    - slot: next
+      target: archive
+  - id: archive
+    kind: 2
+    position: {x: 930, y: 100}
+    unit: {fileID: 0}
+    condition:
+      key: credits
+      compare: 3
+      value: 0
+    prompt: "\u6863\u6848\u4F20\u8F93\u5B8C\u6210\u3002\u5982\u4F55\u4FDD\u5B58\u8FD9\u4EFD\u8BB0\u5F55\uFF1F"
+    patienceSeconds: 18
+    choices:
+    - id: publish
+      text: "\u516C\u5F00\u8BB0\u5F55"
+      condition:
+        key: credits
+        compare: 3
+        value: 0
+      hasCondition: 0
+      effects: []
+    - id: seal
+      text: "\u5C01\u5B58\u8BB0\u5F55"
+      condition:
+        key: credits
+        compare: 3
+        value: 0
+      hasCondition: 0
+      effects: []
+    edges:
+    - slot: publish
+      target: published
+    - slot: seal
+      target: sealed
+    - slot: silence
+      target: deferred
+  - id: published
+    kind: 3
+    position: {x: 1250, y: 20}
+    unit: {fileID: 0}
+    condition:
+      key: credits
+      compare: 3
+      value: 0
+    prompt: "\u8BF7\u9009\u62E9"
+    patienceSeconds: 6
+    choices: []
+    edges: []
+  - id: sealed
+    kind: 3
+    position: {x: 1250, y: 160}
+    unit: {fileID: 0}
+    condition:
+      key: credits
+      compare: 3
+      value: 0
+    prompt: "\u8BF7\u9009\u62E9"
+    patienceSeconds: 6
+    choices: []
+    edges: []
+  - id: deferred
+    kind: 3
+    position: {x: 1250, y: 300}
+    unit: {fileID: 0}
+    condition:
+      key: credits
+      compare: 3
+      value: 0
+    prompt: "\u8BF7\u9009\u62E9"
+    patienceSeconds: 6
+    choices: []
+    edges: []

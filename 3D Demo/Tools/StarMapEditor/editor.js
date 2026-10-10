@@ -204,7 +204,7 @@
     button(panel, '＋ 新建事件', () => addEvent(false), 'primary wide');
     campaign.events.forEach(e => {
       const b = button(panel, e.title, () => { eventId = e.id; mode = 'event'; renderInspector(); }, 'event-item');
-      b.append(element('small', (e.type === 'setpiece' ? '演出 ' + e.setpiece : '抉择') + ' / ' + e.id));
+      b.append(element('small', (e.type === 'performance' ? '视频会议 / ' + e.performanceId : e.type === 'setpiece' ? '演出 ' + e.setpiece : '抉择') + ' / ' + e.id));
     });
   }
   function addEvent(bind) {
@@ -225,7 +225,8 @@
       campaign.sectors.forEach(s => s.nodes.forEach(n => { if (n.eventId === e.id) n.eventId = value; })); e.id = value; eventId = value;
     });
     field(panel, '事件标题', e.title, value => e.title = value);
-    field(panel, '事件类型', e.type, value => { e.type = value; if (value === 'setpiece') { e.setpiece = e.setpiece || 1; e.duration = e.duration || 8; } }, { select: [['choice', '文字选择 / 资源流转'], ['setpiece', '舱内演出 + 处置选择']] });
+    field(panel, '事件类型', e.type, value => { e.type = value; if(value === 'performance') { e.performanceId=e.performanceId || 'relay'; } if (value === 'setpiece') { e.setpiece = e.setpiece || 1; e.duration = e.duration || 8; } }, { select: [['choice', '文字选择 / 资源流转'], ['setpiece', '舱内演出 + 处置选择'], ['performance', '视频会议 / Tool V2 演出树']] });
+    if(e.type === 'performance') { field(panel, '演出包 ID', e.performanceId || '', value => e.performanceId=value); help(panel, '对应 Resources/Performances/<ID>.asset。交互选项在 Tool V2 演出树编辑；这里只保留一个无消耗结算项，会议结束后自动执行。'); }
     if (e.type === 'setpiece') {
       const names = ['星球解体','陌生访客','撞击维修','赤红星域','战机交火','加油站','星海鲸群','另一艘你','耗材分拣站'];
       field(panel, '演出内容', e.setpiece, value => e.setpiece = Number(value), { select: names.map((name, i) => [String(i + 1), `${i + 1} · ${name}`]) });
