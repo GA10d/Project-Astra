@@ -1,8 +1,8 @@
 @echo off
 cd /d "%~dp0"
-if not exist "BuildMeeting\Astra Cabin.exe" (
-    echo BuildMeeting is missing. Run SyncPerformance.ps1 -Build first.
+if not exist "Build\Astra Cabin.exe" (
+    echo Build is missing. Run Rebuild.ps1 first.
     pause
     exit /b 1
 )
-start "" "BuildMeeting\Astra Cabin.exe" --astra-meeting-demo
+start "" "Build\Astra Cabin.exe" --astra-meeting-demo

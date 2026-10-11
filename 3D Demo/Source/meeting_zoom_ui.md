@@ -33,7 +33,11 @@
 
 ## 验证与体验
 
-使用 Unity 2022.3.62f1 构建 `BuildMeeting/Astra Cabin.exe`，通过 `RunMeetingDemo.cmd` 启动。在第一星域选择“中继视频会议”，点击跃迁进入。
+当前开发交接版本使用 Unity 2022.3.62f1。在 `3D Demo` 运行 `Rebuild.ps1` 构建到 `Build`，或直接使用已交付的 `Build/Astra Cabin.exe`。通过 [RunMeetingDemo.cmd](../RunMeetingDemo.cmd) 启动当前 `Build` 的隔离演示入口，导航中先选择 **test** 星球，再在第一星域选择“中继视频会议”，点击跃迁进入。
+
+现有会议资源已包含在 Unity 工程中，运行和构建无需外部导入。只有更新外部 Tool V2 演出时才使用 `SyncPerformance.ps1`，并显式传入 `-ToolRoot`；完整示例见 [演出接入说明](performance_meeting.md)。
+
+以下保留 2026-09-27 的会议界面验证记录与截图路径：
 
 本轮会议运行检查 29 项全部通过，0 失败、0 引擎错误，覆盖原有演出分支、沉默出口、存档失败重试、一次性结算、自动返回导航，以及新增侧栏、字幕开关和聊天记录。实际检查了 1600×900 与 1280×720 截图。
 
