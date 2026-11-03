@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 namespace AstraCabin
 {
@@ -7,6 +8,12 @@ namespace AstraCabin
     public sealed class CabinLightBudget : MonoBehaviour
     {
         public Light[] keyLights;
+        [Tooltip("Use vertex lighting for cabin fill lights and limit per-pixel lighting during this camera render.")]
+        public bool optimizeLighting = true;
+        [Range(1, 4)] public int pixelLightBudget = 2;
+        readonly Dictionary<Light, LightRenderMode> originalModes = new Dictionary<Light, LightRenderMode>();
+        int previousPixelLights;
+        bool qualityOverridden;
         CabinController controller;
         float[] strengths;
         void Awake()
@@ -17,8 +24,43 @@ namespace AstraCabin
             for (int i = 0; i < keyLights.Length; i++)
                 strengths[i] = keyLights[i] ? keyLights[i].shadowStrength : 1f;
         }
+        void ApplyLightingBudget()
+        {
+            var systems = controller ? controller.GetComponent<CabinSystems>() : null;
+            if (!systems) return;
+            previousPixelLights = QualitySettings.pixelLightCount;
+            qualityOverridden = true;
+            QualitySettings.pixelLightCount = pixelLightBudget;
+            BudgetGroup(systems.cabinLights);
+            BudgetGroup(systems.emergencyLights);
+            // The printer is a local task light; keep its existing quality and power state.
+        }
+        void BudgetGroup(Light[] group)
+        {
+            if (group == null) return;
+            foreach (var light in group)
+            {
+                if (!light || originalModes.ContainsKey(light)) continue;
+                originalModes.Add(light, light.renderMode);
+                // Main spotlights retain per-pixel detail through Unity's per-object selection.
+                // Small points remain dynamic, including alarm pulses, without additive pixel passes.
+                light.renderMode = light.type == LightType.Spot ? LightRenderMode.Auto : LightRenderMode.ForceVertex;
+            }
+        }
+        void RestoreLighting()
+        {
+            foreach (var item in originalModes)
+                if (item.Key) item.Key.renderMode = item.Value;
+            originalModes.Clear();
+            if (qualityOverridden) QualitySettings.pixelLightCount = previousPixelLights;
+            qualityOverridden = false;
+        }
+        void OnPostRender() { RestoreLighting(); }
+        void OnDisable() { RestoreLighting(); }
         void OnPreCull()
         {
+            RestoreLighting();
+            if (optimizeLighting) ApplyLightingBudget();
             if (keyLights == null) return;
             // CurrentYaw excludes mouse parallax, observation movement and shaking.
             Vector3 forward = Quaternion.Euler(0, controller ? controller.CurrentYaw : 0, 0) * Vector3.forward;

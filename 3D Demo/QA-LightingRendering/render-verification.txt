@@ -1,0 +1,30 @@
+PASS No lighting jump across center at wall 0 | changed=0.481%
+PASS Mouse sweep keeps wall shadows stable 0 | 
+PASS Two shadow-map budget at wall 0 | lights=1
+PASS No lighting jump across center at wall 1 | changed=0.402%
+PASS Mouse sweep keeps wall shadows stable 1 | 
+PASS Two shadow-map budget at wall 1 | lights=1
+PASS No lighting jump across center at wall 2 | changed=0.512%
+PASS Mouse sweep keeps wall shadows stable 2 | 
+PASS Two shadow-map budget at wall 2 | lights=1
+PASS No lighting jump across center at wall 3 | changed=0.462%
+PASS Mouse sweep keeps wall shadows stable 3 | 
+PASS Two shadow-map budget at wall 3 | lights=1
+PASS Continuous shadow fade during turns 1 | 
+PASS Two-shadow budget through full turn cycle 1 | peak=2
+PASS Continuous shadow fade during turns -1 | 
+PASS Two-shadow budget through full turn cycle -1 | peak=2
+PASS Finite HDR scene before blur | nonfinite pixels=0
+HDR wall 1
+PASS Finite HDR scene before blur | nonfinite pixels=0
+HDR wall 2
+PASS Finite HDR scene before blur | nonfinite pixels=0
+HDR wall 3
+PASS Finite HDR scene before blur | nonfinite pixels=0
+PASS No black blur blocks at 1280 | black pixels=0
+PASS No black blur blocks at 1600 | black pixels=0
+PASS No black blur blocks at 1920 | black pixels=0
+PASS Isolated desktop storage | 
+PASS Desktop opens | 
+PASS No runtime errors | 
+RESULT PASS failures=0 errors=0

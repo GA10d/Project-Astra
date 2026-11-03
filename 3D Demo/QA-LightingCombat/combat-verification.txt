@@ -1,0 +1,114 @@
+PASS QA uses isolated document storage
+PASS Lock cone at -35 degrees
+PASS Lock cone at 35 degrees
+PASS Lock cone at -45 degrees
+PASS Lock cone at 45 degrees
+PASS Lock cone at 180 degrees
+PASS Steering responds on the first tick
+PASS Velocity retains controlled inertia
+PASS Brake converges to low-speed flight
+PASS D turns the nose clockwise
+PASS Boost consumes energy and grants a brief dodge
+PASS Dodge ignores damage
+PASS Sustained firing overheats
+PASS Heat recovers without firing
+PASS Swept collisions catch high-speed crossing
+PASS Swept collisions reject near misses
+PASS Projectile deals damage and awards kill score
+PASS Missile cannot fire before lock
+PASS Locked missile consumes exactly one ammo
+PASS Shield absorbs damage before hull
+PASS Shield overflow damages hull
+PASS Flight remains inside bounded arena
+PASS New enemies accelerate along their initial nose direction
+PASS W plus turn traces a broad closed circle | radius=369.8 closure=1.3
+PASS High speed turn preserves forward speed and limits yaw
+PASS Brake does not instantly grant low-speed turning
+PASS Braking gradually tightens the turn circle | radius=45.4
+PASS Reversing turn has bounded angular acceleration
+PASS TailHunter can be outturned from an initial tail advantage | player rear advantage=6.46s
+PASS TailHunter respects reduced flight envelope | yaw=91.0 speed=229.2
+PASS Flanker can be outturned from an initial tail advantage | player rear advantage=4.48s
+PASS Flanker respects reduced flight envelope | yaw=83.0 speed=229.2
+PASS Slasher can be outturned from an initial tail advantage | player rear advantage=6.22s
+PASS Slasher respects reduced flight envelope | yaw=70.0 speed=265.0
+PASS TailHunter avoids initial head-on collision | minimum separation=81.4
+PASS TailHunter spends most of the fight engaging | engaged=98.8% escape=0.0%
+PASS TailHunter remains bounded and flies forwards
+PASS TailHunter still creates firing opportunities
+PASS Slasher avoids initial head-on collision | minimum separation=75.0
+PASS Slasher spends most of the fight engaging | engaged=89.5% escape=9.3%
+PASS Slasher remains bounded and flies forwards
+PASS Slasher still creates firing opportunities
+PASS Flanker avoids initial head-on collision | minimum separation=95.0
+PASS Flanker spends most of the fight engaging | engaged=97.7% escape=0.0%
+PASS Flanker remains bounded and flies forwards
+PASS Flanker still creates firing opportunities
+PASS Gunship avoids initial head-on collision | minimum separation=61.4
+PASS Gunship spends most of the fight engaging | engaged=98.8% escape=0.0%
+PASS Gunship remains bounded and flies forwards
+PASS Gunship still creates firing opportunities
+PASS Commander avoids initial head-on collision | minimum separation=64.7
+PASS Commander spends most of the fight engaging | engaged=98.8% escape=0.0%
+PASS Commander remains bounded and flies forwards
+PASS Commander still creates firing opportunities
+PASS Tail threat triggers a committed defensive break
+PASS Defensive maneuver does not chatter every frame
+PASS Short defensive turn can reverse into pursuit
+PASS Advantaged fighter holds pursuit beyond old timeout | tail pressure seconds=5.65
+PASS Close pursuit no longer automatically disengages
+PASS Squad limits simultaneous firing warnings, not pursuit | peak=2
+PASS AI respects bounded turn rates
+PASS Squad avoids collapsing into one position | minimum friendly spacing=13.3
+PASS Practice targets remain stationary and harmless
+PASS OS opens
+PASS Combat registered with desktop
+PASS Supplied BGM imported
+PASS Music starts quietly | gain=0.0242 elapsed=0.126
+PASS Music fades in gradually | 0.02419329 < 0.2007022 < 0.299
+PASS Acceleration FOV eases in instead of snapping
+PASS Thrust increases actual camera FOV by about four degrees
+PASS Desktop follows acceleration FOV
+PASS Boost FOV is stronger and capped
+PASS Deceleration FOV returns smoothly
+PASS Cruise restores normal FOV
+PASS Combat isolates cabin turn input
+PASS Turning drives cabin roll | -0.5021592
+PASS Turning desktop shares cabin roll
+PASS Turning pointer transform round-trips
+PASS Turning desktop shares camera recoil
+PASS Bank starts gently with bounded tilt speed
+PASS Sustained turn reaches the larger five-degree bank | -4.96
+PASS Opposite steering banks gradually through center
+PASS Releasing steering returns bank smoothly
+PASS Damage drives real cabin lighting without damage lock
+PASS Damage desktop shares cabin roll
+PASS Damage pointer transform round-trips
+PASS Damage desktop shares camera recoil
+PASS Pause freezes simulation
+PASS Pause fades music to silence
+PASS Pause restores cabin pose and light controls
+PASS Pause restores desktop transform
+PASS Pause restores FOV
+PASS Resume fades BGM back in
+PASS Switching app pauses combat
+PASS Other apps retain stable desktop
+PASS Reduced motion suppresses cabin movement and flashes
+PASS Reduced motion suppresses desktop movement
+PASS Reduced motion suppresses FOV
+PASS Real weapons can clear sector one | phase=Upgrade sector=1 kills=3 hull=100 shield=60 time=12.01657
+PASS Real weapons can clear heavy escort | phase=Upgrade sector=2 kills=8 hull=100 shield=42 time=21.02477
+PASS Mission victory through ordinary flight and weapons | phase=Won sector=3 kills=11 hull=96 shield=51.97534 time=37.3174
+PASS Hull depletion gives defeat
+PASS Retry resets resources and score
+PASS Practice retains flying and weapons
+PASS Practice disables all physical feedback
+PASS Practice keeps desktop and zoom stable
+PASS Practice leaves cabin lighting on
+PASS 1280x720 opposite turn desktop shares cabin roll
+PASS 1280x720 opposite turn pointer transform round-trips
+PASS 1280x720 opposite turn desktop shares camera recoil
+PASS Exit restores OS and music state
+PASS Exit clears desktop transform
+PASS Exit clears FOV
+RESULT PASS failures=0 errors=0
