@@ -21,6 +21,7 @@ namespace AstraCabin.Navigation
         public EventDefinition Pending { get; private set; }
         public bool Observed { get; private set; }
         public bool Complete { get; private set; }
+        public bool EngineBlocked { get; private set; }
         public NavigationEngine(Campaign campaign, EventRegistry registry)
         {
             Campaign = campaign; Registry = registry;
@@ -66,6 +67,7 @@ namespace AstraCabin.Navigation
                     error = TravelError(command.id); if (error != null) return false;
                     Pay(Campaign.travelCosts); Node = Sector.nodes.First(n => n.id == command.id); Visited.Add(Key(Node));
                     Pending = string.IsNullOrEmpty(Node.eventId) ? null : Campaign.events.First(e => e.id == Node.eventId); Observed = false;
+                    if (Pending != null && Pending.type == "setpiece" && Pending.setpiece == SetpieceDirector.BlockedEngineMode) EngineBlocked = true;
                     Journal.Add("抵达 · " + Node.name + " / 消耗 " + Amounts(Campaign.travelCosts, "-")); return true;
                 case "observed":
                     if (Pending == null || Pending.id != command.id || Pending.type=="performance" || Observed || !Registry.Find(Pending.type).NeedsObservation)

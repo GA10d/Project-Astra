@@ -124,7 +124,7 @@ namespace AstraCabin
             float width = area.width - 30, contentWidth = width - 16;
             // A generous scroll surface supports long custom descriptions and up to eight options.
             detailScroll = GUI.BeginScrollView(new Rect(area.x + 12, area.y + 12, width + 5, area.height - 24), detailScroll, new Rect(0, 0, contentWidth, Mathf.Max(area.height - 26, detailHeight)));
-            float y = 0;
+            float y = 0, nodeDetailHeight = 410;
             if (e.Complete)
             {
                 Label(new Rect(0, y, contentWidth, 40), "航程完成", 24, signal); y += 52;
@@ -144,7 +144,7 @@ namespace AstraCabin
                 }
                 if (Registry.Find(ev.type).NeedsObservation)
                 {
-                    string state = e.Observed ? "演出已完成 / 可结算" : OwnsPresentation ? (ev.setpiece == 3 ? "等待修复全部三处裂痕" : "演出进行中 / " + Mathf.FloorToInt(Director.ModeTime) + " 秒") : "待观看 / 可继续未完成演出";
+                    string state = e.Observed ? "演出已完成 / 可结算" : OwnsPresentation ? (SetpieceDirector.RequiresRepair(ev.setpiece) ? "等待修复全部三处裂痕" : "演出进行中 / " + Mathf.FloorToInt(Director.ModeTime) + " 秒") : "待观看 / 可继续未完成演出";
                     Label(new Rect(0, y, contentWidth, 32), state, 15, amber); y += 36;
                     if (Button(new Rect(0, y, contentWidth, 34), OwnsPresentation ? "返回舱室观察" : "播放舱内演出")) BeginPresentation(); y += 48;
                 }
@@ -168,18 +168,24 @@ namespace AstraCabin
                 Label(new Rect(0, 0, contentWidth, 28), node.exit ? "星域出口" : "信标档案", 13, amber);
                 Label(new Rect(0, 37, contentWidth, 70), node.name, 24);
                 string info = node.id == e.Node.id ? "当前位置。沿亮起的航线选择下一处信标。" : e.Visited.Contains(e.Key(node)) ? "此信标已访问，无法返回。" : e.Node.next.Contains(node.id) ? "航路已确认，可以跃迁。" : "尚未接入当前航线。请先抵达与它相连的信标。";
-                Label(new Rect(0, 114, contentWidth, 95), info);
-                if (!string.IsNullOrEmpty(node.eventId)) Label(new Rect(0, 212, contentWidth, 65), Campaign.events.First(ev => ev.id == node.eventId).title, 17, amber);
+                bool hasArchive = !string.IsNullOrWhiteSpace(node.archiveDescription);
+                string archive = hasArchive ? node.archiveDescription : info;
+                navText.fontSize = 15; navText.richText = hasArchive;
+                float archiveHeight = Mathf.Max(95, navText.CalcHeight(new GUIContent(archive), contentWidth));
+                Label(new Rect(0, 114, contentWidth, archiveHeight + 4), archive);
+                navText.richText = false;
+                float actionY = Mathf.Max(284, 114 + archiveHeight + 24);
+                nodeDetailHeight = actionY + 126;
                 if (e.Node.exit)
-                { if (Button(new Rect(0, 284, contentWidth, 44), string.IsNullOrEmpty(e.Sector.nextSectorId) ? "完成本次航程" : "进入下一星域")) Advance(); }
+                { if (Button(new Rect(0, actionY, contentWidth, 44), string.IsNullOrEmpty(e.Sector.nextSectorId) ? "完成本次航程" : "进入下一星域")) Advance(); }
                 else
                 {
                     string why = e.TravelError(node.id);
-                    if (Button(new Rect(0, 284, contentWidth, 44), "跃迁至此信标", why == null)) Travel(node.id);
-                    if (why != null && e.Node.next.Contains(node.id)) Label(new Rect(0, 341, contentWidth, 65), why, 14, amber);
+                    if (Button(new Rect(0, actionY, contentWidth, 44), node.TravelButtonLabel, why == null)) Travel(node.id);
+                    if (why != null && e.Node.next.Contains(node.id)) Label(new Rect(0, actionY + 57, contentWidth, 65), why, 14, amber);
                 }
             }
-            detailHeight = e.Pending != null ? y + 80 : 410;
+            detailHeight = e.Pending != null ? y + 80 : nodeDetailHeight;
             GUI.EndScrollView();
         }
         void DrawJournal(Rect area)

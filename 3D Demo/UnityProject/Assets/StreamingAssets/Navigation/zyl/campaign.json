@@ -1,0 +1,285 @@
+{
+  "schemaVersion": 1,
+  "id": "zyl_scripted_drifter",
+  "name": "zyl · 被编排的流浪者（配置初稿）",
+  "startSectorId": "zyl_s01",
+  "resources": [
+    {
+      "id": "scrap",
+      "name": "材料",
+      "initial": 0,
+      "capacity": 99
+    },
+    {
+      "id": "data",
+      "name": "数据",
+      "initial": 0,
+      "capacity": 99
+    }
+  ],
+  "travelCosts": [],
+  "sectors": [
+    {
+      "id": "zyl_s01",
+      "name": "被编排的流浪者",
+      "description": "按最新方案配置两处分支与汇合。命运的入口使用引擎堵塞演出10；传送与巨兽演出待制作。当前无资源消耗或奖励。",
+      "startNodeId": "entry",
+      "nextSectorId": "",
+      "nodes": [
+        {
+          "id": "entry",
+          "name": "进入星系",
+          "x": 0,
+          "y": 0.5,
+          "eventId": "",
+          "next": [
+            "engine_failure"
+          ],
+          "exit": false
+        },
+        {
+          "id": "engine_failure",
+          "name": "命运的入口",
+          "x": 0.123,
+          "y": 0.5,
+          "eventId": "zyl_engine_failure",
+          "next": [
+            "last_supper",
+            "buddha"
+          ],
+          "exit": false,
+          "travelButtonText": "跃迁至此位置",
+          "archiveDescription": "机舱报警，引擎堵塞，飞船故障。"
+        },
+        {
+          "id": "last_supper",
+          "name": "最后的晚餐",
+          "x": 0.29,
+          "y": 0.2,
+          "eventId": "zyl_last_supper",
+          "next": [
+            "drifter"
+          ],
+          "exit": false,
+          "travelButtonText": "向上帝祈祷",
+          "archiveDescription": "<color=#FFAA00>引擎无法使用</color>，你正在太空中漂流，你的内心开始绝望，你想向耶稣祈祷，它可能会带给你希望"
+        },
+        {
+          "id": "buddha",
+          "name": "求佛",
+          "x": 0.29,
+          "y": 0.8,
+          "eventId": "zyl_buddha",
+          "next": [
+            "drifter"
+          ],
+          "exit": false,
+          "travelButtonText": "求佛祖保佑",
+          "archiveDescription": "<color=#FFAA00>引擎无法使用</color>，你正在太空中漂流，四周一片死寂，但你好像听到了佛陀释迦摩尼的梵声"
+        },
+        {
+          "id": "drifter",
+          "name": "被编排的流浪者",
+          "x": 0.47,
+          "y": 0.495,
+          "eventId": "zyl_drifter",
+          "next": [
+            "roar",
+            "light"
+          ],
+          "exit": false,
+          "travelButtonText": "确定",
+          "archiveDescription": "你在深空中，你不知道会到达哪里……"
+        },
+        {
+          "id": "roar",
+          "name": "深空里的嚎叫",
+          "x": 0.65,
+          "y": 0.2,
+          "eventId": "zyl_roar",
+          "next": [
+            "guest"
+          ],
+          "exit": false,
+          "travelButtonText": "确定",
+          "archiveDescription": "你被传送到了计划外的星系，这里似乎和你以前见过的星系不太一样，深空中一声嚎叫吸引了你的注意力，你决定找一找声音的来源"
+        },
+        {
+          "id": "light",
+          "name": "远处的亮光",
+          "x": 0.65,
+          "y": 0.8,
+          "eventId": "zyl_light",
+          "next": [
+            "guest"
+          ],
+          "exit": false,
+          "travelButtonText": "确定",
+          "archiveDescription": "你被传送到了计划外的星系，你注意到远处有一颗流星，你要看得再清楚一些"
+        },
+        {
+          "id": "guest",
+          "name": "局促的客人",
+          "x": 0.83,
+          "y": 0.5,
+          "eventId": "zyl_guest",
+          "next": [
+            "prisoner"
+          ],
+          "exit": false,
+          "travelButtonText": "去舷窗看看",
+          "archiveDescription": "你什么也没有发现，你只能等待，也许是希望，也许是死亡，但是，好像有东西再在靠近"
+        },
+        {
+          "id": "prisoner",
+          "name": "胃中囚徒",
+          "x": 1,
+          "y": 0.5,
+          "eventId": "zyl_prisoner",
+          "next": [],
+          "exit": true,
+          "travelButtonText": "确定",
+          "archiveDescription": "你们被巨兽吞到肚子里。你已经要崩溃了，你决定躺着。"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "id": "zyl_engine_failure",
+      "type": "setpiece",
+      "title": "命运的入口",
+      "description": "引擎无法使用，你正在太空中漂流。",
+      "setpiece": 10,
+      "duration": 8,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "引擎无法使用，你正在太空中漂流。",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_last_supper",
+      "type": "choice",
+      "title": "最后的晚餐",
+      "description": "上帝看不见你。",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "阿门",
+          "result": "上帝看不见你。",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_buddha",
+      "type": "choice",
+      "title": "求佛",
+      "description": "佛祖找不到你。",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "阿弥陀佛",
+          "result": "佛祖找不到你。",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_drifter",
+      "type": "choice",
+      "title": "被编排的流浪者",
+      "description": "【演出待制作】遇到传送门，通过传送门传送到新地点，遇到宋霍尔，被泰德勒尔吃到肚子里。\n当前仅以文字占位，不播放传送或吞噬演出。",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "遇到了米霍尔",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_roar",
+      "type": "choice",
+      "title": "深空里的嚎叫",
+      "description": "你什么也没有找到...",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "你什么也没有找到...",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_light",
+      "type": "choice",
+      "title": "远处的亮光",
+      "description": "流星一闪而过，似乎与你无关...",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "流星一闪而过，似乎与你无关...",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_guest",
+      "type": "choice",
+      "title": "局促的客人",
+      "description": "【演出待制作】遇到宋霍尔，被泰德勒尔吃到肚子里。\n当前仅以文字占位，不播放传送或吞噬演出。",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "【演出待制作】遇到宋霍尔，被泰德勒尔吃到肚子里。",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_prisoner",
+      "type": "choice",
+      "title": "胃中囚徒",
+      "description": "你躺了一会",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "你躺了一会",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    }
+  ]
+}

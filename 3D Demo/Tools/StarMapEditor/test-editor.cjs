@@ -6,6 +6,24 @@ const source = JSON.parse(fs.readFileSync(path.join(__dirname, 'campaign.json'),
 let checks = 0;
 function check(name, fn) { fn(); checks++; console.log('PASS ' + name); }
 function invalid(name, change) { check('reject ' + name, () => { const data = C.clone(source); change(data); assert.ok(C.validate(data).length); }); }
+check('travel label optional and round trips', () => {
+  for (const value of [undefined, null, '', '   ', '继续漂流', '看“光”与\\航线', '字'.repeat(24)]) {
+    const c=C.clone(source); if(value !== undefined)c.sectors[0].nodes[1].travelButtonText=value;
+    assert.deepEqual(C.parse(JSON.stringify(c)),c);
+  }
+});
+invalid('travel label too long', c => c.sectors[0].nodes[1].travelButtonText='字'.repeat(25));
+invalid('travel label wrong type', c => c.sectors[0].nodes[1].travelButtonText=123);
+invalid('travel label newline', c => c.sectors[0].nodes[1].travelButtonText='前往\n这里');
+invalid('travel label control', c => c.sectors[0].nodes[1].travelButtonText='前往\u0085这里');
+check('archive rich text valid and preserved', () => {
+ for(const text of [undefined,null,'','  ','普通说明\n第二行','<b>粗体<i>斜体</i></b>','<color=#FFAA00><size=28>提示</size></color>','<color=#11223344>半透明</color>','字'.repeat(2000)]){
+  const c=C.clone(source);if(text!==undefined)c.sectors[0].nodes[1].archiveDescription=text;
+  assert.deepEqual(C.parse(JSON.stringify(c)),c);
+ }
+});
+for(const [name,text] of Object.entries({unclosed:'<b>未关闭',crossed:'<b><i>错位</b></i>',html:'<img src=x>',large:'<size=99>大</size>',badColor:'<color=red>红</color>',tooLong:'字'.repeat(2001),wrongType:12})) invalid('archive '+name,c=>c.sectors[0].nodes[1].archiveDescription=text);
+check('blocked engine setpiece accepts mode 10', () => { const c=C.clone(source);c.events[0].type='setpiece';c.events[0].setpiece=10;c.events[0].duration=8;assert.deepEqual(C.validate(c),[]); });
 check('example round trip', () => assert.deepEqual(C.parse(JSON.stringify(source)), source));
 invalid('version', c => c.schemaVersion = 2);
 invalid('duplicate resources', c => c.resources[1].id = c.resources[0].id);
@@ -17,7 +35,7 @@ invalid('negative costs', c => c.travelCosts[0].amount = -2);
 invalid('unknown resource', c => c.travelCosts[0].resourceId = 'bad');
 invalid('duplicate costs', c => c.travelCosts.push(c.travelCosts[0]));
 invalid('unknown handler', c => c.events[0].type = 'bad');
-invalid('bad setpiece', c => c.events[0].setpiece = 10);
+invalid('bad setpiece', c => c.events[0].setpiece = 11);
 invalid('zero duration', c => c.events[0].duration = 0);
 invalid('null event', c => c.events[0] = null);
 invalid('null option', c => c.events[0].choices[0] = null);

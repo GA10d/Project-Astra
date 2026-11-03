@@ -4,6 +4,18 @@
   const idOK = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,64}$/.test(value);
   const textOK = (value, max) => typeof value === 'string' && value.trim().length > 0 && value.length <= max;
   const bounded = (value, min, max) => Number.isInteger(value) && value >= min && value <= max;
+  function archiveTextError(text) {
+    if (text == null) return null;
+    if (typeof text !== 'string' || text.length > 2000) return '档案信息说明需为最多 2000 字的文本';
+    const stack=[];
+    for (const [tag] of text.matchAll(/<[^>]*>|[<>]/g)) {
+      const open=tag.match(/^<(b|i|color=#[0-9a-fA-F]{6}(?:[0-9a-fA-F]{2})?|size=(?:1[2-9]|2[0-8]))>$/);
+      if(open){ stack.push(open[1].split('=')[0]); continue; }
+      const close=tag.match(/^<\/(b|i|color|size)>$/);
+      if(!close || stack.pop()!==close[1])return '档案富文本标签不支持或未正确配对';
+    }
+    return stack.length ? '档案富文本标签未关闭' : null;
+  }
   function validate(c) {
     const errors = [];
     const error = text => errors.push(text);
@@ -33,7 +45,7 @@
       if (!idOK(e.id) || events.has(e.id) || !textOK(e.title, 80) || !textOK(e.description, 4000)) error('事件定义无效或重复：' + e.id);
       events.add(e.id);
       if (!['choice', 'setpiece', 'performance'].includes(e.type)) error(e.id + '：未知事件类型');
-      if (e.type === 'setpiece' && (!bounded(e.setpiece, 1, 9) || !Number.isFinite(e.duration) || e.duration < 1 || e.duration > 300)) error(e.id + '：演出编号需 1–9，时长需 1–300 秒');
+      if (e.type === 'setpiece' && (!bounded(e.setpiece, 1, 10) || !Number.isFinite(e.duration) || e.duration < 1 || e.duration > 300)) error(e.id + '：演出编号需 1–10，时长需 1–300 秒');
       if (!Array.isArray(e.choices) || e.choices.length < 1 || e.choices.length > 8 || e.choices.some(o => !o)) { error(e.id + '：选项需 1–8 项'); return; }
       if (e.type === 'performance' && (!idOK(e.performanceId) || e.choices.length !== 1 || !Array.isArray(e.choices[0].costs) || e.choices[0].costs.length)) error(e.id + '：会议需要演出包 ID 和一个无消耗的自动结算项');
       const options = new Set();
@@ -55,6 +67,8 @@
         if (!idOK(n.id) || nodes.has(n.id)) error(prefix + '：节点 ID 无效或重复 ' + n.id);
         nodes.set(n.id, n);
         if (!textOK(n.name, 32) || !Number.isFinite(n.x) || !Number.isFinite(n.y) || n.x < 0 || n.x > 1 || n.y < 0 || n.y > 1) error(prefix + '/' + n.id + '：名称或坐标无效');
+        const archiveError=archiveTextError(n.archiveDescription); if(archiveError)error(prefix + '/' + n.id + '：' + archiveError);
+        if (n.travelButtonText != null && (typeof n.travelButtonText !== 'string' || n.travelButtonText.length > 24 || /[\u0000-\u001f\u007f-\u009f]/.test(n.travelButtonText))) error(prefix + '/' + n.id + '：前往按钮文本最多 24 字且不能含控制字符');
         if (n.eventId && !events.has(n.eventId)) error(prefix + '/' + n.id + '：事件不存在');
         if (!Array.isArray(n.next) || n.next.length > 128 || new Set(n.next).size !== n.next.length) error(prefix + '/' + n.id + '：连线数组无效或重复');
         if (n.exit && (!Array.isArray(n.next) || n.next.length)) error(prefix + '/' + n.id + '：出口不能有连线');
@@ -109,6 +123,6 @@
     if (!node || node.exit || from === to) throw Error('出口或节点自身不能连线');
     node.next = node.next.includes(to) ? node.next.filter(id => id !== to) : node.next.concat(to);
   }
-  const api = { clone, validate, parse, unique, removeNode, renameNode, toggleEdge };
+  const api = { archiveTextError, clone, validate, parse, unique, removeNode, renameNode, toggleEdge };
   if (typeof module !== 'undefined' && module.exports) module.exports = api; else root.NavEditorCore = api;
 })(typeof window === 'undefined' ? globalThis : window);

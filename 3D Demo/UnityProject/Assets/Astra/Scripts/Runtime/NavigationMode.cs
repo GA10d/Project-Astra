@@ -160,7 +160,7 @@ namespace AstraCabin
                 OwnsPresentation = true;
                 Registry.Find(e.type).Begin(this, e);
                 computer.Close();
-                controller.ShowNotice(e.setpiece == 3 ? "导航事件：前往 B 墙取维修锤，修复 D 墙裂痕" : "导航事件：Q / E 转向 D 墙观察，结束后返回导航模式");
+                controller.ShowNotice(SetpieceDirector.RequiresRepair(e.setpiece) ? "导航事件：前往 B 墙取维修锤，修复 D 墙裂痕" : "导航事件：Q / E 转向 D 墙观察，结束后返回导航模式");
                 return true;
             }
             catch (Exception e) { OwnsPresentation = false; Message = "演出未启动，可重试：" + e.Message; return false; }

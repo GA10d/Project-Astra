@@ -3,6 +3,8 @@
   'use strict';
   const C = NavEditorCore, $ = id => document.getElementById(id), STORAGE = 'astra-navigation-editor-v1';
   let campaign = C.clone(DEFAULT_CAMPAIGN), sectorId = campaign.startSectorId, nodeId = 'entry', mode = 'node', eventId = null;
+  let fileBinding=null, fileBusy=false;
+  const F=NavEditorFileStore, canWrite=typeof window.showOpenFilePicker==='function' && typeof window.showSaveFilePicker==='function';
   const undo = [], redo = []; let drag = null, linkFrom = null;
   try {
     const draft = localStorage.getItem(STORAGE);
@@ -23,11 +25,25 @@
     catch (_) { status('浏览器无法保存草稿，请导出 JSON 保留改动。', true); }
   }
   function mutate(change) {
-    const before = JSON.stringify(campaign);
-    try { change(); const after = JSON.stringify(campaign); if (before !== after) { undo.push(before); if (undo.length > 80) undo.shift(); redo.length = 0; persist(); } render(); }
-    catch (error) { campaign = JSON.parse(before); render(); status(error.message, true); }
+    const before = JSON.stringify(campaign), beforeBinding=fileBinding;
+    try { change(); const after = JSON.stringify(campaign); if (before !== after || beforeBinding !== fileBinding) { undo.push({text:before,binding:beforeBinding}); if (undo.length > 80) undo.shift(); redo.length = 0; persist(); } render(); }
+    catch (error) { campaign = JSON.parse(before); fileBinding=beforeBinding; render(); status(error.message, true); }
   }
-  function history(from, to) { if (!from.length) return; to.push(JSON.stringify(campaign)); campaign = JSON.parse(from.pop()); sectorId = sector().id; nodeId = sector().startNodeId; mode = 'node'; persist(); render(); }
+  function history(from, to) {
+    if(fileBusy || !from.length)return;
+    to.push({text:JSON.stringify(campaign),binding:fileBinding});const previous=from.pop();
+    campaign=JSON.parse(previous.text);fileBinding=previous.binding;
+    sectorId=sector().id;nodeId=sector().startNodeId;mode='node';persist();render();
+  }
+  function fileUI() {
+    const saved=fileBinding && fileBinding.savedJSON===JSON.stringify(campaign);
+    $('file-status').textContent=fileBinding ? fileBinding.handle.name+' · '+(saved?'已保存到文件':'有未保存修改') : '尚未关联文件 · 仅浏览器草稿';
+    $('file-status').title='文件关联仅在本次页面会话有效，刷新后保存会重新询问位置。';
+    for(const id of ['load','save','save-as','example'])$(id).disabled=fileBusy;
+    $('save').title=canWrite?'Ctrl+S：保存到当前文件；未关联时选择位置':'当前浏览器不支持直接写入，请用“导出到游戏”下载';
+    $('save-as').title=canWrite?'Ctrl+Shift+S：选择另一个文件位置':'当前浏览器不支持直接写入，请用“导出到游戏”下载';
+    if(fileBusy){$('undo').disabled=true;$('redo').disabled=true;}
+  }
   function field(parent, title, value, change, options = {}) {
     const label = element('label', title, 'field'); let input;
     if (options.select) {
@@ -50,6 +66,7 @@
     campaign.resources.forEach(r => field(grid, r.name, (values.find(a => a.resourceId === r.id) || {}).amount || 0, value => setAmount(values, r.id, value), { number: true, min: 0, max: 1000000 }));
   }
   function render() {
+    fileUI();
     if (!campaign.sectors.some(s => s.id === sectorId)) sectorId = campaign.sectors[0].id;
     $('campaign-title').textContent = campaign.name;
     $('sector-title').textContent = sector().name; $('sector-index').textContent = 'SECTOR ' + String(campaign.sectors.indexOf(sector()) + 1).padStart(2, '0') + ' / 星域航路';
@@ -116,7 +133,7 @@
   });
   function endDrag(event) {
     if (!drag) return;
-    if (drag.moved && drag.before !== JSON.stringify(campaign)) { undo.push(drag.before); if (undo.length > 80) undo.shift(); redo.length = 0; persist(); }
+    if (drag.moved && drag.before !== JSON.stringify(campaign)) { undo.push({text:drag.before,binding:fileBinding}); if (undo.length > 80) undo.shift(); redo.length = 0; persist(); }
     if ($('map').hasPointerCapture(drag.pointer)) $('map').releasePointerCapture(drag.pointer);
     drag = null; render();
   }
@@ -139,6 +156,27 @@
     title(panel, 'BEACON / 信标', n.name);
     field(panel, '节点 ID', n.id, value => { C.renameNode(sector(), n.id, value); nodeId = value; });
     field(panel, '显示名称', n.name, value => n.name = value);
+    field(panel, '前往按钮文本（可选）', n.travelButtonText, value => { if (value.trim()) n.travelButtonText = value; else delete n.travelButtonText; });
+    help(panel, '留空显示“跃迁至此信标”；最多 24 字。仅改变前往此节点的按钮，抵达后的事件选项和出口结算按钮不变。');
+    const archiveInput = field(panel, '档案信息说明（富文本，可选）', n.archiveDescription, value => { if (value.trim()) n.archiveDescription = value; else delete n.archiveDescription; }, { multiline: true });
+    help(panel, '留空显示原航路状态。支持 <b>粗体</b>、<i>斜体</i>、<color=#FFAA00>颜色</color>、<size=20>字号</size>（12-28），直接回车换行。最多 2000 字；不影响抵达后的事件描述。');
+    const archivePreview=element('div', null, 'archive-preview'); panel.append(archivePreview);
+    archivePreview.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;padding:12px;background:#10221b;color:#c4dbb5;font-size:15px;line-height:1.5';
+    function previewArchive() {
+      archivePreview.replaceChildren(); const text=archiveInput.value, error=C.archiveTextError(text);
+      if(error){archivePreview.textContent=error;return;}
+      if(!text.trim()){archivePreview.textContent='预览：未填写，游戏将显示航路状态提示。';return;}
+      let parent=archivePreview;
+      for(const token of text.split(/(<[^>]*>)/g)) {
+        if(token.startsWith('</')){parent=parent.parentNode;continue;}
+        if(token.startsWith('<')){
+          const span=element('span'), tag=token.slice(1,-1);parent.append(span);parent=span;
+          if(tag==='b')span.style.fontWeight='bold';else if(tag==='i')span.style.fontStyle='italic';
+          else if(tag.startsWith('color='))span.style.color=tag.slice(6);else if(tag.startsWith('size='))span.style.fontSize=tag.slice(5)+'px';
+        } else parent.append(document.createTextNode(token));
+      }
+    }
+    archiveInput.addEventListener('input',previewArchive);previewArchive();
     const pos = element('div', null, 'row'); panel.append(pos);
     field(pos, '横坐标 X', n.x, value => n.x = value, { number: true, step: '.01', min: 0, max: 1 });
     field(pos, '纵坐标 Y', n.y, value => n.y = value, { number: true, step: '.01', min: 0, max: 1 });
@@ -228,10 +266,10 @@
     field(panel, '事件类型', e.type, value => { e.type = value; if(value === 'performance') { e.performanceId=e.performanceId || 'relay'; } if (value === 'setpiece') { e.setpiece = e.setpiece || 1; e.duration = e.duration || 8; } }, { select: [['choice', '文字选择 / 资源流转'], ['setpiece', '舱内演出 + 处置选择'], ['performance', '视频会议 / Tool V2 演出树']] });
     if(e.type === 'performance') { field(panel, '演出包 ID', e.performanceId || '', value => e.performanceId=value); help(panel, '对应 Resources/Performances/<ID>.asset。交互选项在 Tool V2 演出树编辑；这里只保留一个无消耗结算项，会议结束后自动执行。'); }
     if (e.type === 'setpiece') {
-      const names = ['星球解体','陌生访客','撞击维修','赤红星域','战机交火','加油站','星海鲸群','另一艘你','耗材分拣站'];
+      const names = ['星球解体','陌生访客','撞击维修','赤红星域','战机交火','加油站','星海鲸群','另一艘你','耗材分拣站','泰德野里_未知撞击导致引擎堵塞'];
       field(panel, '演出内容', e.setpiece, value => e.setpiece = Number(value), { select: names.map((name, i) => [String(i + 1), `${i + 1} · ${name}`]) });
       field(panel, '最短观看时间（秒）', e.duration, value => e.duration = value, { number: true, min: 1, max: 300, step: '.5' });
-      if (e.setpiece === 3) help(panel, '撞击事件还要求玩家实际修复全部三处裂痕。');
+      if (e.setpiece === 3 || e.setpiece === 10) help(panel, '撞击事件还要求玩家实际修复全部三处裂痕。');
     }
     field(panel, '事件描述', e.description, value => e.description = value, { multiline: true });
     heading(panel, '处置选项'); help(panel, '至少保留一个无消耗选项。0 表示无收支，收益超过容量的部分会舍弃。');
@@ -255,30 +293,63 @@
     const body = $('modal-body'); body.replaceChildren(element('h2', '将星域配置导入游戏'));
     const list = element('ol');
     ['完成星域、节点、连线和事件设置；处理地图下方的所有校验错误。', '点击「导出到游戏」，保存下载的 campaign.json。', '将文件复制到游戏旁 Astra Cabin_Data / StreamingAssets / Navigation 文件夹，替换同名 campaign.json。', '打开游戏 A 墙电脑 → 导航模式 → 导入星域配置 → 校验并导入。旧航程会备份，并开始新航程。'].forEach(t => list.append(element('li', t)));
-    body.append(list, element('p', 'Unity 工程中对应路径：Assets/StreamingAssets/Navigation/campaign.json。游戏启动后优先继续已导入的配置；修改文件后需要在导航模式中再次导入。'), element('p', '演出编号 1–9 直接复用现有舱内演出。新增代码事件类型需在游戏 EventRegistry 注册处理器，并扩展此编辑器的类型选项和校验。'));
+    body.append(list, element('p', 'Unity 工程中对应路径：Assets/StreamingAssets/Navigation/campaign.json。游戏启动后优先继续已导入的配置；修改文件后需要在导航模式中再次导入。'), element('p', '演出编号 1–10 直接复用现有舱内演出（10 为引擎堵塞撞击）。新增代码事件类型需在游戏 EventRegistry 注册处理器，并扩展此编辑器的类型选项和校验。'));
     $('modal').showModal();
   }
   $('close-dialog').onclick = () => $('modal').close(); $('help').onclick = helpDialog;
-  $('load').onclick = () => $('file').click();
-  async function importFile(file) {
+  $('load').onclick = async () => {
+    if(fileBusy)return;
+    document.activeElement?.blur();
+    if(!canWrite){$('file').click();return;}
+    fileBusy=true;fileUI();status('正在打开文件…');
+    try {
+      const [handle]=await window.showOpenFilePicker({multiple:false,types:F.types});
+      const {file,text}=await F.read(handle);
+      await importFile(file,{handle,expectedText:text},text);
+    } catch(error) { if(error.name==='AbortError')status('已取消打开，当前草稿未改变。'); else status('打开失败，原草稿保留：'+error.message,true); }
+    finally {fileBusy=false;render();}
+  };
+  async function importFile(file,binding=null,sourceText=null) {
     if (!file) return;
     try {
       if (file.size > 2 * 1024 * 1024) throw Error('文件超过 2 MB');
-      const next = C.parse(await file.text());
+      const next = C.parse((sourceText ?? await file.text()).replace(/^\uFEFF/,''));
+      if(binding)binding.savedJSON=JSON.stringify(next);
       if (!confirm('载入「' + next.name + '」并替换当前草稿？可以撤销。')) return;
-      mutate(() => { campaign = next; sectorId = next.startSectorId; nodeId = sector().startNodeId; mode = 'node'; }); status('已打开配置：' + file.name);
+      mutate(() => { fileBinding=binding; campaign = next; sectorId = next.startSectorId; nodeId = sector().startNodeId; mode = 'node'; }); status('已打开配置：' + file.name);
     } catch (error) { status('导入失败，原草稿保留：' + error.message, true); const body = $('modal-body'); body.replaceChildren(element('h2', '配置未导入'), element('p', error.message)); $('modal').showModal(); }
   }
-  $('file').onchange = event => { importFile(event.target.files[0]); event.target.value = ''; };
+  $('file').onchange = event => { if(fileBusy)return; importFile(event.target.files[0]); event.target.value = ''; };
   document.addEventListener('dragover', event => event.preventDefault());
-  document.addEventListener('drop', event => { event.preventDefault(); importFile(event.dataTransfer.files[0]); });
+  document.addEventListener('drop', event => { event.preventDefault(); if(fileBusy)return; importFile(event.dataTransfer.files[0]); });
+  async function saveFile(saveAs=false) {
+    if(fileBusy)return;
+    document.activeElement?.blur();
+    if(!canWrite){status('当前浏览器不支持直接写入，请点击“导出到游戏”下载，或使用 Edge / Chrome。',true);return;}
+    if(validate().length){status('文件尚未保存：请先修正配置错误；当前修改仍在浏览器草稿中。',true);return;}
+    const snapshot=JSON.stringify(campaign),text=JSON.stringify(campaign,null,2)+'\n';
+    fileBusy=true;fileUI();status('正在保存文件…');
+    try {
+      let target=fileBinding;
+      if(saveAs || !target){
+        const handle=await window.showSaveFilePicker({suggestedName:target?.handle.name || 'campaign.json',types:F.types});
+        const current=await F.read(handle);target={handle,expectedText:current.text};
+      }
+      await F.write(target,text);target.savedJSON=snapshot;fileBinding=target;
+      status('已写入文件：'+target.handle.name+' · '+new Date().toLocaleTimeString());
+    } catch(error) {
+      if(error.name==='AbortError')status('已取消保存；当前修改仍保留。');
+      else status('保存失败，未确认写入成功：'+error.message,true);
+    } finally {fileBusy=false;render();}
+  }
+  $('save').onclick=()=>saveFile(false);$('save-as').onclick=()=>saveFile(true);
   $('export').onclick = () => {
     if (validate().length) { status('请先修正配置错误。', true); return; }
     const blob = new Blob([JSON.stringify(campaign, null, 2)], { type: 'application/json;charset=utf-8' }), url = URL.createObjectURL(blob), anchor = element('a');
     anchor.href = url; anchor.download = 'campaign.json'; document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000); status('已导出 campaign.json，请放入游戏配置目录并导入。'); helpDialog();
   };
   $('undo').onclick = () => history(undo, redo); $('redo').onclick = () => history(redo, undo);
-  $('example').onclick = () => { if (confirm('用三个星域的示例替换当前草稿？可以撤销。')) mutate(() => { campaign = C.clone(DEFAULT_CAMPAIGN); sectorId = campaign.startSectorId; nodeId = 'entry'; mode = 'node'; }); };
+  $('example').onclick = () => { if(fileBusy)return; if (confirm('用三个星域的示例替换当前草稿？可以撤销。')) mutate(() => { fileBinding=null; campaign = C.clone(DEFAULT_CAMPAIGN); sectorId = campaign.startSectorId; nodeId = 'entry'; mode = 'node'; }); };
   $('settings').onclick = () => { mode = 'campaign'; renderInspector(); };
   $('sector-settings').onclick = () => { mode = 'sector'; renderInspector(); };
   $('event-library').onclick = () => { mode = 'library'; renderInspector(); };
@@ -292,6 +363,9 @@
     ] }); sectorId = id; nodeId = 'entry'; mode = 'sector';
   });
   document.addEventListener('keydown', event => {
+    if((event.ctrlKey || event.metaKey) && event.key.toLowerCase()==='s'){
+      event.preventDefault();saveFile(event.shiftKey);return;
+    }
     if (event.target.matches('input,textarea,select')) return;
     if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') { event.preventDefault(); if (event.shiftKey) history(redo, undo); else history(undo, redo); }
     if (event.key === 'Escape') { linkFrom = null; status('已取消连线操作。'); }

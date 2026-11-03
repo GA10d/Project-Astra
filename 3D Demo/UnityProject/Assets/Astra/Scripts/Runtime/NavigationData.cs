@@ -30,6 +30,9 @@ namespace AstraCabin.Navigation
         public float x, y;
         public bool exit;
         public string[] next;
+        public string travelButtonText;
+        public string archiveDescription;
+        public string TravelButtonLabel { get { return string.IsNullOrWhiteSpace(travelButtonText) ? "跃迁至此信标" : travelButtonText.Trim(); } }
     }
     [Serializable] public sealed class EventDefinition
     {
@@ -91,19 +94,34 @@ namespace AstraCabin.Navigation
         public bool NeedsObservation { get { return true; } }
         public string Validate(EventDefinition e)
         {
-            return e.setpiece < 1 || e.setpiece > 9 || float.IsNaN(e.duration) || float.IsInfinity(e.duration) || e.duration < 1 || e.duration > 300
-                ? "演出编号必须为 1–9，时长必须为 1–300 秒" : null;
+            return e.setpiece < 1 || e.setpiece > 10 || float.IsNaN(e.duration) || float.IsInfinity(e.duration) || e.duration < 1 || e.duration > 300
+                ? "演出编号必须为 1–10，时长必须为 1–300 秒" : null;
         }
         public void Begin(NavigationMode host, EventDefinition e) { host.Director.TriggerMode(e.setpiece); }
         public bool IsComplete(NavigationMode host, EventDefinition e)
         {
             return host.Director.ActiveMode == e.setpiece && host.Director.ModeTime >= e.duration &&
-                (e.setpiece != 3 || (!host.Director.CrisisActive && host.Director.RepairedCount == 3));
+                (!SetpieceDirector.RequiresRepair(e.setpiece) || (!host.Director.CrisisActive && host.Director.RepairedCount == 3));
         }
     }
 
     public static class CampaignValidator
     {
+        public static string ArchiveTextError(string text)
+        {
+            if (text == null) return null;
+            if (text.Length > 2000) return "档案信息说明最多 2000 字";
+            var stack = new Stack<string>();
+            foreach (Match match in Regex.Matches(text, @"<[^>]*>|[<>]"))
+            {
+                string tag = match.Value;
+                var open = Regex.Match(tag, @"^<(b|i|color=#[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?|size=(?:1[2-9]|2[0-8]))>$");
+                if (open.Success) { stack.Push(open.Groups[1].Value.Split('=')[0]); continue; }
+                var close = Regex.Match(tag, @"^</(b|i|color|size)>$");
+                if (!close.Success || stack.Count == 0 || stack.Pop() != close.Groups[1].Value) return "档案富文本标签不支持或未正确配对";
+            }
+            return stack.Count == 0 ? null : "档案富文本标签未关闭";
+        }
         public const int MaxBytes = 2 * 1024 * 1024;
         static readonly Regex Identifier = new Regex("^[A-Za-z0-9_-]{1,64}$");
         static bool Id(string value) { return value != null && Identifier.IsMatch(value); }
@@ -113,6 +131,8 @@ namespace AstraCabin.Navigation
             // Preserve old configuration hashes when the optional integration field is empty.
             string json=JsonUtility.ToJson(campaign);
             json=Regex.Replace(json, @",""performanceId"":(?:""""|null)", "");
+            // Display-only node labels must not invalidate existing voyages.
+            json=Regex.Replace(json, @",""(?:travelButtonText|archiveDescription)"":(?:null|""(?:\\.|[^""\\])*"")", "");
             using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(json))).Replace("-", "");
         }
         public static List<string> Validate(Campaign c, EventRegistry registry)
@@ -164,6 +184,9 @@ namespace AstraCabin.Navigation
                 {
                     if (!Id(n.id) || nodes.ContainsKey(n.id)) errors.Add(s.id + "：节点 ID 无效或重复 " + n.id); else nodes.Add(n.id, n);
                     if (!Text(n.name, 32) || float.IsNaN(n.x) || float.IsNaN(n.y) || n.x < 0 || n.x > 1 || n.y < 0 || n.y > 1) errors.Add(s.id + "/" + n.id + "：名称或坐标无效");
+                    string archiveError = ArchiveTextError(n.archiveDescription);
+                    if (archiveError != null) errors.Add(s.id + "/" + n.id + "：" + archiveError);
+                    if (n.travelButtonText != null && (n.travelButtonText.Length > 24 || n.travelButtonText.Any(char.IsControl))) errors.Add(s.id + "/" + n.id + "：前往按钮文本最多 24 字且不能含控制字符");
                     if (!string.IsNullOrEmpty(n.eventId) && !eventIds.Contains(n.eventId)) errors.Add(s.id + "/" + n.id + "：事件不存在");
                     if (n.next == null || n.next.Length > 128 || n.next.Distinct().Count() != n.next.Length) errors.Add(s.id + "/" + n.id + "：连线数组无效或重复");
                     if (n.exit && (n.next == null || n.next.Length != 0)) errors.Add(s.id + "/" + n.id + "：出口不能有星域内连线");
