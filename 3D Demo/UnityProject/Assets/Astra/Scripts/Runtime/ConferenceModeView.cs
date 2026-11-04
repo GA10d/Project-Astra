@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -109,60 +109,21 @@ namespace AstraCabin
             bool old=GUI.enabled;GUI.enabled=old&&enabled;bool clicked=GUI.Button(r,label,reply);GUI.enabled=old;return clicked;
         }
 
+        ConferenceCallSurface meetingSurface;
         public void Draw(Rect bounds,Font font)
         {
-            if(text==null)
-            {
-                text=new GUIStyle(GUI.skin.label){font=font,wordWrap=true,richText=false,padding=new RectOffset(0,0,0,0)};
-                hit=new GUIStyle(GUIStyle.none);
-                reply=new GUIStyle(GUIStyle.none){font=font,fontSize=15,wordWrap=true,richText=false,alignment=TextAnchor.MiddleCenter,padding=new RectOffset(12,12,6,6)};
-            }
-            GUI.BeginGroup(bounds);float w=bounds.width,h=bounds.height;
-            Box(new Rect(0,0,w,h),Ink);
-            if(!Player){Label(new Rect(30,30,w-60,60),"当前没有会议。请从导航节点接入。",20);GUI.EndGroup();return;}
-            var names=Player.Participants;
-            string speaker=string.IsNullOrEmpty(Player.CurrentSpeaker)?(names.Length>0?names[0]:"中继站"):Player.CurrentSpeaker;
-            float drawer=string.IsNullOrEmpty(SidePanel)?0:Mathf.Min(278,w*.30f);
-            float toolbarY=h-68;
-            // Compact meeting header, with layout controls in the same position as Zoom.
-            Label(new Rect(14,7,170,24),"●  "+TimeSpan.FromSeconds(elapsed).ToString(@"mm\:ss"),12,new Color(.57f,.76f,.64f));
-            Label(new Rect(180,7,w-360,24),title,13,Muted,TextAnchor.UpperCenter);
-            if(FlatButton(new Rect(w-139,4,127,27),"发言人视图  ▾"))viewMenu=!viewMenu;
-            var canvas=new Rect(0,36,w-drawer,toolbarY-36);
-            float vw=Mathf.Min(canvas.width-24,(canvas.height-12)*16/9f),vh=vw*9/16f;
-            var screen=new Rect(canvas.center.x-vw/2,canvas.center.y-vh/2,vw,vh);
-            Box(screen,Color.black);if(video)GUI.DrawTexture(screen,video,ScaleMode.ScaleToFit,false);
-            Outline(screen,Green,1.5f);
-            float nameWidth=Mathf.Min(screen.width-20,Mathf.Max(148,speaker.Length*14+44));
-            Box(new Rect(screen.x+2,screen.yMax-28,nameWidth,26),new Color(0,0,0,.75f));
-            Icon("mic",new Vector2(screen.x+17,screen.yMax-16),Paper);
-            Label(new Rect(screen.x+33,screen.yMax-25,nameWidth-40,23),speaker,13);
-            if(showSelf)
-            {
-                var tile=new Rect(screen.xMax-158,screen.y+12,146,82);Box(tile,new Color(.18f,.18f,.20f));Outline(tile,new Color(.38f,.39f,.41f));
-                Label(new Rect(tile.x,tile.y+14,tile.width,37),"04",28,Paper,TextAnchor.MiddleCenter);
-                Label(new Rect(tile.x+8,tile.yMax-23,tile.width-16,20),"探测舱 04（我）",11,Muted);
-            }
-            DrawCaptions(screen,speaker);
-            if(drawer>0)DrawDrawer(new Rect(w-drawer,36,drawer,toolbarY-36),names);
-            Box(new Rect(0,toolbarY,w,68),new Color(.105f,.105f,.12f));
-            Box(new Rect(0,toolbarY,w,1),new Color(.22f,.22f,.24f));
-            ToolButton(new Rect(8,toolbarY+1,78,64),"mic","文字接入",false,false,tooltip:"本终端通过演出选项回复，不采集麦克风");
-            ToolButton(new Rect(88,toolbarY+1,78,64),"camera","视频关闭",false,false,tooltip:"本地摄像头未接入");
-            float start=(w-352)/2;
-            if(ToolButton(new Rect(start,toolbarY+1,88,64),"participants","参会者 ("+(names.Length+1)+")",SidePanel=="participants"))TogglePanel("participants");
-            if(ToolButton(new Rect(start+88,toolbarY+1,88,64),"chat","聊天",SidePanel=="chat"))TogglePanel("chat");
-            if(ToolButton(new Rect(start+176,toolbarY+1,88,64),"captions","字幕",CaptionsVisible))ToggleCaptions();
-            if(ToolButton(new Rect(start+264,toolbarY+1,88,64),UserPaused?"play":"pause",UserPaused?"继续":"暂停",UserPaused,true,Green))SetPaused(!UserPaused);
-            if(ToolButton(new Rect(w-99,toolbarY+1,90,64),"leave","离开",false,true,new Color(.98f,.32f,.38f),"暂离会议，返回导航后可以继续"))computer.OpenApp("navigation");
-            if(viewMenu)
-            {
-                var menu=new Rect(w-210,36,198,82);Box(menu,Panel);Outline(menu,new Color(.35f,.35f,.39f));
-                Label(new Rect(menu.x+13,menu.y+10,175,23),"✓  发言人视图",13);
-                if(FlatButton(new Rect(menu.x+8,menu.y+39,182,32),showSelf?"隐藏本地画面":"显示本地画面")){showSelf=!showSelf;viewMenu=false;}
-            }
-            if(UserPaused||Error!=null)DrawPause(screen);
-            GUI.EndGroup();
+            EnsureConferenceStyles(font);
+            if(!Player){GUI.BeginGroup(bounds);Box(new Rect(0,0,bounds.width,bounds.height),Ink);Label(new Rect(30,30,bounds.width-60,60),"当前没有会议。请从导航节点接入。",20);GUI.EndGroup();return;}
+            var names=Player.Participants;string speaker=string.IsNullOrEmpty(Player.CurrentSpeaker)?(names.Length>0?names[0]:"中继站"):Player.CurrentSpeaker;
+            var view=meetingSurface??(meetingSurface=new ConferenceCallSurface());
+            view.Title=title;view.Elapsed=elapsed;view.Video=video;view.Participants=names;view.Speaker=speaker;
+            view.SidePanel=SidePanel;view.CaptionsVisible=CaptionsVisible;view.ShowSelf=showSelf;view.ViewMenu=viewMenu;view.Paused=UserPaused;view.HasError=Error!=null;
+            view.SetPaused=SetPaused;view.Leave=()=>computer.OpenApp("navigation");
+            view.DrawCaptions=screen=>DrawCaptions(screen,speaker);
+            view.DrawDrawer=r=>{SidePanel=view.SidePanel;DrawDrawer(r,names);view.SidePanel=SidePanel;};
+            view.DrawPause=DrawPause;
+            DrawCallSurface(bounds,font,view);
+            SidePanel=view.SidePanel;CaptionsVisible=view.CaptionsVisible;showSelf=view.ShowSelf;viewMenu=view.ViewMenu;
         }
 
         void DrawCaptions(Rect screen,string speaker)

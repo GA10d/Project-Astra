@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
 namespace AstraCabin.Galaxies.Zyl {
@@ -24,7 +24,11 @@ namespace AstraCabin.Galaxies.Zyl {
   LoopingStarfield callStars;Light creatureKey,mouthSearch,mouthBounce;
   public bool CallStarsReady {get{return callStars&&callStars.Initialized&&callStars.gameObject.activeInHierarchy;}}
   public bool MouthLightReady {get{return mouthSearch&&mouthSearch.enabled&&mouthSearch.intensity>0;}}
-  SetpieceDirector d;Transform root,ship,pilot,beast;Camera videoCamera;Animation actorAnimation,beastAnimation;
+  ConferenceCallSurface callSurface;float callElapsed;
+  public ConferenceCallSurface CallSurface {get{return callSurface;}}
+  public Vector3 MouthViewport {get{return videoCamera&&mouthAnchor?videoCamera.WorldToViewportPoint(mouthAnchor.position):Vector3.zero;}}
+  public bool MouthAnchorReady {get{return mouthAnchor;}}
+  SetpieceDirector d;Transform root,ship,pilot,beast,mouthAnchor;Camera videoCamera;Animation actorAnimation,beastAnimation;
   readonly List<Material> materials=new List<Material>();float arrival,clock,finishTime,talkBlend;bool callRequested,invitationPressed;int callRequestFrame=-1;
   static readonly Rect InviteButton=new Rect(1330,370,210,50);Font uiFont;GUIStyle text,title,button;
   public void Initialize(SetpieceDirector owner){d=owner;}
@@ -42,9 +46,12 @@ namespace AstraCabin.Galaxies.Zyl {
    pilot.localPosition=new Vector3(0,.06f,-.12f);pilot.localRotation=Quaternion.Euler(0,180,0);pilot.localScale=Vector3.one*1.12f;
    Layer(pilot.gameObject);actorAnimation=pilot.GetComponentInChildren<Animation>();PrepareMaterials(pilot);
    beast=Instantiate(creature,root).transform;beast.name="泰德勒尔 | recessed mouth animation collection";beast.localRotation=Quaternion.Euler(0,-90,0);Layer(beast.gameObject,27);beastAnimation=beast.GetComponentInChildren<Animation>();PrepareMaterials(beast,true);beast.gameObject.SetActive(false);
+   foreach(var child in beast.GetComponentsInChildren<Transform>(true))if(child.name=="Mouth_Center")mouthAnchor=child;
+   if(!mouthAnchor)throw new InvalidOperationException("巨兽缺少口部定位锚点");
+   callSurface=new ConferenceCallSurface{Title="米霍尔 · 视频通话",Speaker="米霍尔",Participants=new[]{"米霍尔"},ReplyText="你要做什么？"};callSurface.Reply=Reply;callSurface.SetPaused=value=>callSurface.Paused=value;callSurface.Leave=()=>d.computer.OpenApp("navigation");
    var light=new GameObject("Encounter exterior key");light.transform.SetParent(root,false);light.transform.position=new Vector3(2,5,-4);var lamp=light.AddComponent<Light>();lamp.type=LightType.Point;lamp.range=130;lamp.intensity=.8f;lamp.cullingMask=1<<26;lamp.shadows=LightShadows.None;
    var vc=new GameObject("ASTRA LINK live exterior camera");vc.transform.SetParent(root,false);videoCamera=vc.AddComponent<Camera>();videoCamera.enabled=false;videoCamera.cullingMask=(1<<26)|(1<<27);videoCamera.nearClipPlane=.05f;videoCamera.farClipPlane=40000;videoCamera.fieldOfView=72;videoCamera.clearFlags=CameraClearFlags.SolidColor;videoCamera.backgroundColor=new Color(.005f,.01f,.025f);
-   Video=new RenderTexture(1024,768,24){name="Mihuoer live call"};Video.Create();videoCamera.targetTexture=Video;videoCamera.aspect=4f/3f;CreateCallEnvironment();
+   Video=new RenderTexture(1280,720,24){name="Mihuoer live call"};Video.Create();videoCamera.targetTexture=Video;videoCamera.aspect=16f/9f;CreateCallEnvironment();
    d.computer.SetEventAlert("舷窗检测到未知身份生物","舷窗检测到未知身份生物");d.computer.Open();d.PlayCue("alert",.6f);
   }
   void Layer(GameObject value,int layer=26){foreach(var t in value.GetComponentsInChildren<Transform>(true))t.gameObject.layer=layer;}
@@ -55,7 +62,7 @@ namespace AstraCabin.Galaxies.Zyl {
   public void View(){if(!WaitingForView)return;d.computer.ClearEventAlert();d.computer.Close();d.controller.SnapToWall(1);d.controller.EnterWindowView();d.controller.cinematicWindowLock=true;Phase=Step.Arrival;arrival=0;}
   void RequestCall(){callRequested=true;callRequestFrame=Time.frameCount;}
   public void AcceptCall(){if(!Active||Phase<Step.Invitation||Complete)return;if(Phase==Step.Invitation){ Phase=Step.Greeting;talkBlend=0; }d.controller.SnapToWall(0);d.computer.Open();d.computer.OpenApp("encounter");RenderVideo();}
-  public void Reply(){if(Phase!=Step.Greeting)return;Phase=Step.Story;StoryTime=0;beast.gameObject.SetActive(true);d.PlayCue("echo",.35f);}
+  public void Reply(){if(Phase!=Step.Greeting)return;Phase=Step.Story;StoryTime=0;callSurface.Transcript.Add(new ConferenceTranscriptLine{Sender="探测舱 04（我）",Message=callSurface.ReplyText,Local=true});beast.gameObject.SetActive(true);d.PlayCue("echo",.35f);}
   void Update(){
    if(!Active||d.controller.IsPaused)return;
    float dt=Time.deltaTime;
@@ -67,7 +74,7 @@ namespace AstraCabin.Galaxies.Zyl {
    }else invitationPressed=false;
    if(callRequested&&Time.frameCount>callRequestFrame){callRequested=false;AcceptCall();}
    if(Phase==Step.Arrival||Phase==Step.Invitation){if(d.computer.IsOpen)return;arrival+=dt;clock+=dt;float blend=Mathf.SmoothStep(0,1,arrival/4);ship.position=Vector3.Lerp(new Vector3(9,1.05f,12),new Vector3(7.6f,1.05f,0),blend);ship.position+=Vector3.up*Mathf.Sin(clock*.7f)*.025f;Sample(actorAnimation,"SeatedWave",clock);ActorAnimation="SeatedWave";if(arrival>=5.2f&&Phase==Step.Arrival){Phase=Step.Invitation;d.PlayCue("alert",.6f);}}
-   if(Phase==Step.Greeting||Phase==Step.Story){if(!d.computer.IsOpen||d.computer.CurrentApp!="encounter")return;clock+=dt;SampleTalk();if(Phase==Step.Story){StoryTime+=dt;AnimateBeast();if(engulfStartedAt>=0&&StoryTime>=engulfStartedAt+9f){Complete=true;Phase=Step.Finished;finishTime=0;d.controller.cinematicWindowLock=false;d.computer.CloseEncounterApp(true);d.visitors.GeneratedRoot.gameObject.SetActive(false);beast.gameObject.SetActive(false);}}RenderVideo();}
+   if(Phase==Step.Greeting||Phase==Step.Story){if(!d.computer.IsOpen||d.computer.CurrentApp!="encounter"||callSurface.Paused)return;callElapsed+=dt;clock+=dt;SampleTalk();if(Phase==Step.Story){StoryTime+=dt;AnimateBeast();if(engulfStartedAt>=0&&StoryTime>=engulfStartedAt+9f){Complete=true;callStars.gameObject.SetActive(false);creatureKey.enabled=mouthSearch.enabled=mouthBounce.enabled=false;Phase=Step.Finished;finishTime=0;d.controller.cinematicWindowLock=false;d.computer.CloseEncounterApp(true);d.visitors.GeneratedRoot.gameObject.SetActive(false);beast.gameObject.SetActive(false);}}RenderVideo();}
    if(Phase==Step.Finished)finishTime+=dt;
   }
   void AnimateBeast(){
@@ -81,7 +88,7 @@ namespace AstraCabin.Galaxies.Zyl {
    MouthClearance=beast.position.x-ship.position.x-2560f;
    if(mouthStartedAt<0&&CreatureDistance<=MouthTriggerDistance)mouthStartedAt=t;
    // Hold the open-flight animation and continue approaching until the mouth actually reaches us.
-   if(engulfStartedAt<0&&mouthStartedAt>=0&&t-mouthStartedAt>=12f&&MouthClearance<=180f)engulfStartedAt=t;
+   if(engulfStartedAt<0&&mouthStartedAt>=0&&t-mouthStartedAt>=12f&&mouthAnchor.position.x-ship.position.x<=180f)engulfStartedAt=t;
    float mouthTime=mouthStartedAt<0?-1:t-mouthStartedAt;
    var flight=beastAnimation["Flight"];var opening=beastAnimation["OpenTransition"];var openFlight=beastAnimation["OpenFlight"];
    if(flight==null||opening==null||openFlight==null)throw new InvalidOperationException("泰德勒尔三段动画不完整");
@@ -91,7 +98,15 @@ namespace AstraCabin.Galaxies.Zyl {
    else{CreatureAnimation="OpenFlight";openFlight.enabled=true;openFlight.weight=1;openFlight.time=Mathf.Repeat(mouthTime-opening.length*2f,openFlight.length);}
    beastAnimation.Sample();JawOpenness=0;
    foreach(var renderer in beast.GetComponentsInChildren<SkinnedMeshRenderer>())for(int i=0;i<renderer.sharedMesh.blendShapeCount;i++)if(renderer.sharedMesh.GetBlendShapeName(i).EndsWith("Jaw_Open"))JawOpenness=Mathf.Max(JawOpenness,renderer.GetBlendShapeWeight(i)/100f);
+   CenterMouth();CreatureDistance=Vector3.Distance(beast.position,ship.position);MouthClearance=mouthAnchor.position.x-ship.position.x;
    UpdateEncounterLighting();
+  }
+  void CenterMouth(){
+   ConfigureVideoCamera();Vector3 center=mouthAnchor.position;
+   float depthAlongX=center.x-videoCamera.transform.position.x;
+   Vector3 target=videoCamera.transform.position+videoCamera.transform.forward*(depthAlongX/Mathf.Max(.01f,videoCamera.transform.forward.x));
+   Vector3 correction=target-center;correction.x=0;
+   beast.position+=correction*Mathf.SmoothStep(0,1,JawOpenness);
   }
   void CreateCallEnvironment(){
    var sky=new GameObject("ASTRA LINK | distant starfield");sky.transform.SetParent(root,false);sky.layer=26;
@@ -117,15 +132,21 @@ namespace AstraCabin.Galaxies.Zyl {
    for(int i=0;i<actorClips.Length;i++){var state=actorAnimation[actorClips[i]];if(state==null)throw new InvalidOperationException("米霍尔动作缺失："+actorClips[i]);state.weight=Mathf.Lerp(blendFrom[i],actorClips[i]==target?1:0,alpha);state.enabled=state.weight>.0001f;state.speed=0;state.time=Mathf.Repeat(clock,state.length);}
    ActorAnimation=target;actorAnimation.Sample();
   }
-  public void RenderVideo(){if(!videoCamera||!ship)return;videoCamera.transform.position=ship.position+new Vector3(-3.1f,1.15f,0);videoCamera.transform.LookAt(ship.position+Vector3.up*.85f);bool fog=RenderSettings.fog;try{RenderSettings.fog=false;videoCamera.Render();}finally{RenderSettings.fog=fog;}}
+  void ConfigureVideoCamera(){videoCamera.transform.position=ship.position+new Vector3(-3.1f,1.15f,0);videoCamera.transform.LookAt(ship.position+Vector3.up*.85f);}
+  public void RenderVideo(){if(!videoCamera||!ship)return;ConfigureVideoCamera();bool fog=RenderSettings.fog;try{RenderSettings.fog=false;videoCamera.Render();}finally{RenderSettings.fog=fog;}}
   void Styles(Font supplied=null){if(text!=null)return;uiFont=supplied?supplied:Font.CreateDynamicFontFromOSFont(new[]{"Microsoft YaHei UI","Microsoft YaHei","Arial"},22);text=new GUIStyle(GUI.skin.label){font=uiFont,fontSize=20,wordWrap=true};text.normal.textColor=new Color(.83f,.9f,.83f);title=new GUIStyle(text){fontSize=24};button=new GUIStyle(GUI.skin.button){font=uiFont,fontSize=20};}
   void Fill(Rect r,Color c){Color old=GUI.color;GUI.color=c;GUI.DrawTexture(r,Texture2D.whiteTexture);GUI.color=old;}
-  public void DrawCall(Rect bounds,Font supplied){Styles(supplied);GUI.BeginGroup(bounds);Fill(new Rect(0,0,bounds.width,bounds.height),new Color(.02f,.045f,.04f));GUI.Label(new Rect(20,12,bounds.width-40,36),"ASTRA LINK / 米霍尔",title);float vw=bounds.width*.65f;Rect videoRect=new Rect(18,50,vw,bounds.height-64);if(Video)GUI.DrawTexture(videoRect,Video,ScaleMode.ScaleToFit,false);float x=vw+38,w=bounds.width-x-20;GUI.Label(new Rect(x,64,w,36),"米霍尔",title);string line=Phase==Step.Greeting?"你好，我是米霍尔。":StoryTime<10f?"我想……我可能要请你离开这里。我没有恶意，但是这件事说起来十分复杂，":!Concerned?"我需要想想这件事应该从哪说起？也许应该从十年前，我居住的地方非常糟糕……":"你怎么了？你看起来好像不太好";GUI.Label(new Rect(x,114,w,bounds.height-220),line,text);if(Phase==Step.Greeting&&GUI.Button(new Rect(x,bounds.height-90,w,52),"你要做什么？",button))Reply();GUI.EndGroup();}
+  public void DrawCall(Rect bounds,Font supplied){
+   Styles(supplied);callSurface.Video=Video;callSurface.Elapsed=callElapsed;callSurface.Choosing=Phase==Step.Greeting;
+   string line=Phase==Step.Greeting?"你好，我是米霍尔。":StoryTime<10f?"我想……我可能要请你离开这里。我没有恶意，但是这件事说起来十分复杂，":!Concerned?"我需要想想这件事应该从哪说起？也许应该从十年前，我居住的地方非常糟糕……":"你怎么了？你看起来好像不太好";
+   if(callSurface.Caption!=line){callSurface.Caption=line;callSurface.Transcript.Add(new ConferenceTranscriptLine{Sender="米霍尔",Message=line});}
+   d.computer.Meeting.DrawCallSurface(bounds,supplied,callSurface);
+  }
   void OnGUI(){if(!Active)return;Styles();Matrix4x4 matrix=GUI.matrix;int depth=GUI.depth;bool oldEnabled=GUI.enabled;GUI.depth=-80;GUI.enabled=oldEnabled&&!d.controller.IsPaused;float scale=Mathf.Min(Screen.width/1600f,Screen.height/900f);GUI.matrix=Matrix4x4.Scale(new Vector3(scale,scale,1));
    if(!d.computer.IsOpen&&Phase>=Step.Invitation&&!Complete){GUI.depth=-80;Fill(new Rect(1150,235,420,210),new Color(.025f,.06f,.055f,.97f));GUI.Label(new Rect(1170,255,380,92),"有不明身份生物向你发出通话邀请",text);if(GUI.Button(InviteButton,Phase==Step.Invitation?"◉  查看":"继续通话",button))RequestCall();if(callRequested)GUIUtility.hotControl=0;}
    float fade=Phase==Step.Story&&engulfStartedAt>=0?Mathf.SmoothStep(0,1,Mathf.InverseLerp(engulfStartedAt+5f,engulfStartedAt+8f,StoryTime)):Phase==Step.Finished?1-Mathf.SmoothStep(0,1,finishTime/1.5f):0;if(fade>0){GUI.depth=-250;Fill(new Rect(0,0,Screen.width/scale,Screen.height/scale),new Color(0,0,0,fade));}GUI.matrix=matrix;GUI.depth=depth;GUI.enabled=oldEnabled;
   }
-  public void Clear(){if(d&&d.computer)d.computer.CloseEncounterApp();if(d&&d.visitors)d.visitors.enabled=true;if(d&&d.controller)d.controller.cinematicWindowLock=false;if(root){root.gameObject.SetActive(false);Destroy(root.gameObject);}if(Video){Video.Release();Destroy(Video);}foreach(var m in materials)if(m)Destroy(m);materials.Clear();callStars=null;creatureKey=mouthSearch=mouthBounce=null;root=ship=pilot=beast=null;videoCamera=null;Video=null;Active=Complete=false;arrival=clock=StoryTime=finishTime=talkBlend=0;callRequested=invitationPressed=false;callRequestFrame=-1;CreatureAnimation=ActorAnimation=talkTarget=null;Array.Clear(blendFrom,0,blendFrom.Length);JawOpenness=CreatureDistance=0;mouthStartedAt=engulfStartedAt=-1;MouthClearance=0;Phase=Step.WaitingForView;}
+  public void Clear(){if(d&&d.computer)d.computer.CloseEncounterApp();if(d&&d.visitors)d.visitors.enabled=true;if(d&&d.controller)d.controller.cinematicWindowLock=false;if(root){root.gameObject.SetActive(false);Destroy(root.gameObject);}if(Video){Video.Release();Destroy(Video);}foreach(var m in materials)if(m)Destroy(m);materials.Clear();callStars=null;creatureKey=mouthSearch=mouthBounce=null;callSurface=null;callElapsed=0;root=ship=pilot=beast=mouthAnchor=null;videoCamera=null;Video=null;Active=Complete=false;arrival=clock=StoryTime=finishTime=talkBlend=0;callRequested=invitationPressed=false;callRequestFrame=-1;CreatureAnimation=ActorAnimation=talkTarget=null;Array.Clear(blendFrom,0,blendFrom.Length);JawOpenness=CreatureDistance=0;mouthStartedAt=engulfStartedAt=-1;MouthClearance=0;Phase=Step.WaitingForView;}
   void OnDestroy(){Clear();}
  }
 }
