@@ -22,7 +22,7 @@
     {
       "id": "zyl_s01",
       "name": "被编排的流浪者",
-      "description": "按最新方案配置两处分支与汇合。命运的入口使用引擎堵塞演出10；传送与巨兽演出待制作。当前无资源消耗或奖励。",
+      "description": "按最新方案配置两处分支与汇合。命运的入口使用引擎堵塞演出10；传送门使用演出11；巨兽演出待制作。当前无资源消耗或奖励。",
       "startNodeId": "entry",
       "nextSectorId": "",
       "nodes": [
@@ -198,11 +198,11 @@
     },
     {
       "id": "zyl_drifter",
-      "type": "choice",
+      "type": "setpiece",
       "title": "被编排的流浪者",
-      "description": "【演出待制作】遇到传送门，通过传送门传送到新地点，遇到宋霍尔，被泰德勒尔吃到肚子里。\n当前仅以文字占位，不播放传送或吞噬演出。",
-      "setpiece": 0,
-      "duration": 0,
+      "description": "舷窗检测到不明物体。查看舷窗，等待传送结束。",
+      "setpiece": 11,
+      "duration": 35,
       "choices": [
         {
           "id": "confirm",
@@ -249,16 +249,16 @@
     },
     {
       "id": "zyl_guest",
-      "type": "choice",
+      "type": "setpiece",
       "title": "局促的客人",
-      "description": "【演出待制作】遇到宋霍尔，被泰德勒尔吃到肚子里。\n当前仅以文字占位，不播放传送或吞噬演出。",
-      "setpiece": 0,
-      "duration": 0,
+      "description": "舷窗检测到未知身份生物。查看来客，接受米霍尔的通话邀请。",
+      "setpiece": 12,
+      "duration": 1,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "【演出待制作】遇到宋霍尔，被泰德勒尔吃到肚子里。",
+          "result": "米霍尔的通话被巨兽打断。你们被吞入黑暗。",
           "costs": [],
           "rewards": []
         }

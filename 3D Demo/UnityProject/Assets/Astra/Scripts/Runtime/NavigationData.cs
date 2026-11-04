@@ -94,13 +94,15 @@ namespace AstraCabin.Navigation
         public bool NeedsObservation { get { return true; } }
         public string Validate(EventDefinition e)
         {
-            return e.setpiece < 1 || e.setpiece > 10 || float.IsNaN(e.duration) || float.IsInfinity(e.duration) || e.duration < 1 || e.duration > 300
-                ? "演出编号必须为 1–10，时长必须为 1–300 秒" : null;
+            return e.setpiece < 1 || e.setpiece > 12 || float.IsNaN(e.duration) || float.IsInfinity(e.duration) || e.duration < 1 || e.duration > 300
+                ? "演出编号必须为 1–12，时长必须为 1–300 秒" : null;
         }
         public void Begin(NavigationMode host, EventDefinition e) { host.Director.TriggerMode(e.setpiece); }
         public bool IsComplete(NavigationMode host, EventDefinition e)
         {
             return host.Director.ActiveMode == e.setpiece && host.Director.ModeTime >= e.duration &&
+                (e.setpiece != SetpieceDirector.PortalMode || host.Director.portal.Complete) &&
+                (e.setpiece != SetpieceDirector.EncounterMode || host.Director.encounter.Complete) &&
                 (!SetpieceDirector.RequiresRepair(e.setpiece) || (!host.Director.CrisisActive && host.Director.RepairedCount == 3));
         }
     }

@@ -145,8 +145,13 @@ namespace AstraCabin
                 if (Registry.Find(ev.type).NeedsObservation)
                 {
                     string state = e.Observed ? "演出已完成 / 可结算" : OwnsPresentation ? (SetpieceDirector.RequiresRepair(ev.setpiece) ? "等待修复全部三处裂痕" : "演出进行中 / " + Mathf.FloorToInt(Director.ModeTime) + " 秒") : "待观看 / 可继续未完成演出";
-                    Label(new Rect(0, y, contentWidth, 32), state, 15, amber); y += 36;
-                    if (Button(new Rect(0, y, contentWidth, 34), OwnsPresentation ? "返回舱室观察" : "播放舱内演出")) BeginPresentation(); y += 48;
+                    if((ev.setpiece != SetpieceDirector.PortalMode && ev.setpiece != SetpieceDirector.EncounterMode) || !e.Observed) { Label(new Rect(0, y, contentWidth, 32), state, 15, amber); y += 36; }
+                    // Mode 10 has no optional observation-return control; retain only unfinished-session recovery.
+                    if ((ev.setpiece != SetpieceDirector.BlockedEngineMode && ev.setpiece != SetpieceDirector.PortalMode && ev.setpiece != SetpieceDirector.EncounterMode) || (!e.Observed && !OwnsPresentation))
+                    {
+                        if (Button(new Rect(0, y, contentWidth, 34), OwnsPresentation ? "返回舱室观察" : "播放舱内演出")) BeginPresentation();
+                        y += 48;
+                    }
                 }
                 foreach (var choice in ev.choices)
                 {

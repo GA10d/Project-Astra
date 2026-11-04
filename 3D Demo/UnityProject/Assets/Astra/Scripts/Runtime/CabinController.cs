@@ -15,6 +15,7 @@ namespace AstraCabin
         public LayerMask interactionMask = ~0;
         public bool showUI = true;
         public bool automationMode;
+        [HideInInspector] public bool cinematicWindowLock;
         [HideInInspector] public Vector3 cinematicOffset;
         [HideInInspector] public Vector3 cinematicEuler;
         [HideInInspector] public Vector3 combatEuler, combatOffset;
@@ -70,8 +71,8 @@ namespace AstraCabin
         private void Update()
         {
             if (automationMode || ComputerOpen || modalChangedFrame == Time.frameCount) return;
-            if (Input.GetKeyDown(KeyCode.Escape)) { HandleEscape(); return; }
-            if (IsPaused) return;
+            if (Input.GetKeyDown(KeyCode.Escape)) { if(cinematicWindowLock) SetPaused(!IsPaused); else HandleEscape(); return; }
+            if (IsPaused || cinematicWindowLock) return;
             if (IsObservingWindow && Input.GetMouseButtonDown(1)) { ExitWindowView(); return; }
             if (Input.GetKeyDown(KeyCode.Q)) Turn(-1);
             if (Input.GetKeyDown(KeyCode.E)) Turn(1);
@@ -111,7 +112,7 @@ namespace AstraCabin
             viewCamera.transform.position += viewCamera.transform.rotation * combatOffset;
             viewCamera.transform.rotation *= Quaternion.Euler(combatEuler);
             viewCamera.fieldOfView = Mathf.Lerp(fieldOfView, windowFieldOfView, approach) + combatFov;
-            if (!automationMode && !IsPaused && !ComputerOpen && modalChangedFrame != Time.frameCount)
+            if (!automationMode && !cinematicWindowLock && !IsPaused && !ComputerOpen && modalChangedFrame != Time.frameCount)
             {
                 if (IsObservingWindow) { ChangeHovered(null); return; }
                 UpdateHover();

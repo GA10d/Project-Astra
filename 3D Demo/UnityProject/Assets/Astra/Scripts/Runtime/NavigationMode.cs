@@ -41,6 +41,8 @@ namespace AstraCabin
             string[] args = Environment.GetCommandLineArgs(); int qa = Array.IndexOf(args, "--astra-navigation-qa");
             int meetingQA = Array.IndexOf(args, "--astra-meeting-qa");
             if(meetingQA>=0)qa=meetingQA;
+            int portalQA=Array.IndexOf(args,"--astra-portal-qa");if(portalQA>=0)qa=portalQA;
+            int encounterQA=Array.IndexOf(args,"--astra-encounter-qa");if(encounterQA>=0)qa=encounterQA;
             if (qa >= 0 && qa + 1 < args.Length) folder = Path.Combine(Path.GetFullPath(args[qa + 1]), "storage");
             if(Array.IndexOf(args,"--astra-meeting-demo")>=0)folder=Path.Combine(Application.persistentDataPath,"NavigationMeetingDemo");
             storageRoot = folder;
@@ -156,9 +158,11 @@ namespace AstraCabin
                     Registry.Find(e.type).Begin(this,e);OwnsPresentation=true;
                     computer.Open();computer.OpenApp("meeting");return true;
                 }
-                if (OwnsPresentation && Director.ActiveMode == e.setpiece) { computer.Close(); return true; }
+                if (OwnsPresentation && Director.ActiveMode == e.setpiece && e.setpiece==SetpieceDirector.EncounterMode) { if(Director.encounter.WaitingForView)computer.Open();else if(Director.encounter.Phase>=Galaxies.Zyl.MihuoerEncounter.Step.Invitation)Director.encounter.AcceptCall();else computer.Close(); return true; }
+                if (OwnsPresentation && Director.ActiveMode == e.setpiece) { if(e.setpiece==SetpieceDirector.PortalMode && !Director.portal.Started)computer.Open();else computer.Close(); return true; }
                 OwnsPresentation = true;
                 Registry.Find(e.type).Begin(this, e);
+                if(e.setpiece==SetpieceDirector.PortalMode || e.setpiece==SetpieceDirector.EncounterMode) { computer.Open(); return true; }
                 computer.Close();
                 controller.ShowNotice(SetpieceDirector.RequiresRepair(e.setpiece) ? "导航事件：前往 B 墙取维修锤，修复 D 墙裂痕" : "导航事件：Q / E 转向 D 墙观察，结束后返回导航模式");
                 return true;

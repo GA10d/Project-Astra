@@ -109,7 +109,7 @@ namespace AstraCabin
         {
             if (initialized) return;
             initialized = true;
-            qaStorage = Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-qa") >= 0 ||
+            qaStorage = Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-encounter-qa") >= 0 || Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-portal-qa") >= 0 || Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-qa") >= 0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-setpiece-qa") >= 0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-combat-qa") >= 0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-art-qa") >= 0 ||
@@ -395,6 +395,11 @@ namespace AstraCabin
             editorScroll = Vector2.zero;
         }
 
+        public void CloseEncounterApp(bool returnToNavigation=false)
+        {
+            runningApps.Remove("encounter");
+            if(activeApp=="encounter") { if(returnToNavigation)OpenApp("navigation");else activeApp=""; }
+        }
         public void FinishMeeting()
         {
             runningApps.Remove("meeting");OpenApp("navigation");
@@ -406,7 +411,8 @@ namespace AstraCabin
             if (app == "filemanager" || app == "documents") app = "files";
             if (app == "text" || app == "notepad") app = "editor";
             if (app == "recyclebin") app = "trash";
-            if (app != "files" && app != "editor" && app != "browser" && app != "trash" && app != "combat" && app != "navigation" && app != "meeting") return;
+            if (app != "files" && app != "editor" && app != "browser" && app != "trash" && app != "combat" && app != "navigation" && app != "meeting" && app != "encounter") return;
+            if(app=="encounter" && (!GetComponent<SetpieceDirector>().encounter || !GetComponent<SetpieceDirector>().encounter.Active))return;
             if(app=="meeting" && (!Meeting || !Meeting.HasSession))return;
             if (app == "combat" && Navigation && Navigation.PresentationPending) { SetStatus("请先在导航模式完成当前演出事件。", true); return; }
             if (activeApp == "combat" && app != "combat" && Combat) Combat.Suspend();
@@ -420,7 +426,7 @@ namespace AstraCabin
             if (app == "navigation" && activeApp != "navigation" && activeApp != "meeting" && Navigation) Navigation.OnAppOpened();
             activeApp = app;
             if (IsOpen) Input.imeCompositionMode = app == "combat" ? IMECompositionMode.Off : IMECompositionMode.On;
-            if ((app == "combat" || app == "navigation" || app == "meeting") && !maximized) { restoreRect = windowRect; windowRect = new Rect(154, 42, 1198, 684); maximized = true; }
+            if ((app == "combat" || app == "navigation" || app == "meeting" || app == "encounter") && !maximized) { restoreRect = windowRect; windowRect = new Rect(154, 42, 1198, 684); maximized = true; }
             confirmationId = "";
             GUIUtility.keyboardControl = 0;
             SetStatus(AppName(app) + " / 就绪");
@@ -475,7 +481,7 @@ namespace AstraCabin
         void PlayClick() { if (CabinAudio.Instance) CabinAudio.Instance.Play(CabinSound.Click, controller ? controller.centerPosition : transform.position); }
         static string AppName(string app)
         {
-            switch (app) { case "meeting": return "ASTRA LINK · 视频会议"; case "navigation": return "导航模式"; case "combat": return "战斗模式"; case "files": return "文件管理"; case "editor": return "文本编辑器"; case "trash": return "垃圾堆"; default: return "离线浏览器"; }
+            switch (app) { case "encounter": return "ASTRA LINK · 米霍尔"; case "meeting": return "ASTRA LINK · 视频会议"; case "navigation": return "导航模式"; case "combat": return "战斗模式"; case "files": return "文件管理"; case "editor": return "文本编辑器"; case "trash": return "垃圾堆"; default: return "离线浏览器"; }
         }
 
         void EnsureStyles()
@@ -639,8 +645,14 @@ namespace AstraCabin
             Fill(new Rect(5, 5, 670, 38), accentColor);
             GUI.Label(new Rect(18, 7, 630, 32), "舰载监控 / " + eventAlertTitle, lightLabel);
             GUI.Label(new Rect(24, 64, 630, 92), eventAlertBody, body);
-            if (GUI.Button(new Rect(490, 169, 160, 34), "确认 / ACK", button))
+            var director=GetComponent<SetpieceDirector>();
+            bool encounter=director && director.ActiveMode==SetpieceDirector.EncounterMode && director.encounter && director.encounter.WaitingForView;
+            bool portal=director && director.ActiveMode==SetpieceDirector.PortalMode && director.portal && !director.portal.Started;
+            if (((portal || encounter) ? RetroButton(new Rect(490, 169, 160, 34), "◉  查看") : GUI.Button(new Rect(490, 169, 160, 34), "确认 / ACK", button))) {
                 acknowledgedAlert = eventAlertTitle + eventAlertBody;
+                if(portal) director.portal.View();
+                if(encounter)director.encounter.View();
+            }
         }
 
         void DrawDesktop()
@@ -745,6 +757,7 @@ namespace AstraCabin
             if (RetroButton(new Rect(width - 65, 8, 26, 23), "□")) toggleMaximize = true;
             if (RetroButton(new Rect(width - 34, 8, 26, 23), "×")) { SaveCurrentDocument(); if(activeApp=="meeting")FinishMeeting();else {runningApps.Remove(activeApp); activeApp = "";} }
             if (string.IsNullOrEmpty(activeApp)) return;
+            if(activeApp=="encounter") { GetComponent<SetpieceDirector>().encounter.DrawCall(new Rect(8,39,width-16,height-45),font); return; }
             if(activeApp=="meeting" && Meeting)
             {
                 Meeting.Draw(new Rect(8,39,width-16,height-45),font);
@@ -1032,3 +1045,4 @@ namespace AstraCabin
         }
     }
 }
+

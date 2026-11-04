@@ -24,6 +24,8 @@ check('archive rich text valid and preserved', () => {
 });
 for(const [name,text] of Object.entries({unclosed:'<b>未关闭',crossed:'<b><i>错位</b></i>',html:'<img src=x>',large:'<size=99>大</size>',badColor:'<color=red>红</color>',tooLong:'字'.repeat(2001),wrongType:12})) invalid('archive '+name,c=>c.sectors[0].nodes[1].archiveDescription=text);
 check('blocked engine setpiece accepts mode 10', () => { const c=C.clone(source);c.events[0].type='setpiece';c.events[0].setpiece=10;c.events[0].duration=8;assert.deepEqual(C.validate(c),[]); });
+check('portal setpiece accepts mode 11', () => { const c=C.clone(source);c.events[0].type='setpiece';c.events[0].setpiece=11;c.events[0].duration=35;assert.deepEqual(C.validate(c),[]); });
+check('mihuoer encounter accepts mode 12', () => { const c=C.clone(source);c.events[0].type='setpiece';c.events[0].setpiece=12;c.events[0].duration=1;assert.deepEqual(C.validate(c),[]); });
 check('example round trip', () => assert.deepEqual(C.parse(JSON.stringify(source)), source));
 invalid('version', c => c.schemaVersion = 2);
 invalid('duplicate resources', c => c.resources[1].id = c.resources[0].id);
@@ -35,7 +37,7 @@ invalid('negative costs', c => c.travelCosts[0].amount = -2);
 invalid('unknown resource', c => c.travelCosts[0].resourceId = 'bad');
 invalid('duplicate costs', c => c.travelCosts.push(c.travelCosts[0]));
 invalid('unknown handler', c => c.events[0].type = 'bad');
-invalid('bad setpiece', c => c.events[0].setpiece = 11);
+invalid('bad setpiece', c => c.events[0].setpiece = 13);
 invalid('zero duration', c => c.events[0].duration = 0);
 invalid('null event', c => c.events[0] = null);
 invalid('null option', c => c.events[0].choices[0] = null);
@@ -69,3 +71,5 @@ invalid('meeting invalid package path', c => c.events.find(e=>e.type==='performa
 invalid('meeting multiple settlements', c => { const e=c.events.find(e=>e.type==='performance');e.choices.push({...e.choices[0],id:'second'}); });
 invalid('meeting settlement has cost', c => c.events.find(e=>e.type==='performance').choices[0].costs=[{resourceId:'fuel',amount:1}]);
 console.log(`RESULT PASS checks=${checks}`);
+
+

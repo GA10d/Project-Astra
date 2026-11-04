@@ -15,6 +15,10 @@ namespace AstraCabin
         public LoopingStarfield stars;
         // Scene references retain shaders and transparent variants in standalone builds.
         public Material[] retainedMaterials;
+        public const int EncounterMode = 12;
+        public Galaxies.Zyl.MihuoerEncounter encounter;
+        public const int PortalMode = 11;
+        public PortalSetpiece portal;
         public const int BlockedEngineMode = 10;
         public static bool RequiresRepair(int mode) { return mode == 3 || mode == BlockedEngineMode; }
         public bool EngineBlocked { get { return ActiveMode == BlockedEngineMode || (computer && computer.Navigation && computer.Navigation.Session != null && computer.Navigation.Session.Engine.EngineBlocked); } }
@@ -61,6 +65,8 @@ namespace AstraCabin
             if(!computer) computer=GetComponent<CabinComputer>();
             if(!planet) planet=FindObjectOfType<DistantPlanet>();
             if(!stars) stars=FindObjectOfType<LoopingStarfield>();
+            encounter=GetComponent<Galaxies.Zyl.MihuoerEncounter>()??gameObject.AddComponent<Galaxies.Zyl.MihuoerEncounter>(); encounter.Initialize(this);
+            portal=GetComponent<PortalSetpiece>()??gameObject.AddComponent<PortalSetpiece>(); portal.Initialize(this);
             combat=GetComponent<ExplosionBattleSetpieces>()??gameObject.AddComponent<ExplosionBattleSetpieces>();
             visitors=GetComponent<VisitorStationSetpieces>()??gameObject.AddComponent<VisitorStationSetpieces>();
             crimson=GetComponent<CrimsonEyeSetpiece>()??gameObject.AddComponent<CrimsonEyeSetpiece>();
@@ -118,7 +124,7 @@ namespace AstraCabin
         }
         public bool TriggerMode(int mode)
         {
-            if(mode<0 || mode>BlockedEngineMode) return false;
+            if(mode<0 || mode>EncounterMode) return false;
             Initialize();
             Quaternion previousPlanetRotation=planet.transform.rotation;
             ClearCurrent();
@@ -152,6 +158,8 @@ namespace AstraCabin
                 case 7: whales.Show(); break;
                 case 8: mirror.Show(); break;
                 case 9: sorting.Show(); break;
+                case PortalMode: portal.Show(); break;
+                case EncounterMode: encounter.Show(); break;
             }
             return true;
         }
@@ -161,7 +169,7 @@ namespace AstraCabin
             StopAllCoroutines();
             if(computer.IsOpen) computer.Close();
             controller.SetPaused(false); controller.observationAllowed=true;
-            combat.Clear(); visitors.Clear(); crimson.Clear(); whales.Clear(); mirror.Clear(); sorting.Clear(); eventAudio.StopAll();
+            encounter.Clear(); portal.Clear(); combat.Clear(); visitors.Clear(); crimson.Clear(); whales.Clear(); mirror.Clear(); sorting.Clear(); eventAudio.StopAll();
             if(repairRoot) { repairRoot.SetActive(false); Destroy(repairRoot); }
             if(heldHammer) { heldHammer.SetActive(false); Destroy(heldHammer); }
             if(AlertRoot) { AlertRoot.SetActive(false); Destroy(AlertRoot); }
@@ -354,18 +362,19 @@ namespace AstraCabin
                 body=new GUIStyle(small){fontSize=16,alignment=TextAnchor.UpperLeft,wordWrap=true};
             }
             var old=GUI.matrix; float scale=Mathf.Min(Screen.width/1600f,Screen.height/900f);
+            try {
             GUI.matrix=Matrix4x4.Scale(new Vector3(scale,scale,1)); float width=Screen.width/scale;
             GUI.Label(new Rect(width*.5f-410,28,820,27),"[1] 爆星  [2] 访客  [3] 撞击  [4] 赤域  [5] 战场  [6] 补给  [7] 鲸群  [8] 镜像  [9] 分拣  [0] 复位",small);
             if(ActiveMode!=0)
             {
                 Color oldColor=GUI.color; GUI.color=new Color(.018f,.025f,.025f,.87f);
                 GUI.DrawTexture(new Rect(28,110,385,CrisisActive?119:79),Texture2D.whiteTexture); GUI.color=oldColor;
-                string[] names={"","行星碎裂","不明飞行物靠近","舱体遭遇撞击","赤红星域","交战区","星际补给站","星海鲸群","另一艘你","耗材分拣站","未知撞击 / 引擎堵塞"};
-                GUI.Label(new Rect(43,116,350,31),names[ActiveMode],heading);
+                string[] names={"","行星碎裂","不明飞行物靠近","舱体遭遇撞击","赤红星域","交战区","星际补给站","星海鲸群","另一艘你","耗材分拣站","未知撞击 / 引擎堵塞","误入星际传送门","初遇米霍尔"};
+                GUI.Label(new Rect(43,116,350,31),ActiveMode < names.Length ? names[ActiveMode] : "舱内演出",heading);
                 string text=CrisisActive?(ModeTime<3?"电力中断…":HasHammer?"已持维修锤 / 修复 D 墙裂痕："+RepairedCount+" / 3":"前往 B 墙取下维修锤\n然后点击 D 墙三处黄色高亮裂痕"):ActiveMode==7?"小鲸鱼正在穿舱 / Q、E 环顾四周":ActiveMode==8?"移动鼠标、拨动电源，观察对面…":ActiveMode==9?"转向 D 墙观察 / 点击窗户可凑近":"[0] 随时恢复默认场景";
                 GUI.Label(new Rect(43,153,352,65),text,body);
             }
-            GUI.matrix=old;
+            } finally { GUI.matrix=old; }
             DrawEngineWarning();
         }
         void DrawEngineWarning()

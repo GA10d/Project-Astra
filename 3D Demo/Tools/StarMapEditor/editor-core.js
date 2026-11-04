@@ -45,7 +45,7 @@
       if (!idOK(e.id) || events.has(e.id) || !textOK(e.title, 80) || !textOK(e.description, 4000)) error('事件定义无效或重复：' + e.id);
       events.add(e.id);
       if (!['choice', 'setpiece', 'performance'].includes(e.type)) error(e.id + '：未知事件类型');
-      if (e.type === 'setpiece' && (!bounded(e.setpiece, 1, 10) || !Number.isFinite(e.duration) || e.duration < 1 || e.duration > 300)) error(e.id + '：演出编号需 1–10，时长需 1–300 秒');
+      if (e.type === 'setpiece' && (!bounded(e.setpiece, 1, 12) || !Number.isFinite(e.duration) || e.duration < 1 || e.duration > 300)) error(e.id + '：演出编号需 1–12，时长需 1–300 秒');
       if (!Array.isArray(e.choices) || e.choices.length < 1 || e.choices.length > 8 || e.choices.some(o => !o)) { error(e.id + '：选项需 1–8 项'); return; }
       if (e.type === 'performance' && (!idOK(e.performanceId) || e.choices.length !== 1 || !Array.isArray(e.choices[0].costs) || e.choices[0].costs.length)) error(e.id + '：会议需要演出包 ID 和一个无消耗的自动结算项');
       const options = new Set();
