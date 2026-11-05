@@ -1,0 +1,99 @@
+{
+  "schemaVersion": 1,
+  "repairAlarmDelay": 2,
+  "repairStrikeDuration": 0.48,
+  "repairImpactStrength": 0.95,
+  "repairImpactDuration": 1.35,
+  "portalApproachDuration": 20,
+  "portalInitialDistance": 45,
+  "portalNearDistance": 2.8,
+  "portalInitialOpening": 0.2,
+  "portalFinalOpening": 1.65,
+  "portalOpenStart": 5,
+  "portalOpenEnd": 15,
+  "portalWarpStart": 21.5,
+  "portalGateEnd": 23,
+  "portalArrival": 28,
+  "portalComplete": 29.5,
+  "portalTunnelSpeed": 24,
+  "portalShake": 0.18,
+  "planetDiameter0": 46,
+  "planetSpin0": 1.2,
+  "planetDiameter1": 7,
+  "planetSpin1": 0.45,
+  "planetDiameter2": 4.5,
+  "planetSpin2": 0.18,
+  "visitorArrivalDuration": 4,
+  "visitorInvitationTime": 5.2,
+  "actorBlendDuration": 1,
+  "beastScale": 640,
+  "initialClearance": 18000,
+  "finalClearance": 120,
+  "approachDuration": 44,
+  "mouthTriggerDistance": 16500,
+  "mouthPlaybackSpeed": 0.5,
+  "swallowDistance": 180,
+  "swallowDuration": 6,
+  "swallowAdvance": 80,
+  "concernDistance": 3000,
+  "videoFov": 72,
+  "videoFarClip": 40000,
+  "starCount": 1400,
+  "starSize": 42,
+  "coldLight": 0.42,
+  "mouthSearchLight": 2.2,
+  "mouthBounceLight": 0.65,
+  "loadDistance": 250,
+  "blackHoldDuration": 1,
+  "fadeInDuration": 2,
+  "greetingText": "你好，我是米霍尔。",
+  "playerReplyText": "你要做什么？",
+  "concernText": "你怎么了？你看起来好像不太好",
+  "freeDialogue": [
+    {
+      "text": "我想……我可能要请你离开这里。我没有恶意，但是这件事说起来十分复杂",
+      "duration": 4,
+      "replies": []
+    },
+    {
+      "text": "虽然时间不够了，但还有一些时间。我需要想想这件事应该从哪说起？",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "也许应该从十年前，那时我居住的地方非常糟糕。",
+      "duration": 4,
+      "replies": []
+    },
+    {
+      "text": "你肯定难以想象那是一个什么样的地方，即使是如今的我也不愿意主动回忆。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "但是现在情况有点不同，所以我必须把这件事告诉你。",
+      "duration": 4,
+      "replies": []
+    },
+    {
+      "text": "那个地方几乎很少见到阳光，大家似乎有很多烦恼，每个人的脸上都不太平静。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "但我不知道他们的烦恼是什么，我年纪很小，只知道自己经常生病。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "我的病不只有一种，有时候会肚子疼，有时候会走不了路……",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "所以，大部分时候我都一副无精打采的样子。",
+      "duration": 5,
+      "replies": []
+    }
+  ]
+}

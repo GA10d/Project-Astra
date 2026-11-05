@@ -70,7 +70,7 @@ namespace AstraCabin
 
         private void Update()
         {
-            if (automationMode || ComputerOpen || modalChangedFrame == Time.frameCount) return;
+            if (Galaxies.Zyl.ZylScreenCurtain.BlocksInput || automationMode || ComputerOpen || modalChangedFrame == Time.frameCount) return;
             if (Input.GetKeyDown(KeyCode.Escape)) { if(cinematicWindowLock) SetPaused(!IsPaused); else HandleEscape(); return; }
             if (IsPaused || cinematicWindowLock) return;
             if (IsObservingWindow && Input.GetMouseButtonDown(1)) { ExitWindowView(); return; }
@@ -112,7 +112,7 @@ namespace AstraCabin
             viewCamera.transform.position += viewCamera.transform.rotation * combatOffset;
             viewCamera.transform.rotation *= Quaternion.Euler(combatEuler);
             viewCamera.fieldOfView = Mathf.Lerp(fieldOfView, windowFieldOfView, approach) + combatFov;
-            if (!automationMode && !cinematicWindowLock && !IsPaused && !ComputerOpen && modalChangedFrame != Time.frameCount)
+            if (!Galaxies.Zyl.ZylScreenCurtain.BlocksInput && !automationMode && !cinematicWindowLock && !IsPaused && !ComputerOpen && modalChangedFrame != Time.frameCount)
             {
                 if (IsObservingWindow) { ChangeHovered(null); return; }
                 UpdateHover();
@@ -285,7 +285,7 @@ namespace AstraCabin
 
         private void OnGUI()
         {
-            if (!showUI || ComputerOpen) return;
+            if (Galaxies.Zyl.ZylScreenCurtain.IsOpaque || !showUI || ComputerOpen) return;
             EnsureStyles();
             Matrix4x4 previous = GUI.matrix;
             float scale = Mathf.Min(Screen.width / 1600f, Screen.height / 900f);

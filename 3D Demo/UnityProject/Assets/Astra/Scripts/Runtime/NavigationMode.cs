@@ -49,6 +49,9 @@ namespace AstraCabin
             int encounterQA=Array.IndexOf(args,"--astra-encounter-qa");if(encounterQA>=0)qa=encounterQA;
             if (qa >= 0 && qa + 1 < args.Length) folder = Path.Combine(Path.GetFullPath(args[qa + 1]), "storage");
             if(Array.IndexOf(args,"--astra-meeting-demo")>=0)folder=Path.Combine(Application.persistentDataPath,"NavigationMeetingDemo");
+#if UNITY_EDITOR
+            if(Galaxies.Zyl.ZylEditorDebugSession.Enabled)folder=Path.Combine(Galaxies.Zyl.ZylEditorDebugSession.Root,"Navigation");
+#endif
             storageRoot = folder;
             LoadGalaxy("test");
         }

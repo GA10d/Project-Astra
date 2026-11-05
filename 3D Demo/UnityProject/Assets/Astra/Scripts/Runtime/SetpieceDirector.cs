@@ -53,6 +53,8 @@ namespace AstraCabin
         bool initialized,alarmStarted,repairing;
         readonly bool[] repaired=new bool[3];
         float shakeRemaining,shakeDuration,shakeStrength;
+        Galaxies.Zyl.ZylPresentationParameters zylParameters=new Galaxies.Zyl.ZylPresentationParameters();
+        bool ZylRepair { get { return ActiveMode==BlockedEngineMode && computer.Navigation && computer.Navigation.ActiveGalaxyId=="zyl"; } }
         string alertDetail="";
         Vector3 originalPlanetPosition,originalPlanetScale;
         Color originalCameraBackground;
@@ -93,7 +95,7 @@ namespace AstraCabin
         void Update()
         {
             if(!initialized) return;
-            if(allowDebugHotkeys && !automationMode && !controller.automationMode && !controller.ComputerOpen && !controller.IsPaused)
+            if(!Galaxies.Zyl.ZylScreenCurtain.BlocksInput && allowDebugHotkeys && !automationMode && !controller.automationMode && !controller.ComputerOpen && !controller.IsPaused)
             {
                 for(int i=0;i<=9;i++)
                     if(Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha0+i)) || Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad0+i)))
@@ -106,10 +108,10 @@ namespace AstraCabin
             }
             if(controller.IsPaused) return;
             ModeTime+=Time.deltaTime;
-            if(RequiresRepair(ActiveMode) && CrisisActive && !alarmStarted && ModeTime>=3f)
+            if(RequiresRepair(ActiveMode) && CrisisActive && !alarmStarted && ModeTime>=(ZylRepair?zylParameters.repairAlarmDelay:3f))
             {
                 alarmStarted=true; systems.SetDamageState(true,true); eventAudio.SetAlarm(true);
-                Shake(.95f,1.35f); PlayCue("impact",.85f);
+                Shake(ZylRepair?zylParameters.repairImpactStrength:.95f,ZylRepair?zylParameters.repairImpactDuration:1.35f); PlayCue("impact",.85f);
                 SetAlert("舱体遭遇撞击","应急电源已启动\n前往 B 墙取下维修锤\n修复 D 墙裂痕：0 / 3");
             }
             shakeRemaining=Mathf.Max(0,shakeRemaining-Time.deltaTime);
@@ -132,6 +134,7 @@ namespace AstraCabin
             Quaternion previousPlanetRotation=planet?planet.transform.rotation:Quaternion.identity;
             ClearCurrent();
             ActiveMode=mode; ModeTime=0;
+            zylParameters=Galaxies.Zyl.ZylPresentationParameters.Load(mode==BlockedEngineMode && computer.Navigation && computer.Navigation.ActiveGalaxyId=="zyl");
             if(mode==0)
             {
                 controller.SnapToWall(0); controller.ShowNotice("全部演出已复位 / DEFAULT SCENE"); return true;
@@ -267,9 +270,10 @@ namespace AstraCabin
             repairing=true;
             Quaternion rest=heldHammer.transform.localRotation; Vector3 restPosition=heldHammer.transform.localPosition;
             float elapsed=0; bool struck=false;
-            while(elapsed<.48f)
+            float strikeDuration=ZylRepair?zylParameters.repairStrikeDuration:.48f;
+            while(elapsed<strikeDuration)
             {
-                elapsed+=Time.deltaTime; float u=Mathf.Clamp01(elapsed/.48f);
+                elapsed+=Time.deltaTime; float u=Mathf.Clamp01(elapsed/strikeDuration);
                 float swing=Mathf.Sin(u*Mathf.PI);
                 heldHammer.transform.localRotation=rest*Quaternion.Euler(-72*swing,0,14*swing);
                 heldHammer.transform.localPosition=restPosition+new Vector3(-.045f,.04f,.11f)*swing;
@@ -355,6 +359,7 @@ namespace AstraCabin
         void RefreshFontAtlas(Font updated) { if(updated==font && worldText) worldText.mainTexture=font.material.mainTexture; }
         void OnGUI()
         {
+            if(Galaxies.Zyl.ZylScreenCurtain.IsOpaque)return;
             if(!initialized) return;
             if(controller.ComputerOpen) { DrawEngineWarning(); return; }
             if(small==null)

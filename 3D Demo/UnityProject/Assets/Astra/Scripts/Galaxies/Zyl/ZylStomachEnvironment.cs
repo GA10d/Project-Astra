@@ -15,6 +15,7 @@ namespace AstraCabin.Galaxies.Zyl
         public const string ScenePath = "Assets/Astra/Scenes/Zyl/StomachRefuge.unity";
         public const int EnvironmentLayer = 25;
         public bool Ready { get; private set; }
+        bool EncounterCurtainOwned { get { return navigation && navigation.Director.encounter && navigation.Director.encounter.LoadingEnvironment; } }
         public bool Busy { get; private set; }
         public string Error { get; private set; }
         public Matrix4x4 AuthoredToRuntime { get; private set; }
@@ -27,6 +28,11 @@ namespace AstraCabin.Galaxies.Zyl
         GameObject environmentRoot;
         StomachEnvironmentSettings settings;
         float curtain;
+        public float CurtainAlpha {get{return Error!=null?1:curtain;}}
+        public void RetryLoad(){Error=null;}
+#if UNITY_EDITOR
+        public void EditorRefreshForDebug(){enteringSession=null;evaluatedSave=null;RefreshDesired();}
+#endif
         Color ambient, background, fogColor;
         AmbientMode ambientMode;
         Material skybox;
@@ -70,7 +76,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
             // Restart/import replace Save; retain the transient request only during the actual black ending.
             bool entering = enteringSession == navigation.Session && navigation.ActiveGalaxyId == "zyl" &&
-                navigation.OwnsPresentation && navigation.Director.encounter && navigation.Director.encounter.Swallowing;
+                navigation.OwnsPresentation && navigation.Director.encounter && (navigation.Director.encounter.LoadingEnvironment || navigation.Director.encounter.Complete);
             desired = savedWantsStomach || entering;
             if (!entering) enteringSession = null;
             if (!desired && Error != null) Error = null;
@@ -80,7 +86,7 @@ namespace AstraCabin.Galaxies.Zyl
 
         IEnumerator ChangeEnvironment()
         {
-            Busy = true; curtain = 1;
+            Busy = true; curtain = EncounterCurtainOwned ? 0 : 1;
             if (desired)
             {
                 CaptureExterior();
@@ -191,6 +197,7 @@ namespace AstraCabin.Galaxies.Zyl
             prepared = false;
             if (!captured || !navigation || !navigation.Director) return;
             var director = navigation.Director; var camera = director.controller.viewCamera;
+            if (!camera) { captured = false; return; } // Play Mode exit can destroy the camera before this component.
             if (director.planet) director.planet.gameObject.SetActive(planetActive);
             if (director.stars) director.stars.gameObject.SetActive(starsActive);
             camera.backgroundColor = background; camera.clearFlags = clearFlags; camera.farClipPlane = cameraFar; camera.cullingMask = cameraMask;
@@ -198,21 +205,6 @@ namespace AstraCabin.Galaxies.Zyl
             RenderSettings.fog = fog; RenderSettings.fogColor = fogColor; RenderSettings.fogMode = fogMode;
             RenderSettings.fogDensity = fogDensity; RenderSettings.fogStartDistance = fogStart; RenderSettings.fogEndDistance = fogEnd;
             captured = false;
-        }
-
-        void OnGUI()
-        {
-            if (curtain <= 0) return;
-            var matrix = GUI.matrix; var color = GUI.color; var depth = GUI.depth;
-            GUI.matrix = Matrix4x4.identity; GUI.depth = -300; GUI.color = new Color(0, 0, 0, curtain);
-            GUI.DrawTexture(new Rect(0, 0, Screen.width, Screen.height), Texture2D.whiteTexture);
-            GUI.color = Color.white;
-            if (Error != null)
-            {
-                GUI.Label(new Rect(30, Screen.height / 2 - 45, Screen.width - 60, 60), Error);
-                if (GUI.Button(new Rect(30, Screen.height / 2 + 30, 180, 45), "重试加载")) Error = null;
-            }
-            GUI.matrix = matrix; GUI.color = color; GUI.depth = depth;
         }
 
         void OnDestroy()

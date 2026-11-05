@@ -224,6 +224,7 @@ namespace AstraCabin
         }
         void OnGUI()
         {
+            if(Galaxies.Zyl.ZylScreenCurtain.IsOpaque)return;
             if (!loaded || !OwnsPresentation || computer.IsOpen || controller.IsPaused || Session == null) return;
             if(Session.Engine.Pending!=null && Session.Engine.Pending.type=="performance")return;
             if (navText == null) return;

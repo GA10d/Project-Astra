@@ -51,7 +51,11 @@ namespace AstraCabin
         public string CurrentDocumentText { get { return editorBody; } }
         public string CurrentUrl { get { return browserUrl; } }
         public string LastStatus { get { return status; } }
-        public string PersistencePath { get { return Path.Combine(Application.persistentDataPath, qaStorage ? "astra-computer-v1.qa.json" : "astra-computer-v1.json"); } }
+        public string PersistencePath { get {
+#if UNITY_EDITOR
+            if(!string.IsNullOrEmpty(editorDebugPersistencePath))return editorDebugPersistencePath;
+#endif
+            return Path.Combine(Application.persistentDataPath, qaStorage ? "astra-computer-v1.qa.json" : "astra-computer-v1.json"); } }
         public bool IsTestStorage { get { return qaStorage; } }
         public bool HasUnsavedChanges { get { return editorDirty; } }
 
@@ -84,6 +88,9 @@ namespace AstraCabin
         string focusNext = "";
         string confirmationId = "";
         bool editorDirty, statusError, initialized, ownsFont, archiveFolder, qaStorage;
+#if UNITY_EDITOR
+        string editorDebugPersistencePath;
+#endif
         float dirtyAt;
         int historyIndex = -1;
         Rect windowRect = new Rect(174f, 74f, 1130f, 602f);
@@ -116,6 +123,9 @@ namespace AstraCabin
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-render-qa") >= 0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-navigation-qa") >= 0 ||
                 Array.IndexOf(Environment.GetCommandLineArgs(), "--astra-meeting-qa") >= 0;
+#if UNITY_EDITOR
+            if(Galaxies.Zyl.ZylEditorDebugSession.Enabled){editorDebugPersistencePath=Path.Combine(Galaxies.Zyl.ZylEditorDebugSession.Root,"computer.json");qaStorage=true;}
+#endif
             LoadArchive();
             ReloadStore();
             runningApps.Add("browser");
@@ -187,6 +197,7 @@ namespace AstraCabin
 
         void Update()
         {
+            if(Galaxies.Zyl.ZylScreenCurtain.BlocksInput)return;
             if (IsOpen && systems && !systems.ScreenHasPower) Close();
             // Do not normalize a filename or serialize a partial IME edit while a candidate is active.
             if (editorDirty && string.IsNullOrEmpty(Input.compositionString) && Time.unscaledTime > dirtyAt + 1.25f) SaveCurrentDocument();
@@ -595,6 +606,7 @@ namespace AstraCabin
 
         void OnGUI()
         {
+            if(Galaxies.Zyl.ZylScreenCurtain.IsOpaque)return;
             if (!IsOpen) return;
             EnsureStyles();
             int oldDepth = GUI.depth;
