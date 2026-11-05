@@ -12,6 +12,7 @@ namespace AstraCabin
         public NavigationSession Session { get; private set; }
         public SetpieceDirector Director { get; private set; }
         public EventRegistry Registry { get; private set; }
+        public Galaxies.Zyl.ZylStomachEnvironment Exterior { get; private set; }
         public Campaign Campaign { get; private set; }
         public bool OwnsPresentation { get; private set; }
         public string Message { get; private set; }
@@ -37,6 +38,9 @@ namespace AstraCabin
             if (loaded) return; loaded = true;
             computer = GetComponent<CabinComputer>(); controller = GetComponent<CabinController>(); Director = GetComponent<SetpieceDirector>();
             Registry = EventRegistry.CreateDefault();
+            Exterior = GetComponent<Galaxies.Zyl.ZylStomachEnvironment>();
+            if (!Exterior) Exterior = gameObject.AddComponent<Galaxies.Zyl.ZylStomachEnvironment>();
+            Exterior.Initialize(this);
             string folder = Path.Combine(Application.persistentDataPath, computer.IsTestStorage ? "NavigationQA" : "Navigation");
             string[] args = Environment.GetCommandLineArgs(); int qa = Array.IndexOf(args, "--astra-navigation-qa");
             int meetingQA = Array.IndexOf(args, "--astra-meeting-qa");

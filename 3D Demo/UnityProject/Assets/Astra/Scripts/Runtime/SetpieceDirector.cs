@@ -8,6 +8,8 @@ namespace AstraCabin
     /// <summary>One active vignette at a time. Zero restores the cabin, never personal documents.</summary>
     public sealed class SetpieceDirector : MonoBehaviour
     {
+        public bool allowDebugHotkeys = true;
+        public bool discoverExteriorAutomatically = true;
         public CabinController controller;
         public CabinSystems systems;
         public CabinComputer computer;
@@ -63,8 +65,8 @@ namespace AstraCabin
             if(!controller) controller=GetComponent<CabinController>();
             if(!systems) systems=GetComponent<CabinSystems>();
             if(!computer) computer=GetComponent<CabinComputer>();
-            if(!planet) planet=FindObjectOfType<DistantPlanet>();
-            if(!stars) stars=FindObjectOfType<LoopingStarfield>();
+            if(!planet && discoverExteriorAutomatically) planet=FindObjectOfType<DistantPlanet>();
+            if(!stars && discoverExteriorAutomatically) stars=FindObjectOfType<LoopingStarfield>();
             encounter=GetComponent<Galaxies.Zyl.MihuoerEncounter>()??gameObject.AddComponent<Galaxies.Zyl.MihuoerEncounter>(); encounter.Initialize(this);
             portal=GetComponent<PortalSetpiece>()??gameObject.AddComponent<PortalSetpiece>(); portal.Initialize(this);
             combat=GetComponent<ExplosionBattleSetpieces>()??gameObject.AddComponent<ExplosionBattleSetpieces>();
@@ -76,7 +78,7 @@ namespace AstraCabin
             eventAudio=GetComponent<SetpieceAudio>()??gameObject.AddComponent<SetpieceAudio>();
             combat.Initialize(this); visitors.Initialize(this); crimson.Initialize(this);
             whales.Initialize(this); mirror.Initialize(this); sorting.Initialize(this);
-            originalPlanetPosition=planet.transform.position; originalPlanetScale=planet.transform.localScale;
+            originalPlanetPosition=planet?planet.transform.position:new Vector3(20,-6.8f,-7); originalPlanetScale=planet?planet.transform.localScale:Vector3.one*19;
             originalCameraBackground=controller.viewCamera.backgroundColor;
             font=Font.CreateDynamicFontFromOSFont(new[]{"Microsoft YaHei UI","Microsoft YaHei","SimHei","Arial"},48);
             worldText=new Material(Shader.Find("Astra/Setpieces/WorldText")); materials.Add(worldText);
@@ -91,14 +93,14 @@ namespace AstraCabin
         void Update()
         {
             if(!initialized) return;
-            if(!automationMode && !controller.automationMode && !controller.ComputerOpen && !controller.IsPaused)
+            if(allowDebugHotkeys && !automationMode && !controller.automationMode && !controller.ComputerOpen && !controller.IsPaused)
             {
                 for(int i=0;i<=9;i++)
                     if(Input.GetKeyDown((KeyCode)((int)KeyCode.Alpha0+i)) || Input.GetKeyDown((KeyCode)((int)KeyCode.Keypad0+i)))
                     {
                         if(computer.Navigation && computer.Navigation.PresentationPending)
                             controller.ShowNotice("请先在导航模式完成当前事件，再使用演出调试快捷键");
-                        else TriggerMode(i);
+                        else TryDebugMode(i);
                         break;
                     }
             }
@@ -122,11 +124,12 @@ namespace AstraCabin
             if(initialized && AlertRoot && AlertRoot.activeSelf!=systems.ScreenHasPower)
                 AlertRoot.SetActive(systems.ScreenHasPower);
         }
+        public bool TryDebugMode(int mode) { return allowDebugHotkeys && TriggerMode(mode); }
         public bool TriggerMode(int mode)
         {
             if(mode<0 || mode>EncounterMode) return false;
             Initialize();
-            Quaternion previousPlanetRotation=planet.transform.rotation;
+            Quaternion previousPlanetRotation=planet?planet.transform.rotation:Quaternion.identity;
             ClearCurrent();
             ActiveMode=mode; ModeTime=0;
             if(mode==0)
@@ -136,12 +139,12 @@ namespace AstraCabin
             // Events change the world, not the player's chosen wall, mouse look,
             // active turn or window approach. Only damage requires leaving the
             // close-up so the player can reach the repair targets.
-            if(!RequiresRepair(mode)) planet.gameObject.SetActive(false);
+            if(!RequiresRepair(mode) && planet) planet.gameObject.SetActive(false);
             switch(mode)
             {
                 case 1:
                     combat.PlanetRotation=previousPlanetRotation;
-                    combat.ShowPlanetExplosion(originalPlanetPosition,originalPlanetScale.x*.5f,planet.GetComponent<Renderer>().sharedMaterial);
+                    combat.ShowPlanetExplosion(originalPlanetPosition,originalPlanetScale.x*.5f,planet?planet.GetComponent<Renderer>().sharedMaterial:null);
                     break;
                 case 2:
                     SetAlert("不明飞行物靠近","近距目标已停泊于观察窗外\n检测到生命体 / 对方正在招手");
@@ -183,9 +186,10 @@ namespace AstraCabin
             systems.SetDamageState(false,false);
             systems.SetMainPower(true); systems.SetLights(true); systems.SetAir(true); systems.SetPrinter(false); systems.SetRadio(false);
             foreach(var item in FindObjectsOfType<CabinInteractable>()) item.ResetToInitialState();
-            planet.gameObject.SetActive(true); planet.transform.position=originalPlanetPosition; planet.transform.localScale=originalPlanetScale;
-            planet.SetElapsedForTest(0); planet.animate=true; stars.gameObject.SetActive(true); stars.animate=true;
+            if(planet){planet.gameObject.SetActive(true); planet.transform.position=originalPlanetPosition; planet.transform.localScale=originalPlanetScale;planet.SetElapsedForTest(0);planet.animate=true;}
+            if(stars){stars.gameObject.SetActive(true);stars.animate=true;}
             controller.viewCamera.backgroundColor=originalCameraBackground;
+            var exterior=GetComponent<Galaxies.Zyl.ZylStomachEnvironment>(); if(exterior)exterior.ApplyExterior();
         }
         public void Shake(float intensity,float seconds)
         {
@@ -364,14 +368,14 @@ namespace AstraCabin
             var old=GUI.matrix; float scale=Mathf.Min(Screen.width/1600f,Screen.height/900f);
             try {
             GUI.matrix=Matrix4x4.Scale(new Vector3(scale,scale,1)); float width=Screen.width/scale;
-            GUI.Label(new Rect(width*.5f-410,28,820,27),"[1] 爆星  [2] 访客  [3] 撞击  [4] 赤域  [5] 战场  [6] 补给  [7] 鲸群  [8] 镜像  [9] 分拣  [0] 复位",small);
+            if(allowDebugHotkeys) GUI.Label(new Rect(width*.5f-410,28,820,27),"[1] 爆星  [2] 访客  [3] 撞击  [4] 赤域  [5] 战场  [6] 补给  [7] 鲸群  [8] 镜像  [9] 分拣  [0] 复位",small);
             if(ActiveMode!=0)
             {
                 Color oldColor=GUI.color; GUI.color=new Color(.018f,.025f,.025f,.87f);
                 GUI.DrawTexture(new Rect(28,110,385,CrisisActive?119:79),Texture2D.whiteTexture); GUI.color=oldColor;
                 string[] names={"","行星碎裂","不明飞行物靠近","舱体遭遇撞击","赤红星域","交战区","星际补给站","星海鲸群","另一艘你","耗材分拣站","未知撞击 / 引擎堵塞","误入星际传送门","初遇米霍尔"};
                 GUI.Label(new Rect(43,116,350,31),ActiveMode < names.Length ? names[ActiveMode] : "舱内演出",heading);
-                string text=CrisisActive?(ModeTime<3?"电力中断…":HasHammer?"已持维修锤 / 修复 D 墙裂痕："+RepairedCount+" / 3":"前往 B 墙取下维修锤\n然后点击 D 墙三处黄色高亮裂痕"):ActiveMode==7?"小鲸鱼正在穿舱 / Q、E 环顾四周":ActiveMode==8?"移动鼠标、拨动电源，观察对面…":ActiveMode==9?"转向 D 墙观察 / 点击窗户可凑近":"[0] 随时恢复默认场景";
+                string text=CrisisActive?(ModeTime<3?"电力中断…":HasHammer?"已持维修锤 / 修复 D 墙裂痕："+RepairedCount+" / 3":"前往 B 墙取下维修锤\n然后点击 D 墙三处黄色高亮裂痕"):ActiveMode==7?"小鲸鱼正在穿舱 / Q、E 环顾四周":ActiveMode==8?"移动鼠标、拨动电源，观察对面…":ActiveMode==9?"转向 D 墙观察 / 点击窗户可凑近":(allowDebugHotkeys?"[0] 随时恢复默认场景":"完成事件后返回导航继续");
                 GUI.Label(new Rect(43,153,352,65),text,body);
             }
             } finally { GUI.matrix=old; }

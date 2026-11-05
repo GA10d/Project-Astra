@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 namespace AstraCabin {
  public sealed class PortalSetpiece : MonoBehaviour {
@@ -40,7 +40,7 @@ namespace AstraCabin {
    if(Elapsed>=32)for(int i=0;i<planets.Count;i++)planets[i].Rotate(Vector3.up,spinRates[i]*Time.deltaTime,Space.Self);
   }
   void Animate(){float t=Elapsed;dark.SetFloat("_Clock",t);gate.position=new Vector3(Mathf.Lerp(38,2.8f,Mathf.SmoothStep(0,1,t/20)),1.65f,0);float opening=Mathf.SmoothStep(.20f,1.65f,Mathf.InverseLerp(5,15,t));gate.localScale=new Vector3(1,opening,opening);if(t>20){float pull=Mathf.SmoothStep(0,1,(t-20)/3);gate.position=new Vector3(Mathf.Lerp(2.8f,2.2f,pull),1.65f,0);gate.localScale*=1+pull*4;}
-   bool warp=t>=21.5f&&t<32;dark.SetFloat("_TransitBlend",Mathf.SmoothStep(0,1,Mathf.InverseLerp(21.5f,23,t)));gate.gameObject.SetActive(t<23);tunnel.gameObject.SetActive(warp);d.stars.gameObject.SetActive(!warp);if(warp){for(int i=0;i<tunnel.childCount;i++)tunnel.GetChild(i).localPosition=new Vector3(2+Mathf.Repeat(i*2-(t-23)*24,84),1.65f,0);d.Shake(.18f,.15f);}
+   bool warp=t>=21.5f&&t<32;dark.SetFloat("_TransitBlend",Mathf.SmoothStep(0,1,Mathf.InverseLerp(21.5f,23,t)));gate.gameObject.SetActive(t<23);tunnel.gameObject.SetActive(warp);if(d.stars)d.stars.gameObject.SetActive(!warp);if(warp){for(int i=0;i<tunnel.childCount;i++)tunnel.GetChild(i).localPosition=new Vector3(2+Mathf.Repeat(i*2-(t-23)*24,84),1.65f,0);d.Shake(.18f,.15f);}
    destination.gameObject.SetActive(t>=32);if(t>=35){Complete=true;d.controller.cinematicWindowLock=false;d.controller.ShowNotice("已穿越传送门 / 抵达未知星域");}
   }
   public void Clear(){planets.Clear();if(d)d.controller.cinematicWindowLock=false;Started=false;Complete=false;Elapsed=0;if(root){root.gameObject.SetActive(false);Destroy(root.gameObject);}foreach(var m in mats)if(m)Destroy(m);mats.Clear();rings.Clear();}

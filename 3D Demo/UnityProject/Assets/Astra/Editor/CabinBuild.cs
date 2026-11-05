@@ -362,7 +362,7 @@ public static class CabinBuild
             if (errors.Count > 0) throw new Exception(galaxy + ": " + string.Join("; ", errors));
         }
         Directory.CreateDirectory(directory);
-        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = new[] { Root + "/Scenes/Cabin04.unity" }, locationPathName = directory + "/Astra Cabin.exe", target = BuildTarget.StandaloneWindows64, options = BuildOptions.None });
+        var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions { scenes = new[] { Root + "/Scenes/Cabin04.unity", AstraCabin.Galaxies.Zyl.ZylStomachEnvironment.ScenePath }, locationPathName = directory + "/Astra Cabin.exe", target = BuildTarget.StandaloneWindows64, options = BuildOptions.None });
         if (report.summary.result != BuildResult.Succeeded) throw new Exception("Build failed: " + report.summary.result);
         Debug.Log("ASTRA_NAVIGATION_BUILD_SUCCEEDED " + report.summary.totalSize);
     }

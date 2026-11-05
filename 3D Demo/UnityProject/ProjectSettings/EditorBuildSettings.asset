@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Astra/Scenes/Cabin04.unity
     guid: 9f02bd5878e1df0438bb74008e12188b
+  - enabled: 1
+    path: Assets/Astra/Scenes/Zyl/StomachRefuge.unity
+    guid: 339ae1f06ea432a4ba3b62c1c30198a6
   m_configObjects: {}

@@ -11,7 +11,7 @@ public static class ZylStomachSceneBuilder {
  const string ScenePath="Assets/Astra/Scenes/Zyl/StomachRefuge.unity";
  static Material NaturalMaterial(string name,float gloss,float bump){
   string path=Root+"/"+name+".mat";var m=AssetDatabase.LoadAssetAtPath<Material>(path);
-  if(!m){m=new Material(Shader.Find("Standard"));AssetDatabase.CreateAsset(m,path);}m.shader=Shader.Find("Standard (Specular setup)");m.color=Color.white;m.SetColor("_SpecColor",new Color(.055f,.055f,.055f));m.SetFloat("_Metallic",name=="Fluid"?.08f:0);m.SetFloat("_Glossiness",gloss);
+  if(!m){m=new Material(Shader.Find("Standard"));AssetDatabase.CreateAsset(m,path);}m.shader=Shader.Find(name=="Mucosa"?"Astra/Zyl/BreathingMucosa":"Standard (Specular setup)");if(name=="Mucosa"){m.SetFloat("_BreathAmplitude",.6f);m.SetFloat("_BreathPeriod",4.5f);m.SetFloat("_BreathPreviewTime",-1);}m.color=Color.white;m.SetColor("_SpecColor",new Color(.055f,.055f,.055f));m.SetFloat("_Metallic",name=="Fluid"?.08f:0);m.SetFloat("_Glossiness",gloss);
   foreach(string suffix in new[]{"_Albedo","_Normal"}){string p=Root+"/"+name+suffix+".png";var ti=(TextureImporter)AssetImporter.GetAtPath(p);ti.maxTextureSize=2048;ti.wrapMode=TextureWrapMode.Repeat;ti.filterMode=FilterMode.Trilinear;ti.anisoLevel=4;ti.textureType=suffix=="_Normal"?TextureImporterType.NormalMap:TextureImporterType.Default;ti.sRGBTexture=suffix!="_Normal";ti.SaveAndReimport();m.SetTexture(suffix=="_Normal"?"_BumpMap":"_MainTex",AssetDatabase.LoadAssetAtPath<Texture2D>(p));}
   m.EnableKeyword("_NORMALMAP");m.SetFloat("_BumpScale",bump);EditorUtility.SetDirty(m);return m;
  }
@@ -19,7 +19,7 @@ public static class ZylStomachSceneBuilder {
  [MenuItem("Astra/Zyl/Rebuild natural stomach scene")]
  public static void Build(){
   AssetDatabase.Refresh();var scene=EditorSceneManager.OpenScene(ScenePath,OpenSceneMode.Single);
-  foreach(var o in scene.GetRootGameObjects())if(!o.name.StartsWith("05 |")&&!o.GetComponent<Camera>())Object.DestroyImmediate(o);
+  foreach(var o in scene.GetRootGameObjects())if(!o.name.StartsWith("05 |")&&!o.name.StartsWith("06 |")&&!o.GetComponent<Camera>()&&!o.GetComponent<AstraCabin.Galaxies.Zyl.StomachEnvironmentSettings>())Object.DestroyImmediate(o);
   var materials=new Dictionary<string,Material>();foreach(string n in new[]{"Mucosa","Bark","Stone","Humus","Leaf","Fluid"})materials[n]=NaturalMaterial(n,n=="Fluid"?.68f:n=="Mucosa"?.52f:.22f,n=="Mucosa"?.15f:n=="Fluid"?.12f:n=="Bark"?.4f:.25f);
   string fbx=Root+"/Stomach_Natural.fbx";var imp=(ModelImporter)AssetImporter.GetAtPath(fbx);imp.importCameras=false;imp.importLights=false;imp.importAnimation=false;imp.materialImportMode=ModelImporterMaterialImportMode.None;imp.isReadable=false;imp.SaveAndReimport();
   var model=(GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(fbx));model.name="Natural stomach | Blender authored | +Z depth";
@@ -43,6 +43,11 @@ public static class ZylStomachSceneBuilder {
   cam.transform.position=new Vector3(0,25,116);cam.transform.LookAt(new Vector3(0,20,235));Capture(cam,Path.Combine(output,"natural-mountains.png"));
   cam.transform.position=new Vector3(0,5,-210);cam.transform.LookAt(new Vector3(0,6,-275));Capture(cam,Path.Combine(output,"natural-rear.png"));
   cam.transform.position=new Vector3(0,450,55);cam.transform.rotation=Quaternion.Euler(90,0,0);cam.orthographic=true;cam.orthographicSize=360;cam.aspect=16f/9;bool fog=RenderSettings.fog;RenderSettings.fog=false;Capture(cam,Path.Combine(output,"natural-layout.png"));RenderSettings.fog=fog;
+  cam.orthographic=false;cam.transform.position=new Vector3(27,14,25);cam.transform.LookAt(new Vector3(43,19,80));
+  var flesh=materials["Mucosa"];if(ShaderUtil.ShaderHasError(flesh.shader))throw new System.Exception("Breathing shader compilation failed");
+  flesh.SetFloat("_BreathPreviewTime",0);Capture(cam,Path.Combine(output,"breath-phase0.png"));
+  flesh.SetFloat("_BreathPreviewTime",1.125f);Capture(cam,Path.Combine(output,"breath-phase1.png"));
+  flesh.SetFloat("_BreathPreviewTime",-1);EditorUtility.SetDirty(flesh);AssetDatabase.SaveAssets();
   var rs=model.GetComponentsInChildren<Renderer>();var b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
   int missing=rs.Count(r=>!r.sharedMaterial||!r.sharedMaterial.shader||!r.sharedMaterial.shader.isSupported);int artificial=scene.GetRootGameObjects().Count(o=>o.name.StartsWith("04 |")||o.name.StartsWith("03 |")||o.name.StartsWith("01 |"));
   var missingScripts=Object.FindObjectsOfType<Transform>().Sum(t=>GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject));
@@ -51,4 +56,7 @@ public static class ZylStomachSceneBuilder {
  }
  static void Capture(Camera c,string path){var rt=new RenderTexture(1920,1080,24);c.targetTexture=rt;c.Render();RenderTexture.active=rt;var tex=new Texture2D(1920,1080,TextureFormat.RGB24,false);tex.ReadPixels(new Rect(0,0,1920,1080),0,0);tex.Apply();File.WriteAllBytes(path,tex.EncodeToPNG());c.targetTexture=null;RenderTexture.active=null;Object.DestroyImmediate(rt);Object.DestroyImmediate(tex);}
 }
+
+
+
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 namespace AstraCabin.Galaxies.Zyl {
@@ -74,7 +74,7 @@ namespace AstraCabin.Galaxies.Zyl {
    }else invitationPressed=false;
    if(callRequested&&Time.frameCount>callRequestFrame){callRequested=false;AcceptCall();}
    if(Phase==Step.Arrival||Phase==Step.Invitation){if(d.computer.IsOpen)return;arrival+=dt;clock+=dt;float blend=Mathf.SmoothStep(0,1,arrival/4);ship.position=Vector3.Lerp(new Vector3(9,1.05f,12),new Vector3(7.6f,1.05f,0),blend);ship.position+=Vector3.up*Mathf.Sin(clock*.7f)*.025f;Sample(actorAnimation,"SeatedWave",clock);ActorAnimation="SeatedWave";if(arrival>=5.2f&&Phase==Step.Arrival){Phase=Step.Invitation;d.PlayCue("alert",.6f);}}
-   if(Phase==Step.Greeting||Phase==Step.Story){if(!d.computer.IsOpen||d.computer.CurrentApp!="encounter"||callSurface.Paused)return;callElapsed+=dt;clock+=dt;SampleTalk();if(Phase==Step.Story){StoryTime+=dt;AnimateBeast();if(engulfStartedAt>=0&&StoryTime>=engulfStartedAt+9f){Complete=true;callStars.gameObject.SetActive(false);creatureKey.enabled=mouthSearch.enabled=mouthBounce.enabled=false;Phase=Step.Finished;finishTime=0;d.controller.cinematicWindowLock=false;d.computer.CloseEncounterApp(true);d.visitors.GeneratedRoot.gameObject.SetActive(false);beast.gameObject.SetActive(false);}}RenderVideo();}
+   if(Phase==Step.Greeting||Phase==Step.Story){if(!d.computer.IsOpen||d.computer.CurrentApp!="encounter"||callSurface.Paused)return;callElapsed+=dt;clock+=dt;SampleTalk();if(Phase==Step.Story){StoryTime+=dt;AnimateBeast();if(engulfStartedAt>=0&&StoryTime>=engulfStartedAt+9f && (!d.computer.Navigation || !d.computer.Navigation.Exterior || d.computer.Navigation.Exterior.AwaitSwallowEnvironment())){Complete=true;callStars.gameObject.SetActive(false);creatureKey.enabled=mouthSearch.enabled=mouthBounce.enabled=false;Phase=Step.Finished;finishTime=0;d.controller.cinematicWindowLock=false;d.computer.CloseEncounterApp(true);d.visitors.GeneratedRoot.gameObject.SetActive(false);beast.gameObject.SetActive(false);}}RenderVideo();}
    if(Phase==Step.Finished)finishTime+=dt;
   }
   void AnimateBeast(){
@@ -110,7 +110,7 @@ namespace AstraCabin.Galaxies.Zyl {
   }
   void CreateCallEnvironment(){
    var sky=new GameObject("ASTRA LINK | distant starfield");sky.transform.SetParent(root,false);sky.layer=26;
-   callStars=sky.AddComponent<LoopingStarfield>();callStars.volumeCenter=new Vector3(28000,0,0);callStars.size=new Vector3(2500,44000,56000);callStars.starCount=1400;callStars.pointSize=42;callStars.seed=73219;callStars.animate=false;callStars.velocity=Vector3.zero;callStars.starShader=d.stars.starShader;callStars.Initialize();
+   callStars=sky.AddComponent<LoopingStarfield>();callStars.volumeCenter=new Vector3(28000,0,0);callStars.size=new Vector3(2500,44000,56000);callStars.starCount=1400;callStars.pointSize=42;callStars.seed=73219;callStars.animate=false;callStars.velocity=Vector3.zero;callStars.starShader=d.stars?d.stars.starShader:Shader.Find("Particles/Standard Unlit");callStars.Initialize();
    creatureKey=EncounterLight("Distant cold starlight",LightType.Directional,new Color(.62f,.72f,1f),.42f,0);
    creatureKey.transform.rotation=Quaternion.LookRotation(new Vector3(1,-.35f,.22f));
    mouthSearch=EncounterLight("Ship mouth searchlight",LightType.Spot,new Color(.72f,.85f,1f),0,6500);mouthSearch.spotAngle=65;

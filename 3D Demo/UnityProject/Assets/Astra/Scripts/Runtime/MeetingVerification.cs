@@ -32,6 +32,8 @@ namespace AstraCabin
             if(index<0){controller.SnapToWall(0);computer.Open();computer.OpenApp("navigation");yield break;}
             output=Path.GetFullPath(args[index+1]);Directory.CreateDirectory(output);start=Time.realtimeSinceStartup;Application.logMessageReceived+=Log;
             Application.runInBackground=true;Application.targetFrameRate=60;controller.automationMode=true;nav.automationMode=true;
+            // Recreate the hidden player surface before the first framebuffer readback.
+            Screen.SetResolution(1280,720,false);yield return new WaitForSecondsRealtime(.6f);
             Screen.SetResolution(1600,900,false);yield return new WaitForSecondsRealtime(1);
             Check("QA saves isolated",computer.IsTestStorage&&nav.SavePath.StartsWith(output));
             Check("Campaign and imported ToolPackage validate",nav.Session!=null&&ToolValidation.Package(Resources.Load<ToolPackage>("Performances/relay")).Count==0);
