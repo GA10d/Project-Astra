@@ -15,6 +15,19 @@ namespace AstraCabin.Galaxies.Zyl
         public const string ScenePath = "Assets/Astra/Scenes/Zyl/StomachRefuge.unity";
         public const int EnvironmentLayer = 25;
         public bool Ready { get; private set; }
+        public StomachMihuoerAnchor MihuoerAnchor {get;private set;}
+        public StomachMihuoerShipAnchor MihuoerShipAnchor {get;private set;}
+        public StomachMihuoerActor MihuoerActor {get;private set;}
+        public float CabinYaw {get;private set;}
+        Matrix4x4 authoredLandingPose;
+        bool savedTalkCompleted,orientationDirty;
+        public float CabinYawTowardMihuoer(){if(!MihuoerAnchor)return CabinYaw;var direction=MihuoerAnchor.transform.position;direction.y=0;return CabinYaw+Vector3.SignedAngle(Vector3.right,direction,Vector3.up);}
+        public void SetCabinYaw(float yaw){
+            if(!environmentRoot)return;CabinYaw=yaw;var rotation=Quaternion.Euler(0,-yaw,0);
+            var initial=authoredLandingPose.inverse;environmentRoot.transform.SetPositionAndRotation(rotation*initial.MultiplyPoint3x4(Vector3.zero),rotation*Quaternion.Inverse(authoredLandingPose.rotation));
+            AuthoredToRuntime=Matrix4x4.Rotate(rotation)*initial;
+            foreach(var renderer in environmentRoot.GetComponentsInChildren<Renderer>(true))for(int i=0;i<renderer.sharedMaterials.Length;i++){var material=renderer.sharedMaterials[i];if(!material||!material.HasProperty("_UseBreathFrameMatrix"))continue;var block=new MaterialPropertyBlock();renderer.GetPropertyBlock(block,i);block.SetMatrix("_BreathWorldToAuth",AuthoredToRuntime.inverse);block.SetMatrix("_BreathAuthToWorld",AuthoredToRuntime);renderer.SetPropertyBlock(block,i);}
+        }
         bool EncounterCurtainOwned { get { return navigation && navigation.Director.encounter && navigation.Director.encounter.LoadingEnvironment; } }
         public bool Busy { get; private set; }
         public string Error { get; private set; }
@@ -73,6 +86,7 @@ namespace AstraCabin.Galaxies.Zyl
             {
                 evaluatedSave = navigation.Session?.Save; evaluatedGalaxy = navigation.ActiveGalaxyId;
                 savedWantsStomach = HasSwallowedVoyage(evaluatedGalaxy, navigation.Session);
+                savedTalkCompleted=evaluatedGalaxy=="zyl"&&navigation.Session!=null&&navigation.Session.Save.commands.Any(c=>c.kind=="observed"&&navigation.Session.Engine.Campaign.events.Any(e=>e.id==c.id&&e.type=="setpiece"&&e.setpiece==SetpieceDirector.StomachTalkMode));orientationDirty=true;
             }
             // Restart/import replace Save; retain the transient request only during the actual black ending.
             bool entering = enteringSession == navigation.Session && navigation.ActiveGalaxyId == "zyl" &&
@@ -81,6 +95,7 @@ namespace AstraCabin.Galaxies.Zyl
             if (!entering) enteringSession = null;
             if (!desired && Error != null) Error = null;
             if (!Busy && Error == null && desired != Ready) StartCoroutine(ChangeEnvironment());
+            if(Ready&&!Busy&&orientationDirty&&(!navigation.Director.stomachTalk||!navigation.Director.stomachTalk.Active)){SetCabinYaw(savedTalkCompleted?CabinYawTowardMihuoer():0);orientationDirty=false;}
             if (!Busy && Error == null) curtain = Mathf.MoveTowards(curtain, 0, Time.deltaTime / 1.5f);
         }
 
@@ -115,7 +130,7 @@ namespace AstraCabin.Galaxies.Zyl
                 if (environmentRoot) environmentRoot.SetActive(false);
                 RestoreExterior();
                 if (environment.IsValid() && environment.isLoaded) yield return SceneManager.UnloadSceneAsync(environment);
-                environmentRoot = null; settings = null; environment = default;
+                environmentRoot = null; settings = null;MihuoerAnchor=null;MihuoerShipAnchor=null;MihuoerActor=null;CabinYaw=0; environment = default;
             }
             Busy = false;
         }
@@ -139,7 +154,8 @@ namespace AstraCabin.Galaxies.Zyl
             }
             settings = roots.SelectMany(r => r.GetComponentsInChildren<StomachEnvironmentSettings>(true)).FirstOrDefault();
             if (!settings || roots.Any(r => r.GetComponentInChildren<CabinController>(true))) return;
-            var pose = Matrix4x4.TRS(settings.transform.position, settings.transform.rotation, Vector3.one);
+            StomachCabinAnchor.Ensure(settings);MihuoerAnchor=StomachMihuoerAnchor.Ensure(settings);MihuoerShipAnchor=StomachMihuoerShipAnchor.Ensure(settings,MihuoerAnchor);roots=scene.GetRootGameObjects();
+            var pose = Matrix4x4.TRS(settings.transform.position, settings.transform.rotation, Vector3.one);authoredLandingPose=pose;CabinYaw=0;
             AuthoredToRuntime = pose.inverse;
             environmentRoot = new GameObject("StomachRefuge | additive exterior");
             SceneManager.MoveGameObjectToScene(environmentRoot, scene);
@@ -160,7 +176,9 @@ namespace AstraCabin.Galaxies.Zyl
                 }
             }
             environmentRoot.transform.SetPositionAndRotation(AuthoredToRuntime.MultiplyPoint3x4(Vector3.zero), Quaternion.Inverse(pose.rotation));
-            prepared = true;
+            var actorRoot=new GameObject("Mihuoer | persistent stomach visitor");actorRoot.transform.SetParent(environmentRoot.transform,false);
+            MihuoerActor=actorRoot.AddComponent<StomachMihuoerActor>();MihuoerActor.Initialize(navigation.Director,MihuoerAnchor.transform,MihuoerShipAnchor.transform);
+            prepared = true;orientationDirty=true;
             ApplyExterior();
         }
 

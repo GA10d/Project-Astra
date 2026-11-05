@@ -11,6 +11,7 @@ window.ZYL_DIALOGUE={
    ]:JSON.parse(JSON.stringify(defaults.freeDialogue));
   }
   if(Array.isArray(next.freeDialogue))for(const line of next.freeDialogue)if(line&&typeof line==='object'&&line.replies==null)line.replies=[];
+  if(Array.isArray(next.stomachDialogue))for(const line of next.stomachDialogue)if(line&&typeof line==='object'&&line.replies==null)line.replies=[];
   for(const key of ['explainText','thinkText','explainDuration'])delete next[key];
   return next;
  },

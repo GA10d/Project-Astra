@@ -25,3 +25,10 @@
 JSON保持schemaVersion=1：freeDialogue缺失/null时，将旧explainText、explainDuration和thinkText迁移成两段；旧思考段时长600秒，保持到巨兽打断的既有表现。明确freeDialogue:[]表示不播自由对话，不能误补默认段落。编辑器也迁移旧浏览器草稿，写出新文件时移除旧三字段。运行时旧字段只作兼容读取。新文件保持原有其他数值，不修改campaign和正式存档。
 
 新增zyl私有MihuoerDialogue.cs，通话字幕与可滚动多选项使用米霍尔私有DrawCaptions回调，不修改共享ConferenceCallSurface或其他会议流程。新增HTML的dialogue-model.js和dialogue-editor.js必须连同整个工具目录交付。当前仅源码更新，未构建；本次验证包括C#编译、独立对话时钟测试与HTML逻辑检查，未宣称Unity Play视觉验收。
+
+
+## 最新共识：演出13「泰德野里_肚中会谈」
+
+已接入zyl_countdown_bomb，替换炸弹节点文字占位。保留用户当前水面初始停靠位置/朝向，只新增米霍尔位置方向锚点；默认停留1.5秒、转向6秒，舷窗视角字幕/玩家回复，对话结束打开导航，仍手动确认结算。固定舱室不移动船根，通过胃内环境反向旋转实现视觉转舱，肉壁呼吸坐标同步更新。米霍尔环境持有并在会谈后保留；observed13恢复最终朝向，重播从原初始朝向开始。
+
+HTML新增第8组“13 · 泰德野里_肚中会谈”，参数stomachWaterHold、stomachTurnDuration、独立stomachDialogue数组；演出12 freeDialogue保持独立。现51个固定字段（48数值+3文本）、两套对话序列。旧配置补默认，支持空数组。默认两句台词经用户同意先提供，后续自行编辑。Unity官方API的StomachTalkSceneSetup在导入脚本后仅补齐缺失米霍尔锚点，胃内场景有未保存修改时跳过；未直接写Unity YAML、未改用户初始朝向、未构建。细节与实际验证限制见 Docs/Zyl/肚中会谈使用说明.md。

@@ -19,7 +19,7 @@ public static class ZylStomachSceneBuilder {
  [MenuItem("Astra/Zyl/Rebuild natural stomach scene")]
  public static void Build(){
   AssetDatabase.Refresh();var scene=EditorSceneManager.OpenScene(ScenePath,OpenSceneMode.Single);
-  foreach(var o in scene.GetRootGameObjects())if(!o.name.StartsWith("05 |")&&!o.name.StartsWith("06 |")&&!o.GetComponent<Camera>()&&!o.GetComponent<AstraCabin.Galaxies.Zyl.StomachEnvironmentSettings>())Object.DestroyImmediate(o);
+  foreach(var o in scene.GetRootGameObjects())if(!o.name.StartsWith("05 |")&&!o.name.StartsWith("06 |")&&!o.GetComponent<Camera>()&&!o.GetComponent<AstraCabin.Galaxies.Zyl.StomachEnvironmentSettings>()&&!o.GetComponent<AstraCabin.Galaxies.Zyl.StomachMihuoerAnchor>()&&!o.GetComponent<AstraCabin.Galaxies.Zyl.StomachMihuoerShipAnchor>())Object.DestroyImmediate(o);
   var materials=new Dictionary<string,Material>();foreach(string n in new[]{"Mucosa","Bark","Stone","Humus","Leaf","Fluid"})materials[n]=NaturalMaterial(n,n=="Fluid"?.68f:n=="Mucosa"?.52f:.22f,n=="Mucosa"?.15f:n=="Fluid"?.12f:n=="Bark"?.4f:.25f);
   string fbx=Root+"/Stomach_Natural.fbx";var imp=(ModelImporter)AssetImporter.GetAtPath(fbx);imp.importCameras=false;imp.importLights=false;imp.importAnimation=false;imp.materialImportMode=ModelImporterMaterialImportMode.None;imp.isReadable=false;imp.SaveAndReimport();
   var model=(GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(fbx));model.name="Natural stomach | Blender authored | +Z depth";

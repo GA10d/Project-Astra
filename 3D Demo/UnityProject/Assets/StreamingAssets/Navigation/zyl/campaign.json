@@ -365,11 +365,11 @@
     },
     {
       "id": "zyl_countdown_bomb",
-      "type": "choice",
+      "type": "setpiece",
       "title": "肚子和炸弹",
       "description": "你和米霍尔被巨兽吞到肚子里。",
-      "setpiece": 0,
-      "duration": 0,
+      "setpiece": 13,
+      "duration": 1,
       "choices": [
         {
           "id": "confirm",
