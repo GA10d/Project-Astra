@@ -24,7 +24,7 @@
       "name": "被编排的流浪者",
       "description": "按最新方案配置两处分支与汇合。命运的入口使用引擎堵塞演出10；传送门使用演出11；巨兽演出待制作。当前无资源消耗或奖励。",
       "startNodeId": "entry",
-      "nextSectorId": "",
+      "nextSectorId": "sector_1",
       "nodes": [
         {
           "id": "entry",
@@ -49,7 +49,7 @@
           ],
           "exit": false,
           "travelButtonText": "跃迁至此位置",
-          "archiveDescription": "机舱报警，引擎堵塞，飞船故障。"
+          "archiveDescription": "这是一个新的星系，你会遇到什么？"
         },
         {
           "id": "last_supper",
@@ -123,23 +123,105 @@
           "x": 0.83,
           "y": 0.5,
           "eventId": "zyl_guest",
-          "next": [
-            "prisoner"
-          ],
-          "exit": false,
+          "next": [],
+          "exit": true,
           "travelButtonText": "去舷窗看看",
           "archiveDescription": "你什么也没有发现，你只能等待，也许是希望，也许是死亡，但是，好像有东西再在靠近"
+        }
+      ]
+    },
+    {
+      "id": "sector_1",
+      "name": "倒计时",
+      "description": "星域02 · 倒计时。肚子和肚子里的炸弹 → 囚徒／暴徒 → 米霍尔的尝试 → 缺失的构件。",
+      "startNodeId": "entry",
+      "nextSectorId": "",
+      "nodes": [
+        {
+          "id": "entry",
+          "name": "跃迁入口",
+          "x": 0,
+          "y": 0.5,
+          "eventId": "",
+          "next": [
+            "node_1"
+          ],
+          "exit": false
+        },
+        {
+          "id": "node_1",
+          "name": "肚子和炸弹",
+          "x": 0.2,
+          "y": 0.5,
+          "eventId": "zyl_countdown_bomb",
+          "next": [
+            "prisoner",
+            "violent"
+          ],
+          "exit": false,
+          "travelButtonText": "确定",
+          "archiveDescription": "你和米霍尔被巨兽吞到肚子里。"
         },
         {
           "id": "prisoner",
-          "name": "胃中囚徒",
+          "name": "囚徒",
+          "x": 0.43,
+          "y": 0.23,
+          "eventId": "zyl_countdown_prisoner",
+          "next": [
+            "attempt"
+          ],
+          "exit": false,
+          "travelButtonText": "确定",
+          "archiveDescription": "你不确定米霍尔身上的炸弹是真的假的，你决定到周围看一看"
+        },
+        {
+          "id": "violent",
+          "name": "暴徒",
+          "x": 0.43,
+          "y": 0.77,
+          "eventId": "zyl_countdown_violent",
+          "next": [
+            "attempt"
+          ],
+          "exit": false,
+          "travelButtonText": "确定",
+          "archiveDescription": "你觉得米霍尔是一个骗子，是它害你来到这里，你决定去揍他一顿"
+        },
+        {
+          "id": "attempt",
+          "name": "米霍尔的尝试",
+          "x": 0.66,
+          "y": 0.5,
+          "eventId": "zyl_countdown_attempt",
+          "next": [
+            "missing_component"
+          ],
+          "exit": false,
+          "travelButtonText": "确定",
+          "archiveDescription": "米霍尔似乎想到了办法，他想找你聊聊"
+        },
+        {
+          "id": "missing_component",
+          "name": "缺失的构件",
+          "x": 0.84,
+          "y": 0.5,
+          "eventId": "zyl_countdown_missing_component",
+          "next": [
+            "exit"
+          ],
+          "exit": false,
+          "travelButtonText": "确定",
+          "archiveDescription": "米霍尔想要给怪兽的肚子挠痒，但是缺少一个飞船组件，他请你帮他制作一个，你可以在3D打印机中查看图纸"
+        },
+        {
+          "id": "exit",
+          "name": "星域出口",
           "x": 1,
           "y": 0.5,
-          "eventId": "zyl_prisoner",
+          "eventId": "",
           "next": [],
-          "exit": true,
-          "travelButtonText": "确定",
-          "archiveDescription": "你们被巨兽吞到肚子里。你已经要崩溃了，你决定躺着。"
+          "exit": true
         }
       ]
     }
@@ -276,6 +358,91 @@
           "id": "confirm",
           "text": "确定",
           "result": "你躺了一会",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_countdown_bomb",
+      "type": "choice",
+      "title": "肚子和炸弹",
+      "description": "你和米霍尔被巨兽吞到肚子里。",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "你和米霍尔被巨兽吞到肚子里。",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_countdown_prisoner",
+      "type": "choice",
+      "title": "囚徒",
+      "description": "你回来了，什么也没有，死人骨头都没有。",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "你回来了，什么也没有，死人骨头都没有",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_countdown_violent",
+      "type": "choice",
+      "title": "暴徒",
+      "description": "你回来了，他看起来有点可怜，你不忍心下手。",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "你回来了，他看起来有点可怜，你不忍心下手",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_countdown_attempt",
+      "type": "choice",
+      "title": "米霍尔的尝试",
+      "description": "米霍尔似乎想到了办法，他想找你聊聊",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "米霍尔似乎想到了办法，他想找你聊聊",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_countdown_missing_component",
+      "type": "choice",
+      "title": "缺失的构件",
+      "description": "米霍尔想要给怪兽的肚子挠痒，但是缺少一个飞船组件，他请你帮他制作一个，你可以在3D打印机中查看图纸",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "米霍尔想要给怪兽的肚子挠痒，但是缺少一个飞船组件，他请你帮他制作一个，你可以在3D打印机中查看图纸",
           "costs": [],
           "rewards": []
         }
