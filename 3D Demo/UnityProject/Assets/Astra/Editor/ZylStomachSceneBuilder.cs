@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
@@ -40,6 +40,7 @@ public static class ZylStomachSceneBuilder {
   cam.transform.position=new Vector3(18,17,-23);cam.transform.LookAt(new Vector3(0,8,45));Capture(cam,Path.Combine(output,"natural-ring.png"));
   cam.transform.position=new Vector3(0,3,3);cam.transform.LookAt(new Vector3(0,4,45));Capture(cam,Path.Combine(output,"natural-courtyard.png"));
   cam.transform.position=new Vector3(0,17,48);cam.transform.LookAt(new Vector3(0,12,160));Capture(cam,Path.Combine(output,"natural-depth.png"));
+  cam.transform.position=new Vector3(0,25,116);cam.transform.LookAt(new Vector3(0,20,235));Capture(cam,Path.Combine(output,"natural-mountains.png"));
   cam.transform.position=new Vector3(0,5,-210);cam.transform.LookAt(new Vector3(0,6,-275));Capture(cam,Path.Combine(output,"natural-rear.png"));
   cam.transform.position=new Vector3(0,450,55);cam.transform.rotation=Quaternion.Euler(90,0,0);cam.orthographic=true;cam.orthographicSize=360;cam.aspect=16f/9;bool fog=RenderSettings.fog;RenderSettings.fog=false;Capture(cam,Path.Combine(output,"natural-layout.png"));RenderSettings.fog=fog;
   var rs=model.GetComponentsInChildren<Renderer>();var b=rs[0].bounds;foreach(var r in rs)b.Encapsulate(r.bounds);
@@ -50,3 +51,4 @@ public static class ZylStomachSceneBuilder {
  }
  static void Capture(Camera c,string path){var rt=new RenderTexture(1920,1080,24);c.targetTexture=rt;c.Render();RenderTexture.active=rt;var tex=new Texture2D(1920,1080,TextureFormat.RGB24,false);tex.ReadPixels(new Rect(0,0,1920,1080),0,0);tex.Apply();File.WriteAllBytes(path,tex.EncodeToPNG());c.targetTexture=null;RenderTexture.active=null;Object.DestroyImmediate(rt);Object.DestroyImmediate(tex);}
 }
+
