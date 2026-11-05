@@ -139,7 +139,7 @@ namespace AstraCabin.Navigation
             {
                 if (!File.Exists(path)) return;
                 var loaded = JsonUtility.FromJson<VoyageSave>(NavigationStorage.ReadLimited(path));
-                Engine = Replay(loaded); Save = loaded;
+                if(loaded!=null&&loaded.mihuoerCountdown!=null)loaded.mihuoerCountdown.Validate();Engine = Replay(loaded); Save = loaded;
             }
             catch (Exception e) { Blocked = true; Error = "存档未载入，原文件已保留：" + e.Message; }
         }
@@ -156,7 +156,7 @@ namespace AstraCabin.Navigation
             if (Blocked) return false;
             try
             {
-                var candidate = new VoyageSave { fingerprint = Save.fingerprint, commands = new List<Command>(Save.commands) };
+                var candidate = new VoyageSave { fingerprint = Save.fingerprint, commands = new List<Command>(Save.commands),mihuoerCountdown=Save.mihuoerCountdown };
                 candidate.commands.Add(new Command { kind = kind, id = id, outcome = outcome });
                 var next = Replay(candidate);
                 // Commit durable data before exposing a world action or a reward.
@@ -164,6 +164,12 @@ namespace AstraCabin.Navigation
                 Engine = next; Save = candidate; Error = null; return true;
             }
             catch (Exception e) { Error = "操作未提交：" + e.Message; return false; }
+        }
+        public bool StoreMihuoerCountdown(Galaxies.Zyl.MihuoerCountdownSnapshot state)
+        {
+            if(Blocked)return false;
+            try{state.Validate();var candidate=new VoyageSave{fingerprint=Save.fingerprint,commands=new List<Command>(Save.commands),mihuoerCountdown=state};NavigationStorage.WriteAtomic(Path,JsonUtility.ToJson(candidate,true));Save=candidate;Error=null;return true;}
+            catch(Exception e){Error="倒计时未保存："+e.Message;return false;}
         }
         public bool Restart()
         {

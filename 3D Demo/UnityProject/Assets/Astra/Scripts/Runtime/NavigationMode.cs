@@ -13,6 +13,7 @@ namespace AstraCabin
         public SetpieceDirector Director { get; private set; }
         public EventRegistry Registry { get; private set; }
         public Galaxies.Zyl.ZylStomachEnvironment Exterior { get; private set; }
+        public Galaxies.Zyl.MihuoerCountdown Countdown {get;private set;}
         public Campaign Campaign { get; private set; }
         public bool OwnsPresentation { get; private set; }
         public string Message { get; private set; }
@@ -41,6 +42,7 @@ namespace AstraCabin
             Exterior = GetComponent<Galaxies.Zyl.ZylStomachEnvironment>();
             if (!Exterior) Exterior = gameObject.AddComponent<Galaxies.Zyl.ZylStomachEnvironment>();
             Exterior.Initialize(this);
+            Countdown=GetComponent<Galaxies.Zyl.MihuoerCountdown>()??gameObject.AddComponent<Galaxies.Zyl.MihuoerCountdown>();Countdown.Initialize(this);
             string folder = Path.Combine(Application.persistentDataPath, computer.IsTestStorage ? "NavigationQA" : "Navigation");
             string[] args = Environment.GetCommandLineArgs(); int qa = Array.IndexOf(args, "--astra-navigation-qa");
             int meetingQA = Array.IndexOf(args, "--astra-meeting-qa");

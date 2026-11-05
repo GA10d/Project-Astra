@@ -7,7 +7,8 @@ window.ZYL_PARAMETERS={
     "12 · 巨兽逼近与动画",
     "12 · 通话画面与照明",
     "胃内 · 加载与淡入",
-    "13 · 泰德野里_肚中会谈"
+    "13 · 泰德野里_肚中会谈",
+    "米霍尔 · 皮下倒计时"
   ],
   "fields": [
     {
@@ -519,6 +520,138 @@ window.ZYL_PARAMETERS={
       "max": 30,
       "unit": "秒",
       "desc": "从初始水面朝向平滑转向米霍尔位置锚点。米霍尔的位置和朝向在Unity场景中编辑。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownEnabled",
+      "label": "显示皮下效果（0关／1开）",
+      "value": 1,
+      "min": 0,
+      "max": 1,
+      "unit": "开关",
+      "desc": "关闭时恢复原皮肤材质显示，不停止计时逻辑。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownInitialSeconds",
+      "label": "初始剩余时间",
+      "value": 300,
+      "min": 0,
+      "max": 5999,
+      "unit": "分:秒",
+      "desc": "首次创建航程倒计时时使用，续玩保留存档时间。",
+      "type": "time"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownInitiallyVisible",
+      "label": "初始可见（0否／1是）",
+      "value": 0,
+      "min": 0,
+      "max": 1,
+      "unit": "开关",
+      "desc": "默认初遇阶段隐藏；肚中会谈开始时显示。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownStartOnTalk",
+      "label": "肚中会谈自动显示并启动（0否／1是）",
+      "value": 1,
+      "min": 0,
+      "max": 1,
+      "unit": "开关",
+      "desc": "本航程第一次进入会谈时启动；重入不重置，已发生操作不重复。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownWarningSeconds",
+      "label": "进入警告颜色的剩余时间",
+      "value": 30,
+      "min": 0,
+      "max": 5999,
+      "unit": "分:秒",
+      "desc": "剩余时间低于此值时使用警告色。",
+      "type": "time"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownBrightness",
+      "label": "皮下发光强度",
+      "value": 2.5,
+      "min": 0,
+      "max": 8,
+      "unit": "强度",
+      "desc": "同时影响数字与皮下散光。建议1–4。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownHalo",
+      "label": "皮下散光柔和度",
+      "value": 0.08,
+      "min": 0.01,
+      "max": 0.3,
+      "unit": "比例",
+      "desc": "越大边缘散光越明显。建议0.04–0.12。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownWidth",
+      "label": "数字显示宽度",
+      "value": 0.12,
+      "min": 0.04,
+      "max": 0.2,
+      "unit": "模型单位",
+      "desc": "限定在原胸口破口内，建议0.10–0.14。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownHeight",
+      "label": "数字显示高度",
+      "value": 0.032,
+      "min": 0.012,
+      "max": 0.07,
+      "unit": "模型单位",
+      "desc": "建议0.025–0.04。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownOffsetX",
+      "label": "胸口数字水平偏移",
+      "value": 0,
+      "min": -0.05,
+      "max": 0.05,
+      "unit": "模型单位",
+      "desc": "只移动数字，不移动角色或破口。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownOffsetY",
+      "label": "胸口数字上下偏移",
+      "value": 0,
+      "min": -0.05,
+      "max": 0.05,
+      "unit": "模型单位",
+      "desc": "只移动数字，不移动角色或破口。"
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownColor",
+      "label": "正常发光颜色",
+      "value": "#FF4D2E",
+      "type": "color",
+      "unit": "颜色",
+      "desc": "六位十六进制RGB颜色。",
+      "maxLength": 7
+    },
+    {
+      "group": "米霍尔 · 皮下倒计时",
+      "key": "countdownWarningColor",
+      "label": "警告发光颜色",
+      "value": "#FF160B",
+      "type": "color",
+      "unit": "颜色",
+      "desc": "六位十六进制RGB颜色。",
+      "maxLength": 7
     }
   ],
   "defaults": {
@@ -601,7 +734,20 @@ window.ZYL_PARAMETERS={
           "先看看周围吧。"
         ]
       }
-    ]
+    ],
+    "countdownEnabled": 1,
+    "countdownInitialSeconds": 300,
+    "countdownInitiallyVisible": 0,
+    "countdownStartOnTalk": 1,
+    "countdownWarningSeconds": 30,
+    "countdownBrightness": 2.5,
+    "countdownHalo": 0.08,
+    "countdownWidth": 0.12,
+    "countdownHeight": 0.032,
+    "countdownOffsetX": 0,
+    "countdownOffsetY": 0,
+    "countdownColor": "#FF4D2E",
+    "countdownWarningColor": "#FF160B"
   },
   "rules": [
     [

@@ -4,6 +4,18 @@ using UnityEngine;
 namespace AstraCabin.Galaxies.Zyl {
  [Serializable] public sealed class ZylPresentationParameters {
   public int schemaVersion=1;
+  public float countdownEnabled=1f;
+  public float countdownInitialSeconds=300f;
+  public float countdownInitiallyVisible=0f;
+  public float countdownStartOnTalk=1f;
+  public float countdownWarningSeconds=30f;
+  public float countdownBrightness=2.5f;
+  public float countdownHalo=0.08f;
+  public float countdownWidth=0.12f;
+  public float countdownHeight=0.032f;
+  public float countdownOffsetX=0f;
+  public float countdownOffsetY=0f;
+  public string countdownColor="#FF4D2E",countdownWarningColor="#FF160B";
   public float stomachWaterHold=1.5f,stomachTurnDuration=6f;
   public MihuoerDialogueLine[] stomachDialogue=new[]{new MihuoerDialogueLine{text="我们被吞进它的肚子里了。",duration=5f,replies=new[]{"这里到底是什么地方？"}},new MihuoerDialogueLine{text="先别慌，我们得想办法出去。",duration=6f,replies=new[]{"先看看周围吧。"}}};
   public MihuoerDialogueLine[] freeDialogue; // null means legacy config; an explicit empty array means no free dialogue.
@@ -66,6 +78,18 @@ namespace AstraCabin.Galaxies.Zyl {
    catch(Exception e){Debug.LogError("zyl演出参数无效，整份回退默认值："+e.Message);var fallback=new ZylPresentationParameters();fallback.NormalizeDialogue();return fallback;}
   }
   public void Validate(){
+   Check("countdownEnabled",countdownEnabled,0f,1f);
+   Check("countdownInitialSeconds",countdownInitialSeconds,0f,5999f);
+   Check("countdownInitiallyVisible",countdownInitiallyVisible,0f,1f);
+   Check("countdownStartOnTalk",countdownStartOnTalk,0f,1f);
+   Check("countdownWarningSeconds",countdownWarningSeconds,0f,5999f);
+   Check("countdownBrightness",countdownBrightness,0f,8f);
+   Check("countdownHalo",countdownHalo,0.01f,0.3f);
+   Check("countdownWidth",countdownWidth,0.04f,0.2f);
+   Check("countdownHeight",countdownHeight,0.012f,0.07f);
+   Check("countdownOffsetX",countdownOffsetX,-0.05f,0.05f);
+   Check("countdownOffsetY",countdownOffsetY,-0.05f,0.05f);
+   if(!System.Text.RegularExpressions.Regex.IsMatch(countdownColor??"","^#[0-9a-fA-F]{6}$")||!System.Text.RegularExpressions.Regex.IsMatch(countdownWarningColor??"","^#[0-9a-fA-F]{6}$"))throw new InvalidDataException("倒计时颜色需要#RRGGBB");
    NormalizeDialogue();MihuoerDialogueLine.Validate(freeDialogue);MihuoerDialogueLine.Validate(stomachDialogue);Check("stomachWaterHold",stomachWaterHold,0,10);Check("stomachTurnDuration",stomachTurnDuration,1,30);
    CheckText("greetingText",greetingText,300);
    CheckText("playerReplyText",playerReplyText,160);

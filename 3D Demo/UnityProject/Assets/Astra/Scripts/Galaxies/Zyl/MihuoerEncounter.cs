@@ -50,7 +50,7 @@ namespace AstraCabin.Galaxies.Zyl {
    if(!actor||!creature)throw new InvalidOperationException("初遇米霍尔模型资源未导入");
    pilot=Instantiate(actor,ship).transform;pilot.name="米霍尔 | Blender seated animation";
    pilot.localPosition=new Vector3(0,.06f,-.12f);pilot.localRotation=Quaternion.Euler(0,180,0);pilot.localScale=Vector3.one*1.12f;
-   Layer(pilot.gameObject);actorAnimation=pilot.GetComponentInChildren<Animation>();PrepareMaterials(pilot);
+   Layer(pilot.gameObject);actorAnimation=pilot.GetComponentInChildren<Animation>();PrepareMaterials(pilot);if(d.computer.Navigation&&d.computer.Navigation.Countdown){d.computer.Navigation.Countdown.ReloadParameters();d.computer.Navigation.Countdown.BeginEncounter(d.computer.Navigation.Session?.Engine.Pending?.id??"encounter12");MihuoerCountdownSkin.Attach(pilot.gameObject,d.computer.Navigation.Countdown,p);}
    beast=Instantiate(creature,root).transform;beast.name="泰德勒尔 | recessed mouth animation collection";beast.localRotation=Quaternion.Euler(0,-90,0);Layer(beast.gameObject,27);beastAnimation=beast.GetComponentInChildren<Animation>();PrepareMaterials(beast,true);beast.gameObject.SetActive(false);
    foreach(var child in beast.GetComponentsInChildren<Transform>(true))if(child.name=="Mouth_Center")mouthAnchor=child;
    if(!mouthAnchor)throw new InvalidOperationException("巨兽缺少口部定位锚点");
@@ -68,7 +68,8 @@ namespace AstraCabin.Galaxies.Zyl {
   public void View(){if(!WaitingForView)return;d.computer.ClearEventAlert();d.computer.Close();d.controller.SnapToWall(1);d.controller.EnterWindowView();d.controller.cinematicWindowLock=true;Phase=Step.Arrival;arrival=0;}
   void RequestCall(){callRequested=true;callRequestFrame=Time.frameCount;}
   public void AcceptCall(){if(!Active||LoadingEnvironment||Phase<Step.Invitation||Complete)return;if(Phase==Step.Invitation){ Phase=Step.Greeting;talkBlend=0; }d.controller.SnapToWall(0);d.computer.Open();d.computer.OpenApp("encounter");RenderVideo();}
-  public void Reply(){if(Phase!=Step.Greeting)return;Phase=Step.Story;StoryTime=0;dialogue=new MihuoerDialoguePlayer(p.freeDialogue);dialogueReplyScroll=Vector2.zero;callSurface.Transcript.Add(new ConferenceTranscriptLine{Sender="探测舱 04（我）",Message=callSurface.ReplyText,Local=true});beast.gameObject.SetActive(true);d.PlayCue("echo",.35f);}
+  public void Reply(){if(Phase!=Step.Greeting)return;Phase=Step.Story;StoryTime=0;dialogue=new MihuoerDialoguePlayer(p.freeDialogue,(i,a)=>ApplyTimer(i,"line",a),(i,j,a)=>ApplyTimer(i,"reply",a));dialogueReplyScroll=Vector2.zero;callSurface.Transcript.Add(new ConferenceTranscriptLine{Sender="探测舱 04（我）",Message=callSurface.ReplyText,Local=true});beast.gameObject.SetActive(true);d.PlayCue("echo",.35f);}
+  void ApplyTimer(int line,string phase,CountdownAction action){var nav=d.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(action,(nav.Session?.Engine.Pending?.id??"encounter12")+"/free/"+(string.IsNullOrEmpty(p.freeDialogue[line].timerKey)?line.ToString():p.freeDialogue[line].timerKey)+"/"+phase);}
   void Update(){
    if(!Active||d.controller.IsPaused)return;
    float dt=Time.deltaTime;

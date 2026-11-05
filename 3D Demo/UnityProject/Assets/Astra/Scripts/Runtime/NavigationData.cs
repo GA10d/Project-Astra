@@ -52,6 +52,7 @@ namespace AstraCabin.Navigation
     {
         public int schemaVersion = 1;
         public string fingerprint;
+        public Galaxies.Zyl.MihuoerCountdownSnapshot mihuoerCountdown; // Optional voyage-local auxiliary state; old saves remain valid.
         public List<Command> commands = new List<Command>();
     }
 

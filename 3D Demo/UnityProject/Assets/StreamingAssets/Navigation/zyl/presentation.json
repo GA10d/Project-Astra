@@ -53,47 +53,74 @@
     {
       "text": "我想……我可能要请你离开这里。我没有恶意，但是这件事说起来十分复杂",
       "duration": 4,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_m9304isibf",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "虽然时间不够了，但还有一些时间。我需要想想这件事应该从哪说起？",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_4erpt0h8k8",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "也许应该从十年前，那时我居住的地方非常糟糕。",
       "duration": 4,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_7fw5h456ik",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "你肯定难以想象那是一个什么样的地方，即使是如今的我也不愿意主动回忆。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_gtvg1ewnoc",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "但是现在情况有点不同，所以我必须把这件事告诉你。",
       "duration": 4,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_teat659aff",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "那个地方几乎很少见到阳光，大家似乎有很多烦恼，每个人的脸上都不太平静。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_dmd29xl9qd",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "但我不知道他们的烦恼是什么，我年纪很小，只知道自己经常生病。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_6qpax9svtv",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "我的病不只有一种，有时候会肚子疼，有时候会走不了路……",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_bctyb6dg5x",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "所以，大部分时候我都一副无精打采的样子。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_yajf8xp9by",
+      "timerAction": null,
+      "replyTimerActions": []
     }
   ],
   "stomachWaterHold": 1,
@@ -105,6 +132,12 @@
       "replies": [
         "你感觉怎么样？",
         "你的话好像还没说完。"
+      ],
+      "timerKey": "timer_mw3nrb1b_6kovr1ih7l",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
       ]
     },
     {
@@ -112,6 +145,11 @@
       "duration": 4,
       "replies": [
         "也许我比你清楚大怪兽长什么样……"
+      ],
+      "timerKey": "timer_mw3nrb1b_5w1zok6zf6",
+      "timerAction": null,
+      "replyTimerActions": [
+        null
       ]
     },
     {
@@ -120,6 +158,12 @@
       "replies": [
         "你怎么了？",
         "你能不能把话说清楚。"
+      ],
+      "timerKey": "timer_mw3nrb1b_cm5mg2zoi3",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
       ]
     },
     {
@@ -128,24 +172,54 @@
       "replies": [
         "今天怪事真多。",
         "爆炸表演收费吗？"
+      ],
+      "timerKey": "timer_mw3nrb1b_tyfmt2t8rr",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
       ]
     },
     {
       "text": "不应该这样……不应该这样……明明我已经拼尽全力了。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_kq9535g2bt",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "这个星系不应该有人，我们也不应该被关在这个肚子里。不应该这样！",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw3nrb1b_kw5j87v4qh",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "我一定会挽回这一切的，等一下，等我一下，我马上就能想到办法。",
       "duration": 5,
       "replies": [
         "……"
+      ],
+      "timerKey": "timer_mw3nrb1b_sqwru5z88z",
+      "timerAction": null,
+      "replyTimerActions": [
+        null
       ]
     }
-  ]
+  ],
+  "countdownEnabled": 1,
+  "countdownInitialSeconds": 5979,
+  "countdownInitiallyVisible": 1,
+  "countdownStartOnTalk": 1,
+  "countdownWarningSeconds": 30,
+  "countdownBrightness": 2.5,
+  "countdownHalo": 0.08,
+  "countdownWidth": 0.12,
+  "countdownHeight": 0.032,
+  "countdownOffsetX": 0,
+  "countdownOffsetY": 0,
+  "countdownColor": "#FF4D2E",
+  "countdownWarningColor": "#FF160B"
 }

@@ -22,6 +22,7 @@ namespace AstraCabin.Galaxies.Zyl
             animationPlayer=actor.GetComponentInChildren<Animation>();
             foreach(var container in new[]{factory.GeneratedRoot,Actor})foreach(var t in container.GetComponentsInChildren<Transform>(true))t.gameObject.layer=ZylStomachEnvironment.EnvironmentLayer;
             foreach(var light in factory.GeneratedRoot.GetComponentsInChildren<Light>(true)){light.cullingMask=1<<ZylStomachEnvironment.EnvironmentLayer;light.intensity*=.25f;}
+            var timer=owner.computer.Navigation.Countdown;timer.ReloadParameters();MihuoerCountdownSkin.Attach(actor.gameObject,timer,timer.Parameters);
             Sample();
         }
         void Update(){if(!director||director.controller.IsPaused)return;clock+=Time.deltaTime;Sample();}

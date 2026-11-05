@@ -20,7 +20,7 @@ namespace AstraCabin.Galaxies.Zyl
         public void Initialize(SetpieceDirector value){director=value;}
         public void Show()
         {
-            Clear();parameters=ZylPresentationParameters.Load();Active=true;Phase=Step.WaitingForEnvironment;
+            Clear();parameters=ZylPresentationParameters.Load();if(director.computer.Navigation&&director.computer.Navigation.Countdown)director.computer.Navigation.Countdown.ReloadParameters();Active=true;Phase=Step.WaitingForEnvironment;
             if(!director.computer.Navigation||director.computer.Navigation.ActiveGalaxyId!="zyl"){Fail("肚中会谈需要zyl胃内航程，请使用星域调试工具从炸弹信标开始。");return;}
             director.computer.Close();director.controller.SnapToWall(1);director.controller.EnterWindowView();director.controller.cinematicWindowLock=true;
         }
@@ -44,10 +44,11 @@ namespace AstraCabin.Galaxies.Zyl
             if(Phase==Step.Turning)
             {
                 float t=Mathf.Clamp01(elapsed/parameters.stomachTurnDuration);exterior.SetCabinYaw(Mathf.LerpAngle(0,targetYaw,Mathf.SmoothStep(0,1,t)));
-                if(t>=1){dialogue=new MihuoerDialoguePlayer(parameters.stomachDialogue);Phase=Step.Dialogue;elapsed=0;scroll=Vector2.zero;}
+                if(t>=1){var nav=director.computer.Navigation;nav.Countdown.BeginStomachTalk(nav.Session?.Engine.Pending?.id??"stomach13");dialogue=new MihuoerDialoguePlayer(parameters.stomachDialogue,(i,a)=>ApplyTimer(i,"line",a),(i,j,a)=>ApplyTimer(i,"reply",a));Phase=Step.Dialogue;elapsed=0;scroll=Vector2.zero;}
             }
             if(Phase==Step.Dialogue){dialogue.Tick(Time.deltaTime,false);exterior.MihuoerActor.Speaking=!dialogue.Ended&&!dialogue.WaitingForReply;if(dialogue.Ended)Finish();}
         }
+        void ApplyTimer(int line,string phase,CountdownAction action){var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(action,(nav.Session?.Engine.Pending?.id??"stomach13")+"/stomach/"+(string.IsNullOrEmpty(parameters.stomachDialogue[line].timerKey)?line.ToString():parameters.stomachDialogue[line].timerKey)+"/"+phase);}
         public bool ChooseReply(int index)
         {
             if(!Active||Phase!=Step.Dialogue||director.controller.IsPaused||director.computer.IsOpen||dialogue==null||!dialogue.Choose(index))return false;
