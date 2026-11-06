@@ -65,6 +65,13 @@
     heading(parent, titleText); const grid = element('div', null, 'amount-grid'); parent.append(grid);
     campaign.resources.forEach(r => field(grid, r.name, (values.find(a => a.resourceId === r.id) || {}).amount || 0, value => setAmount(values, r.id, value), { number: true, min: 0, max: 1000000 }));
   }
+  function itemAmounts(parent,titleText,owner,key) {
+    heading(parent,titleText);
+    (campaign.items||[]).forEach(i=>field(parent,i.name,((owner[key]||[]).find(a=>a.itemId===i.id)||{}).amount||0,value=>{
+      owner[key]=(owner[key]||[]).filter(a=>a.itemId!==i.id);if(value)owner[key].push({itemId:i.id,amount:value});
+    },{number:true,min:0,max:1000000}));
+    if(!campaign.items?.length)help(parent,'先在航程设置中添加物品。');
+  }
   function render() {
     fileUI();
     if (!campaign.sectors.some(s => s.id === sectorId)) sectorId = campaign.sectors[0].id;
@@ -187,6 +194,8 @@
       if (n.eventId) button(panel, '编辑事件内容 →', () => { mode = 'event'; eventId = n.eventId; renderInspector(); }, 'wide');
       button(panel, '＋ 为此信标新建事件', () => addEvent(true), 'wide');
     }
+    itemAmounts(panel,'进入前需持有（不消耗）',n,'requiredItems');
+    itemAmounts(panel,'进入时交付（消耗）',n,'itemCosts');
     heading(panel, '出站航线');
     if (n.exit) help(panel, '出口直接连接下一星域，请在星域设置中指定。');
     else sector().nodes.filter(target => target.id !== n.id).forEach(target => check(panel, target.name, n.next.includes(target.id), value => { if (value) n.next.push(target.id); else n.next = n.next.filter(id => id !== target.id); }));
@@ -217,6 +226,29 @@
     field(panel, '航程名称', campaign.name, value => campaign.name = value);
     field(panel, '起始星域', campaign.startSectorId, value => campaign.startSectorId = value, { select: campaign.sectors.map(s => [s.id, s.name]) });
     amounts(panel, '每次跃迁消耗', campaign.travelCosts);
+    heading(panel,'物品定义');
+    (campaign.items||[]).forEach(i=>{
+      const group=element('div',null,'resource-row');panel.append(group);
+      field(group,'物品 ID',i.id,value=>{
+        if(!/^[A-Za-z0-9_-]{1,64}$/.test(value)||(campaign.items||[]).some(v=>v!==i&&v.id===value))throw Error('物品 ID 无效或重复');
+        const old=i.id;i.id=value;
+        const owners=[...campaign.sectors.flatMap(s=>s.nodes),...campaign.events.flatMap(e=>e.choices)];
+        owners.forEach(o=>['requiredItems','itemCosts','itemRewards'].forEach(k=>(o[k]||[]).forEach(a=>{if(a.itemId===old)a.itemId=value;})));
+      });
+      field(group,'物品名称',i.name,value=>i.name=value);
+      field(group,'初始数量',i.initial,value=>i.initial=value,{number:true,min:0});
+      field(group,'容量',i.capacity,value=>i.capacity=value,{number:true,min:1,max:1000000});
+      field(group,'打印机图纸',i.fabricatorBlueprint||'',value=>i.fabricatorBlueprint=value,{select:[['','无'],['seal_ring','密封环'],['connection_flange','连接法兰'],['buffer_gasket','缓冲垫片']]});
+      button(group,'删除物品',()=>mutate(()=>{
+        const owners=[...campaign.sectors.flatMap(s=>s.nodes),...campaign.events.flatMap(e=>e.choices)];
+        if(owners.some(o=>['requiredItems','itemCosts','itemRewards'].some(k=>(o[k]||[]).some(a=>a.itemId===i.id))))throw Error('请先移除对此物品的条件、消耗和奖励引用');
+        campaign.items=campaign.items.filter(v=>v!==i);
+      }),'small danger');
+    });
+    button(panel,'＋ 添加物品',()=>mutate(()=>{
+      campaign.items=campaign.items||[];if(campaign.items.length>=64)throw Error('物品最多64种');
+      campaign.items.push({id:C.unique('item_',campaign.items),name:'新物品',initial:0,capacity:99});
+    }),'wide');
     heading(panel, '资源定义');
     campaign.resources.forEach(r => {
       const group = element('div', null, 'resource-row'); panel.append(group);
@@ -279,6 +311,9 @@
       field(group, '按钮文字', o.text, value => o.text = value);
       field(group, '结算叙述', o.result, value => o.result = value, { multiline: true });
       amounts(group, '消耗', o.costs); amounts(group, '收益', o.rewards);
+      itemAmounts(group,'需持有（不消耗）',o,'requiredItems');
+      itemAmounts(group,'交付（消耗）',o,'itemCosts');
+      itemAmounts(group,'物品奖励',o,'itemRewards');
       const del = button(group, '删除选项', () => mutate(() => e.choices.splice(index, 1)), 'small danger'); del.disabled = e.choices.length <= 1;
     });
     button(panel, '＋ 增加选项', () => mutate(() => { if (e.choices.length >= 8) throw Error('每个事件最多 8 个选项'); e.choices.push({ id: C.unique('option_', e.choices), text: '新的选择', result: '选择已记录。', costs: [], rewards: [] }); }), 'wide');

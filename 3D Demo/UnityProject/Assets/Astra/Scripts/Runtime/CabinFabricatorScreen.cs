@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -85,7 +85,7 @@ namespace AstraCabin
             {
                 choices[i].interactable=interactable&&!owner.Printing&&!owner.Drawing;
                 choices[i].GetComponent<Image>().color=owner.Selected==i?new Color(.2f,.4f,.34f):new Color(.14f,.22f,.21f);
-                counts[i].text=owner.Blueprints[i]+"   已完成 "+owner.Completed[i]+" / 已领取 "+owner.Inventory[i];
+                counts[i].text=owner.Blueprints[i]+"   已完成 "+owner.Completed[i]+" / 累计领取 "+owner.Inventory[i];
             }
             begin.interactable=interactable&&!owner.Printing;claim.interactable=interactable;
             begin.GetComponentInChildren<Text>().text=owner.Drawing?"重新开始":owner.Failed?"绘制失败 / 重试":"开始绘制图纸";

@@ -9,7 +9,7 @@ namespace AstraCabin.Navigation
 {
     // Deterministic command replay keeps position, resource transactions and one-shot rewards
     // consistent. No MonoBehaviour, scene side effects, or player-document writes occur here.
-    public sealed class NavigationEngine
+    public sealed partial class NavigationEngine
     {
         public readonly Campaign Campaign;
         public readonly EventRegistry Registry;
@@ -26,6 +26,7 @@ namespace AstraCabin.Navigation
         {
             Campaign = campaign; Registry = registry;
             foreach (var r in campaign.resources) Balances.Add(r.id, r.initial);
+            foreach(var item in campaign.items ?? new ItemDefinition[0]) Items.Add(item.id, item.initial);
             Enter(campaign.sectors.First(s => s.id == campaign.startSectorId));
         }
         void Enter(Sector sector)
@@ -46,7 +47,8 @@ namespace AstraCabin.Navigation
             if (!Node.next.Contains(id)) return "该节点不在当前可达航线上";
             if (Visited.Contains(Sector.id + "/" + id)) return "不能重复访问已完成节点";
             if (!CanPay(Campaign.travelCosts)) return "航行资源不足；可在菜单中重新开始航程";
-            return null;
+            var target = Sector.nodes.First(n => n.id == id);
+            return ItemError(target.requiredItems) ?? ItemError(target.itemCosts);
         }
         public string ChoiceError(string id)
         {
@@ -54,7 +56,7 @@ namespace AstraCabin.Navigation
             if (Registry.Find(Pending.type).NeedsObservation && !Observed) return "请先完成舱内演出";
             var choice = Pending.choices.FirstOrDefault(o => o.id == id);
             if (choice == null) return "选项不存在";
-            return CanPay(choice.costs) ? null : "资源不足";
+            return !CanPay(choice.costs) ? "资源不足" : ItemError(choice.requiredItems) ?? ItemError(choice.itemCosts) ?? ItemRewardError(choice);
         }
         void Pay(Amount[] costs) { foreach (var c in costs) Balances[c.resourceId] -= c.amount; }
         public bool Apply(Command command, out string error)
@@ -63,8 +65,11 @@ namespace AstraCabin.Navigation
             if (command == null) { error = "指令为空"; return false; }
             switch (command.kind)
             {
+                case "collectItems":
+                    return CollectItems(command, out error);
                 case "travel":
                     error = TravelError(command.id); if (error != null) return false;
+                    SpendItems(Sector.nodes.First(n => n.id == command.id).itemCosts);
                     Pay(Campaign.travelCosts); Node = Sector.nodes.First(n => n.id == command.id); Visited.Add(Key(Node));
                     Pending = string.IsNullOrEmpty(Node.eventId) ? null : Campaign.events.First(e => e.id == Node.eventId); Observed = false;
                     if (Pending != null && Pending.type == "setpiece" && Pending.setpiece == SetpieceDirector.BlockedEngineMode) EngineBlocked = true;
@@ -82,6 +87,9 @@ namespace AstraCabin.Navigation
                 case "choose":
                     error = ChoiceError(command.id); if (error != null) return false;
                     var choice = Pending.choices.First(o => o.id == command.id); Pay(choice.costs);
+                    SpendItems(choice.itemCosts);
+                    foreach(var item in choice.itemRewards ?? new ItemAmount[0]) Items[item.itemId] += item.amount;
+                    if((choice.itemCosts?.Length ?? 0)+(choice.itemRewards?.Length ?? 0)>0) Journal.Add("物品交付 " + ItemText(choice.itemCosts) + " / 获得 " + ItemText(choice.itemRewards));
                     var actual = new List<string>();
                     foreach (var reward in choice.rewards)
                     {
@@ -156,7 +164,7 @@ namespace AstraCabin.Navigation
             if (Blocked) return false;
             try
             {
-                var candidate = new VoyageSave { fingerprint = Save.fingerprint, commands = new List<Command>(Save.commands),mihuoerCountdown=Save.mihuoerCountdown };
+                var candidate = new VoyageSave { fingerprint = Save.fingerprint, commands = new List<Command>(Save.commands),voyageId=Save.voyageId,mihuoerCountdown=Save.mihuoerCountdown };
                 candidate.commands.Add(new Command { kind = kind, id = id, outcome = outcome });
                 var next = Replay(candidate);
                 // Commit durable data before exposing a world action or a reward.
@@ -168,8 +176,16 @@ namespace AstraCabin.Navigation
         public bool StoreMihuoerCountdown(Galaxies.Zyl.MihuoerCountdownSnapshot state)
         {
             if(Blocked)return false;
-            try{state.Validate();var candidate=new VoyageSave{fingerprint=Save.fingerprint,commands=new List<Command>(Save.commands),mihuoerCountdown=state};NavigationStorage.WriteAtomic(Path,JsonUtility.ToJson(candidate,true));Save=candidate;Error=null;return true;}
+            try{state.Validate();var candidate=new VoyageSave{fingerprint=Save.fingerprint,commands=new List<Command>(Save.commands),voyageId=Save.voyageId,mihuoerCountdown=state};NavigationStorage.WriteAtomic(Path,JsonUtility.ToJson(candidate,true));Save=candidate;Error=null;return true;}
             catch(Exception e){Error="倒计时未保存："+e.Message;return false;}
+        }
+        public bool EnsureVoyageIdentity()
+        {
+            if(Blocked)return false;
+            if(!string.IsNullOrEmpty(Save.voyageId))return true;
+            Save.voyageId=Guid.NewGuid().ToString("N");
+            try{NavigationStorage.WriteAtomic(Path,JsonUtility.ToJson(Save,true));return true;}
+            catch(Exception e){Save.voyageId=null;Error="航程身份未保存："+e.Message;return false;}
         }
         public bool Restart()
         {

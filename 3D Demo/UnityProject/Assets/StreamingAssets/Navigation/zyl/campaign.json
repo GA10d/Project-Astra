@@ -135,7 +135,7 @@
       "name": "倒计时",
       "description": "星域02 · 倒计时。肚子和肚子里的炸弹 → 囚徒／暴徒 → 米霍尔的尝试 → 缺失的构件。",
       "startNodeId": "entry",
-      "nextSectorId": "",
+      "nextSectorId": "sector_2",
       "nodes": [
         {
           "id": "entry",
@@ -199,12 +199,12 @@
           ],
           "exit": false,
           "travelButtonText": "去看看",
-          "archiveDescription": "米霍尔似乎想到了办法，他想找你聊聊"
+          "archiveDescription": "米霍尔似乎想到了办法，他想找你聊聊。"
         },
         {
           "id": "missing_component",
-          "name": "缺失的构件",
-          "x": 0.84,
+          "name": "傻瓜",
+          "x": 0.858,
           "y": 0.5,
           "eventId": "zyl_countdown_missing_component",
           "next": [
@@ -212,7 +212,42 @@
           ],
           "exit": false,
           "travelButtonText": "确定",
-          "archiveDescription": "米霍尔想要给怪兽的肚子挠痒，但是缺少一个飞船组件，他请你帮他制作一个，你可以在3D打印机中查看图纸"
+          "archiveDescription": "你打印出了米霍尔需要的构件，去找他吧。",
+          "itemCosts": [
+            {
+              "itemId": "item_1",
+              "amount": 1
+            }
+          ]
+        },
+        {
+          "id": "exit",
+          "name": "星域出口",
+          "x": 1,
+          "y": 0.5,
+          "eventId": "",
+          "next": [],
+          "exit": true
+        }
+      ]
+    },
+    {
+      "id": "sector_2",
+      "name": "别离",
+      "description": "",
+      "startNodeId": "entry",
+      "nextSectorId": "",
+      "nodes": [
+        {
+          "id": "entry",
+          "name": "跃迁入口",
+          "x": 0,
+          "y": 0.5,
+          "eventId": "",
+          "next": [
+            "exit"
+          ],
+          "exit": false
         },
         {
           "id": "exit",
@@ -420,7 +455,7 @@
       "title": "米霍尔的尝试",
       "description": "米霍尔计划用一根超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。但是他缺少一个构件，也许你可以用打印机解决这个问题。",
       "setpiece": 14,
-      "duration": 1,
+      "duration": 8,
       "choices": [
         {
           "id": "confirm",
@@ -434,19 +469,28 @@
     {
       "id": "zyl_countdown_missing_component",
       "type": "choice",
-      "title": "缺失的构件",
-      "description": "米霍尔想要给怪兽的肚子挠痒，但是缺少一个飞船组件，他请你帮他制作一个，你可以在3D打印机中查看图纸",
+      "title": "傻瓜",
+      "description": "你和米霍尔又聊了许多，你有点累，或许可以先休息一会。",
       "setpiece": 0,
       "duration": 0,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "米霍尔想要给怪兽的肚子挠痒，但是缺少一个飞船组件，他请你帮他制作一个，你可以在3D打印机中查看图纸",
+          "result": "接演出",
           "costs": [],
           "rewards": []
         }
       ]
+    }
+  ],
+  "items": [
+    {
+      "id": "item_1",
+      "name": "米霍尔的飞船构件",
+      "initial": 0,
+      "capacity": 99,
+      "fabricatorBlueprint": "buffer_gasket"
     }
   ]
 }

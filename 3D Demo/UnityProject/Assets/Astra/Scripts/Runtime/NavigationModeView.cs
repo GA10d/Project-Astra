@@ -10,7 +10,7 @@ namespace AstraCabin
         GUIStyle navText, navButton;
         Font navFont;
         Vector2 detailScroll, journalScroll;
-        bool showJournal;
+        bool showJournal, showInventory;
         float detailHeight = 500;
         readonly Color paper = new Color(.77f, .86f, .71f), muted = new Color(.42f, .55f, .45f), signal = new Color(.63f, .87f, .56f), amber = new Color(.95f, .70f, .34f);
         void Styles(Font font)
@@ -43,7 +43,8 @@ namespace AstraCabin
             Label(new Rect(18, 12, Mathf.Max(150, w - 582), 30), IsGalaxyOverview ? "NAV / 星系总览" : "NAV / " + ActiveGalaxyId, 23);
             float bx = w - 546;
             if (Button(new Rect(bx, 12, 122, 30), "星系总览", !IsGalaxyOverview && confirmation == null)) RequestGalaxyOverview();
-            if (Button(new Rect(bx + 130, 12, 126, 30), showJournal ? "返回星图" : "航行日志", !IsGalaxyOverview && Session != null && confirmation == null)) showJournal = !showJournal;
+            if (Button(new Rect(bx + 130, 12, 60, 30), "日志", !IsGalaxyOverview && Session != null && confirmation == null)) {showJournal=!showJournal;showInventory=false;}
+            if (Button(new Rect(bx + 194,12,62,30), "物品", !IsGalaxyOverview && Session != null && confirmation == null)) {showInventory=!showInventory;showJournal=false;}
             if (Button(new Rect(bx + 264, 12, 136, 30), "导入星域配置", !IsGalaxyOverview && confirmation == null)) confirmation = "import";
             if (Button(new Rect(bx + 408, 12, 120, 30), "新航程", !IsGalaxyOverview && Session != null && confirmation == null)) confirmation = "restart";
             if (IsGalaxyOverview) DrawGalaxyOverview(w, h);
@@ -64,7 +65,8 @@ namespace AstraCabin
                 }
                 Label(new Rect(18, 111, w - 36, 28), Campaign.name + "  /  " + engine.Sector.name + "     ·     每跳消耗 " + engine.Amounts(Campaign.travelCosts, "-"), 15, amber);
                 bool oldEnabled = GUI.enabled; GUI.enabled = oldEnabled && !Session.Blocked && confirmation == null;
-                if (showJournal) DrawJournal(new Rect(18, 148, w - 36, h - 211));
+                if(showInventory) DrawInventory(new Rect(18,148,w-36,h-211));
+                else if (showJournal) DrawJournal(new Rect(18, 148, w - 36, h - 211));
                 else
                 {
                     float mapWidth = (w - 54) * .66f;
@@ -105,7 +107,7 @@ namespace AstraCabin
             foreach (var n in e.Sector.nodes)
             {
                 Vector2 p = NodePoint(area, n); bool current = n.id == e.Node.id, visited = e.Visited.Contains(e.Key(n));
-                bool reachable = e.Node.next.Contains(n.id) && e.Pending == null && !e.Complete;
+                bool reachable = e.TravelError(n.id) == null;
                 Color color = current ? amber : reachable ? signal : visited ? muted : new Color(.36f, .47f, .39f);
                 if (selectedId == n.id) { Block(new Rect(p.x - 19, p.y - 19, 38, 38), color); Block(new Rect(p.x - 17, p.y - 17, 34, 34), new Color(.04f, .08f, .06f)); }
                 Block(new Rect(p.x - 11, p.y - 11, 22, 22), color);
@@ -161,7 +163,10 @@ namespace AstraCabin
                     if (Button(new Rect(0, y, contentWidth, bh), choice.text, error == null)) { Choose(choice.id); break; }
                     y += bh + 5;
                     string cost = "消耗 " + e.Amounts(choice.costs, "-") + "\n获得 " + e.Amounts(choice.rewards, "+");
-                    if (error == "资源不足") cost += "（资源不足）";
+                    if((choice.requiredItems?.Length??0)>0) cost+="\n需持有 "+e.ItemText(choice.requiredItems);
+                    if((choice.itemCosts?.Length??0)>0) cost+="\n交付 "+e.ItemText(choice.itemCosts);
+                    if((choice.itemRewards?.Length??0)>0) cost+="\n获得物品 "+e.ItemText(choice.itemRewards);
+                    if (error != null) cost += "\n"+error;
                     navText.fontSize = 13; float ch = navText.CalcHeight(new GUIContent(cost), contentWidth);
                     Label(new Rect(0, y, contentWidth, ch + 3), cost, 13, muted); y += ch + 18;
                 }
@@ -175,6 +180,8 @@ namespace AstraCabin
                 string info = node.id == e.Node.id ? "当前位置。沿亮起的航线选择下一处信标。" : e.Visited.Contains(e.Key(node)) ? "此信标已访问，无法返回。" : e.Node.next.Contains(node.id) ? "航路已确认，可以跃迁。" : "尚未接入当前航线。请先抵达与它相连的信标。";
                 bool hasArchive = !string.IsNullOrWhiteSpace(node.archiveDescription);
                 string archive = hasArchive ? node.archiveDescription : info;
+                if((node.requiredItems?.Length??0)>0) archive+="\n需持有："+e.ItemText(node.requiredItems);
+                if((node.itemCosts?.Length??0)>0) archive+="\n进入时交付："+e.ItemText(node.itemCosts);
                 navText.fontSize = 15; navText.richText = hasArchive;
                 float archiveHeight = Mathf.Max(95, navText.CalcHeight(new GUIContent(archive), contentWidth));
                 Label(new Rect(0, 114, contentWidth, archiveHeight + 4), archive);
@@ -191,6 +198,15 @@ namespace AstraCabin
                 }
             }
             detailHeight = e.Pending != null ? y + 80 : nodeDetailHeight;
+            GUI.EndScrollView();
+        }
+        Vector2 inventoryScroll;
+        void DrawInventory(Rect area)
+        {
+            var items=Campaign.items??new ItemDefinition[0];
+            inventoryScroll=GUI.BeginScrollView(area,inventoryScroll,new Rect(0,0,area.width-24,Mathf.Max(area.height-20,items.Length*44+95)));
+            Label(new Rect(12,8,area.width-50,48),"本航程物品库存 · "+(items.Length==0?"暂无物品定义":"交付后扣除；新航程重置"),18,amber);
+            for(int i=0;i<items.Length;i++)Label(new Rect(12,62+i*44,area.width-50,40),items[i].name+"    "+Session.Engine.Items[items[i].id]+" / "+items[i].capacity,17);
             GUI.EndScrollView();
         }
         void DrawJournal(Rect area)

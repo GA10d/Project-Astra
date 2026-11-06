@@ -39,6 +39,18 @@
         if (v) seen.add(v.resourceId);
       });
     }
+    const items=c.items??[], itemIds=new Set(), blueprints=new Set();
+    if(!Array.isArray(items)||items.length>64||items.some(i=>!i))return errors.concat('物品需0–64种且不可为空项');
+    items.forEach(i=>{
+      if(!idOK(i.id)||itemIds.has(i.id)||!textOK(i.name,32)||!bounded(i.capacity,1,1000000)||!bounded(i.initial,0,i.capacity))error('物品定义无效：'+i.id);
+      itemIds.add(i.id);
+      if(i.fabricatorBlueprint){if(!['seal_ring','connection_flange','buffer_gasket'].includes(i.fabricatorBlueprint)||blueprints.has(i.fabricatorBlueprint))error('打印图纸无效或重复绑定');blueprints.add(i.fabricatorBlueprint);}
+    });
+    function itemAmounts(values,where){
+      if(values==null)return;
+      if(!Array.isArray(values)||values.length>64){error(where+'：物品列表无效');return;}
+      const seen=new Set();values.forEach(a=>{if(!a||!itemIds.has(a.itemId)||seen.has(a.itemId)||!bounded(a.amount,1,1000000))error(where+'：未知物品、重复项或数量无效');if(a)seen.add(a.itemId);});
+    }
     amounts(c.travelCosts, '航行消耗');
     const events = new Set();
     c.events.forEach(e => {
@@ -51,9 +63,11 @@
       const options = new Set();
       e.choices.forEach(o => {
         if (!idOK(o.id) || options.has(o.id) || !textOK(o.text, 160) || !textOK(o.result, 2000)) error(e.id + '：选项内容无效或 ID 重复');
+        itemAmounts(o.requiredItems,e.id);itemAmounts(o.itemCosts,e.id);itemAmounts(o.itemRewards,e.id);
+        if(e.type==='performance'&&((o.requiredItems?.length||0)+(o.itemCosts?.length||0)>0))error(e.id+'：自动会议结算不能有物品门槛');
         options.add(o.id); amounts(o.costs, e.id + '/' + o.id + ' 消耗'); amounts(o.rewards, e.id + '/' + o.id + ' 收益');
       });
-      if (!e.choices.some(o => Array.isArray(o.costs) && o.costs.length === 0)) error(e.id + '：至少保留一个无消耗选项');
+      if (!e.choices.some(o => Array.isArray(o.costs) && o.costs.length === 0 && !o.requiredItems?.length && !o.itemCosts?.length)) error(e.id + '：至少保留一个无消耗选项');
     });
     const sectors = new Map();
     c.sectors.forEach(s => { if (!idOK(s.id) || sectors.has(s.id)) error('星域 ID 无效或重复：' + s.id); sectors.set(s.id, s); });
@@ -66,6 +80,8 @@
       s.nodes.forEach(n => {
         if (!idOK(n.id) || nodes.has(n.id)) error(prefix + '：节点 ID 无效或重复 ' + n.id);
         nodes.set(n.id, n);
+        itemAmounts(n.requiredItems,n.id);itemAmounts(n.itemCosts,n.id);
+        if(n.id===s.startNodeId&&((n.requiredItems?.length||0)+(n.itemCosts?.length||0)>0))error(n.id+'：起点不能有物品门槛');
         if (!textOK(n.name, 32) || !Number.isFinite(n.x) || !Number.isFinite(n.y) || n.x < 0 || n.x > 1 || n.y < 0 || n.y > 1) error(prefix + '/' + n.id + '：名称或坐标无效');
         const archiveError=archiveTextError(n.archiveDescription); if(archiveError)error(prefix + '/' + n.id + '：' + archiveError);
         if (n.travelButtonText != null && (typeof n.travelButtonText !== 'string' || n.travelButtonText.length > 24 || /[\u0000-\u001f\u007f-\u009f]/.test(n.travelButtonText))) error(prefix + '/' + n.id + '：前往按钮文本最多 24 字且不能含控制字符');

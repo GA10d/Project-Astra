@@ -13,6 +13,7 @@ namespace AstraCabin.Navigation
         public int schemaVersion;
         public string id, name, startSectorId;
         public ResourceDefinition[] resources;
+        public ItemDefinition[] items;
         public Amount[] travelCosts;
         public Sector[] sectors;
         public EventDefinition[] events;
@@ -30,6 +31,7 @@ namespace AstraCabin.Navigation
         public float x, y;
         public bool exit;
         public string[] next;
+        public ItemAmount[] requiredItems, itemCosts;
         public string travelButtonText;
         public string archiveDescription;
         public string TravelButtonLabel { get { return string.IsNullOrWhiteSpace(travelButtonText) ? "跃迁至此信标" : travelButtonText.Trim(); } }
@@ -46,12 +48,14 @@ namespace AstraCabin.Navigation
     {
         public string id, text, result;
         public Amount[] costs, rewards;
+        public ItemAmount[] requiredItems, itemCosts, itemRewards;
     }
     [Serializable] public sealed class Command { public string kind, id, outcome; }
     [Serializable] public sealed class VoyageSave
     {
         public int schemaVersion = 1;
         public string fingerprint;
+        public string voyageId;
         public Galaxies.Zyl.MihuoerCountdownSnapshot mihuoerCountdown; // Optional voyage-local auxiliary state; old saves remain valid.
         public List<Command> commands = new List<Command>();
     }
@@ -136,6 +140,8 @@ namespace AstraCabin.Navigation
             // Preserve old configuration hashes when the optional integration field is empty.
             string json=JsonUtility.ToJson(campaign);
             json=Regex.Replace(json, @",""performanceId"":(?:""""|null)", "");
+            // Empty optional inventory fields preserve pre-inventory voyage fingerprints.
+            json=Regex.Replace(json, @",""(?:items|requiredItems|itemCosts|itemRewards)"":(?:null|\[\])", "");
             // Display-only node labels must not invalidate existing voyages.
             json=Regex.Replace(json, @",""(?:travelButtonText|archiveDescription)"":(?:null|""(?:\\.|[^""\\])*"")", "");
             using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(json))).Replace("-", "");
@@ -173,7 +179,7 @@ namespace AstraCabin.Navigation
                     ValidateAmounts(o.costs, resources, e.id + "/" + o.id + " 消耗", errors);
                     ValidateAmounts(o.rewards, resources, e.id + "/" + o.id + " 收益", errors);
                 }
-                if (!e.choices.Any(o => o.costs != null && o.costs.Length == 0)) errors.Add(e.id + "：必须有一个无消耗选项以避免事件卡死");
+                if (!e.choices.Any(o => o.costs != null && o.costs.Length == 0 && (o.requiredItems == null || o.requiredItems.Length == 0) && (o.itemCosts == null || o.itemCosts.Length == 0))) errors.Add(e.id + "：必须有一个无消耗选项以避免事件卡死");
             }
             var sectors = new Dictionary<string, Sector>();
             foreach (var s in c.sectors)
@@ -223,6 +229,7 @@ namespace AstraCabin.Navigation
                 while (!string.IsNullOrEmpty(id) && sectors.ContainsKey(id)) { if (!seen.Add(id)) { errors.Add("星域顺序有环"); break; } id = sectors[id].nextSectorId; }
                 if (seen.Count != sectors.Count) errors.Add("存在航程不可达星域");
             }
+            InventoryRules.Validate(c, errors);
             return errors;
         }
         static void ValidateAmounts(Amount[] values, HashSet<string> resources, string where, List<string> errors)

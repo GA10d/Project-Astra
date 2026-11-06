@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using UnityEngine;
 namespace AstraCabin
 {
@@ -10,18 +10,22 @@ namespace AstraCabin
         public bool Printing { get; private set; }
         public int[] Completed = new int[3];
         public int[] Inventory = new int[3];
+        public static readonly string[] BlueprintIds={"seal_ring","connection_flange","buffer_gasket"};
+        string receiptId, receiptVoyage, receiptPayload;
+        int[] receiptCounts;
         public float PrintProgress { get; private set; }
-        [Serializable] sealed class Store { public int version=1; public int[] completed,inventory; public int blueprint; public float clock; public bool printing; }
+        [Serializable] sealed class Store { public int version=1; public int[] completed,inventory; public int blueprint; public float clock; public bool printing; public string receiptId,receiptVoyage,receiptPayload; public int[] receiptCounts; }
         string SavePath { get { return System.IO.Path.Combine(Array.IndexOf(Environment.GetCommandLineArgs(),"--fabricator-qa")>=0 ? "D:/AI/02_游戏开发/Project-AstraCabin/output/fabricator" : Application.persistentDataPath,"fabricator-v1.json"); } }
         float saveClock;
-        void Save()
+        bool Save()
         {
-            if(!player)return;
+            if(!player)return false;
             try {
-                var data=new Store{completed=Completed,inventory=Inventory,blueprint=selected,clock=printClock,printing=Printing};
+                var data=new Store{completed=Completed,inventory=Inventory,blueprint=selected,clock=printClock,printing=Printing,receiptId=receiptId,receiptVoyage=receiptVoyage,receiptPayload=receiptPayload,receiptCounts=receiptCounts};
                 string temp=SavePath+".tmp";System.IO.File.WriteAllText(temp,JsonUtility.ToJson(data));
                 if(System.IO.File.Exists(SavePath))System.IO.File.Replace(temp,SavePath,null);else System.IO.File.Move(temp,SavePath);
-            } catch(Exception e){Debug.LogWarning("Fabricator save: "+e.Message);}
+                return true;
+            } catch(Exception e){Debug.LogWarning("Fabricator save: "+e.Message);return false;}
         }
         void Load()
         {
@@ -29,6 +33,7 @@ namespace AstraCabin
                 if(!System.IO.File.Exists(SavePath))return;
                 var data=JsonUtility.FromJson<Store>(System.IO.File.ReadAllText(SavePath));
                 if(data==null||data.version!=1)return;
+                receiptId=data.receiptId;receiptVoyage=data.receiptVoyage;receiptPayload=data.receiptPayload;receiptCounts=data.receiptCounts;
                 for(int i=0;i<3;i++){Completed[i]=data.completed!=null&&i<data.completed.Length?Mathf.Max(0,data.completed[i]):0;Inventory[i]=data.inventory!=null&&i<data.inventory.Length?Mathf.Max(0,data.inventory[i]):0;}
                 if(data.printing){selected=Mathf.Clamp(data.blueprint,0,2);StartPrinting();printClock=Mathf.Clamp(data.clock,0,18);PrintProgress=printClock/18;Save();}
             }catch(Exception e){Debug.LogWarning("Fabricator load: "+e.Message);}
@@ -202,10 +207,59 @@ namespace AstraCabin
         public void ClaimParts()
         {
             if(!Focused)return;
-            for(int i=0;i<3;i++){Inventory[i]+=Completed[i];Completed[i]=0;}
-            message="已存入部件库存";Save();
-            if(!Printing&&part){Destroy(part.GetComponent<MeshFilter>().sharedMesh);Destroy(part);}
+            if(HasPendingClaim && (Input.GetKey(KeyCode.LeftShift)||Input.GetKey(KeyCode.RightShift))){DiscardPendingClaim();return;}
+            var nav=GetComponent<NavigationMode>();
+            bool mapped=nav && nav.Campaign!=null && nav.Campaign.items!=null && nav.Campaign.items.Length>0;
+            if(!string.IsNullOrEmpty(receiptId)||mapped)
+            {
+                if(!nav){message="导航尚未就绪";return;}
+                if(!string.IsNullOrEmpty(receiptId) && nav.Session!=null && !nav.Session.Blocked && !nav.IsGalaxyOverview && nav.Session.Save.voyageId!=receiptVoyage)
+                {
+                    message="有绑定旧航程的待领取部件；请先返回原航程。若已重开，按住 Shift 点击领取可丢弃旧批次，之后重新打印。";return;
+                }
+                if(string.IsNullOrEmpty(receiptId))
+                {
+                    if(!nav.PreparePrintedItems(Completed,out receiptVoyage,out receiptPayload,out receiptCounts)){message=nav.Message;return;}
+                    receiptId=Guid.NewGuid().ToString("N");
+                }
+                if(!Save()){message="领取凭据保存失败，请重试";return;}
+                if(!nav.ReceivePrintedItems(receiptVoyage,receiptId,receiptPayload)){message=nav.Message;return;}
+                var oldId=receiptId;var oldVoyage=receiptVoyage;var oldPayload=receiptPayload;var oldCounts=receiptCounts;
+                for(int i=0;i<3;i++){Inventory[i]+=receiptCounts[i];Completed[i]-=receiptCounts[i];}
+                receiptId=receiptVoyage=receiptPayload=null;receiptCounts=null;
+                if(!Save())
+                {
+                    for(int i=0;i<3;i++){Inventory[i]-=oldCounts[i];Completed[i]+=oldCounts[i];}
+                    receiptId=oldId;receiptVoyage=oldVoyage;receiptPayload=oldPayload;receiptCounts=oldCounts;
+                    message="航程已收货，领取记录保存失败；请重试完成同步";return;
+                }
+                message="已存入本航程物品库存";
+                if(Array.Exists(Completed,n=>n>0))message+="；未绑定部件仍保留在打印机";
+            }
+            else
+            {
+                var amounts=(int[])Completed.Clone();
+                for(int i=0;i<3;i++){Inventory[i]+=amounts[i];Completed[i]=0;}
+                if(!Save()){for(int i=0;i<3;i++){Inventory[i]-=amounts[i];Completed[i]+=amounts[i];}message="库存保存失败，请重试";return;}
+                message="已存入部件库存";
+            }
+            if(!Printing&&part&&Completed[selected]==0){Destroy(part.GetComponent<MeshFilter>().sharedMesh);Destroy(part);}
         }
+        public void DiscardPendingClaim()
+        {
+            if(!Focused||string.IsNullOrEmpty(receiptId))return;
+            var oldId=receiptId;var oldVoyage=receiptVoyage;var oldPayload=receiptPayload;var oldCounts=receiptCounts;
+            for(int i=0;i<3;i++)Completed[i]-=oldCounts[i];
+            receiptId=receiptVoyage=receiptPayload=null;receiptCounts=null;
+            if(!Save())
+            {
+                for(int i=0;i<3;i++)Completed[i]+=oldCounts[i];
+                receiptId=oldId;receiptVoyage=oldVoyage;receiptPayload=oldPayload;receiptCounts=oldCounts;
+                message="重置未保存，请重试";return;
+            }
+            message="旧领取批次已丢弃；请重新打印。旧航程已到账的物品不变。";
+        }
+        internal bool HasPendingClaim {get{return !string.IsNullOrEmpty(receiptId);}}
         void OnDestroy(){if(screen)Destroy(screen.gameObject);if(part){var f=part.GetComponent<MeshFilter>();if(f)Destroy(f.sharedMesh);Destroy(part);}if(material)Destroy(material);if(beamMaterial)Destroy(beamMaterial);}
     }
 }
