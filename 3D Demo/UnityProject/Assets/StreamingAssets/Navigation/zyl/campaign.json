@@ -468,11 +468,11 @@
     },
     {
       "id": "zyl_countdown_missing_component",
-      "type": "choice",
+      "type": "setpiece",
       "title": "傻瓜",
       "description": "你和米霍尔又聊了许多，你有点累，或许可以先休息一会。",
-      "setpiece": 0,
-      "duration": 0,
+      "setpiece": 15,
+      "duration": 33,
       "choices": [
         {
           "id": "confirm",

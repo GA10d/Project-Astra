@@ -97,7 +97,7 @@ namespace AstraCabin.Galaxies.Zyl
             if (!entering) enteringSession = null;
             if (!desired && Error != null) Error = null;
             if (!Busy && Error == null && desired != Ready) StartCoroutine(ChangeEnvironment());
-            if(Ready&&!Busy&&orientationDirty&&(!navigation.Director.stomachTalk||!navigation.Director.stomachTalk.Active)&&(!navigation.Director.printingRequest||!navigation.Director.printingRequest.Active)){SetCabinYaw(savedPrintingReached?CabinYawTowardCraft():savedTalkCompleted?CabinYawTowardMihuoer():0);if(MihuoerActor)MihuoerActor.SetSeatedOnCraft(savedPrintingReached);orientationDirty=false;}
+            if(Ready&&!Busy&&orientationDirty&&(!navigation.Director.stomachTalk||!navigation.Director.stomachTalk.Active)&&(!navigation.Director.printingRequest||!navigation.Director.printingRequest.Active)&&(!navigation.Director.fools||!navigation.Director.fools.Active)){SetCabinYaw(savedPrintingReached?CabinYawTowardCraft():savedTalkCompleted?CabinYawTowardMihuoer():0);if(MihuoerActor)MihuoerActor.SetSeatedOnCraft(savedPrintingReached);orientationDirty=false;}
             if (!Busy && Error == null) curtain = Mathf.MoveTowards(curtain, 0, Time.deltaTime / 1.5f);
         }
 

@@ -167,13 +167,14 @@ namespace AstraCabin
                     Registry.Find(e.type).Begin(this,e);OwnsPresentation=true;
                     computer.Open();computer.OpenApp("meeting");return true;
                 }
+                if(OwnsPresentation&&Director.ActiveMode==e.setpiece&&e.setpiece==SetpieceDirector.FoolsMode){Director.fools.Resume();return true;}
                 if(OwnsPresentation&&Director.ActiveMode==e.setpiece&&e.setpiece==SetpieceDirector.PrintingRequestMode){Director.printingRequest.Resume();return true;}
                 if(OwnsPresentation&&Director.ActiveMode==e.setpiece&&e.setpiece==SetpieceDirector.StomachTalkMode){Director.stomachTalk.Resume();return true;}
                 if (OwnsPresentation && Director.ActiveMode == e.setpiece && e.setpiece==SetpieceDirector.EncounterMode) { if(Director.encounter.WaitingForView)computer.Open();else if(Director.encounter.Phase>=Galaxies.Zyl.MihuoerEncounter.Step.Invitation)Director.encounter.AcceptCall();else computer.Close(); return true; }
                 if (OwnsPresentation && Director.ActiveMode == e.setpiece) { if(e.setpiece==SetpieceDirector.PortalMode && !Director.portal.Started)computer.Open();else computer.Close(); return true; }
                 OwnsPresentation = true;
                 Registry.Find(e.type).Begin(this, e);
-                if(e.setpiece==SetpieceDirector.StomachTalkMode||e.setpiece==SetpieceDirector.PrintingRequestMode)return true;
+                if(e.setpiece==SetpieceDirector.StomachTalkMode||e.setpiece==SetpieceDirector.PrintingRequestMode||e.setpiece==SetpieceDirector.FoolsMode)return true;
                 if(e.setpiece==SetpieceDirector.PortalMode || e.setpiece==SetpieceDirector.EncounterMode) { computer.Open(); return true; }
                 computer.Close();
                 controller.ShowNotice(SetpieceDirector.RequiresRepair(e.setpiece) ? "导航事件：前往 B 墙取维修锤，修复 D 墙裂痕" : "导航事件：Q / E 转向 D 墙观察，结束后返回导航模式");

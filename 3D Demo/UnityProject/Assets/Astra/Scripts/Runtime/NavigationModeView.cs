@@ -147,9 +147,9 @@ namespace AstraCabin
                 if (Registry.Find(ev.type).NeedsObservation)
                 {
                     string state = e.Observed ? "演出已完成 / 可结算" : OwnsPresentation ? (SetpieceDirector.RequiresRepair(ev.setpiece) ? "等待修复全部三处裂痕" : "演出进行中 / " + Mathf.FloorToInt(Director.ModeTime) + " 秒") : "待观看 / 可继续未完成演出";
-                    if((ev.setpiece != SetpieceDirector.PortalMode && ev.setpiece != SetpieceDirector.EncounterMode && ev.setpiece != SetpieceDirector.StomachTalkMode && ev.setpiece != SetpieceDirector.PrintingRequestMode) || !e.Observed) { Label(new Rect(0, y, contentWidth, 32), state, 15, amber); y += 36; }
+                    if((ev.setpiece != SetpieceDirector.PortalMode && ev.setpiece != SetpieceDirector.EncounterMode && ev.setpiece != SetpieceDirector.StomachTalkMode && ev.setpiece != SetpieceDirector.PrintingRequestMode && ev.setpiece != SetpieceDirector.FoolsMode) || !e.Observed) { Label(new Rect(0, y, contentWidth, 32), state, 15, amber); y += 36; }
                     // Mode 10 has no optional observation-return control; retain only unfinished-session recovery.
-                    if ((ev.setpiece != SetpieceDirector.BlockedEngineMode && ev.setpiece != SetpieceDirector.PortalMode && ev.setpiece != SetpieceDirector.EncounterMode && ev.setpiece != SetpieceDirector.StomachTalkMode && ev.setpiece != SetpieceDirector.PrintingRequestMode) || (!e.Observed && !OwnsPresentation) || (!e.Observed && ev.setpiece==SetpieceDirector.StomachTalkMode && Director.stomachTalk.Phase==Galaxies.Zyl.StomachTalkSetpiece.Step.Error) || (!e.Observed && ev.setpiece==SetpieceDirector.PrintingRequestMode && Director.printingRequest.Phase==Galaxies.Zyl.MihuoerPrintingSetpiece.Step.Error))
+                    if ((ev.setpiece != SetpieceDirector.BlockedEngineMode && ev.setpiece != SetpieceDirector.PortalMode && ev.setpiece != SetpieceDirector.EncounterMode && ev.setpiece != SetpieceDirector.StomachTalkMode && ev.setpiece != SetpieceDirector.PrintingRequestMode && ev.setpiece != SetpieceDirector.FoolsMode) || (!e.Observed && !OwnsPresentation) || (!e.Observed && ev.setpiece==SetpieceDirector.StomachTalkMode && Director.stomachTalk.Phase==Galaxies.Zyl.StomachTalkSetpiece.Step.Error) || (!e.Observed && ev.setpiece==SetpieceDirector.PrintingRequestMode && Director.printingRequest.Phase==Galaxies.Zyl.MihuoerPrintingSetpiece.Step.Error) || (!e.Observed && ev.setpiece==SetpieceDirector.FoolsMode && Director.fools.Phase==Galaxies.Zyl.FoolsSetpiece.Step.Error))
                     {
                         if (Button(new Rect(0, y, contentWidth, 34), OwnsPresentation ? "返回舱室观察" : "播放舱内演出")) BeginPresentation();
                         y += 48;
@@ -241,6 +241,7 @@ namespace AstraCabin
         void OnGUI()
         {
             if(Galaxies.Zyl.ZylScreenCurtain.IsOpaque)return;
+            if(Director&&Director.fools&&Director.fools.Active&&!Director.fools.Complete&&Director.fools.Phase!=Galaxies.Zyl.FoolsSetpiece.Step.Error)return;
             if (!loaded || !OwnsPresentation || computer.IsOpen || controller.IsPaused || Session == null) return;
             if(Session.Engine.Pending!=null && Session.Engine.Pending.type=="performance")return;
             if (navText == null) return;
