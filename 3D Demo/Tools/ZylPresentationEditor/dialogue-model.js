@@ -12,7 +12,8 @@ window.ZYL_DIALOGUE={
   }
   if(Array.isArray(next.freeDialogue))for(const line of next.freeDialogue)if(line&&typeof line==='object'&&line.replies==null)line.replies=[];
   if(Array.isArray(next.stomachDialogue))for(const line of next.stomachDialogue)if(line&&typeof line==='object'&&line.replies==null)line.replies=[];
-  for(const key of ['freeDialogue','stomachDialogue'])if(Array.isArray(next[key]))next[key].forEach(line=>ZYL_TIMER_DATA.normalizeLine(line));
+  if(Array.isArray(next.printingDialogue))for(const line of next.printingDialogue)if(line&&typeof line==='object'&&line.replies==null)line.replies=[];
+  for(const key of ['freeDialogue','stomachDialogue','printingDialogue'])if(Array.isArray(next[key]))next[key].forEach(line=>ZYL_TIMER_DATA.normalizeLine(line));
   for(const key of ['explainText','thinkText','explainDuration'])delete next[key];
   return next;
  },

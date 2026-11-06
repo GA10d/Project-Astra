@@ -18,6 +18,7 @@ namespace AstraCabin.Galaxies.Zyl {
   public string countdownColor="#FF4D2E",countdownWarningColor="#FF160B";
   public float stomachWaterHold=1.5f,stomachTurnDuration=6f;
   public MihuoerDialogueLine[] stomachDialogue=new[]{new MihuoerDialogueLine{text="我们被吞进它的肚子里了。",duration=5f,replies=new[]{"这里到底是什么地方？"}},new MihuoerDialogueLine{text="先别慌，我们得想办法出去。",duration=6f,replies=new[]{"先看看周围吧。"}}};
+  public MihuoerDialogueLine[] printingDialogue=new[]{new MihuoerDialogueLine{text="【占位台词，请在HTML中填写米霍尔的正式对白。】",duration=5f,replies=new string[0]}};
   public MihuoerDialogueLine[] freeDialogue; // null means legacy config; an explicit empty array means no free dialogue.
   public void NormalizeDialogue(){if(freeDialogue==null)freeDialogue=new[]{new MihuoerDialogueLine{text=explainText,duration=explainDuration},new MihuoerDialogueLine{text=thinkText,duration=600f}};}
   public string greetingText="你好，我是米霍尔。";
@@ -90,7 +91,7 @@ namespace AstraCabin.Galaxies.Zyl {
    Check("countdownOffsetX",countdownOffsetX,-0.05f,0.05f);
    Check("countdownOffsetY",countdownOffsetY,-0.05f,0.05f);
    if(!System.Text.RegularExpressions.Regex.IsMatch(countdownColor??"","^#[0-9a-fA-F]{6}$")||!System.Text.RegularExpressions.Regex.IsMatch(countdownWarningColor??"","^#[0-9a-fA-F]{6}$"))throw new InvalidDataException("倒计时颜色需要#RRGGBB");
-   NormalizeDialogue();MihuoerDialogueLine.Validate(freeDialogue);MihuoerDialogueLine.Validate(stomachDialogue);Check("stomachWaterHold",stomachWaterHold,0,10);Check("stomachTurnDuration",stomachTurnDuration,1,30);
+   NormalizeDialogue();MihuoerDialogueLine.Validate(freeDialogue);MihuoerDialogueLine.Validate(stomachDialogue);MihuoerDialogueLine.Validate(printingDialogue);Check("stomachWaterHold",stomachWaterHold,0,10);Check("stomachTurnDuration",stomachTurnDuration,1,30);
    CheckText("greetingText",greetingText,300);
    CheckText("playerReplyText",playerReplyText,160);
    CheckText("concernText",concernText,1000);

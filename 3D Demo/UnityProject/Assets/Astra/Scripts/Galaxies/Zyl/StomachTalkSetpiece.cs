@@ -35,7 +35,7 @@ namespace AstraCabin.Galaxies.Zyl
             {
                 if(!exterior.Ready||exterior.Busy||ZylScreenCurtain.BlocksInput||!director.controller.IsAtWindow)return;
                 if(!exterior.MihuoerAnchor||!exterior.MihuoerActor){Fail("胃内场景缺少米霍尔位置锚点或角色。");return;}
-                exterior.SetCabinYaw(0); // Always restart from the user's authored water-facing landing rotation.
+                exterior.MihuoerActor.SetSeatedOnCraft(false);exterior.SetCabinYaw(0); // Always restart from the user's authored water-facing landing rotation.
                 targetYaw=exterior.CabinYawTowardMihuoer();elapsed=0;Phase=Step.WaterView;
             }
             if(director.computer.IsOpen)return;

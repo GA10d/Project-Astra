@@ -19,6 +19,8 @@ namespace AstraCabin
         public Material[] retainedMaterials;
         public const int EncounterMode = 12;
         public const int StomachTalkMode=13;
+        public const int PrintingRequestMode=14;
+        public Galaxies.Zyl.MihuoerPrintingSetpiece printingRequest;
         public Galaxies.Zyl.StomachTalkSetpiece stomachTalk;
         public Galaxies.Zyl.MihuoerEncounter encounter;
         public const int PortalMode = 11;
@@ -74,6 +76,7 @@ namespace AstraCabin
             encounter=GetComponent<Galaxies.Zyl.MihuoerEncounter>()??gameObject.AddComponent<Galaxies.Zyl.MihuoerEncounter>(); encounter.Initialize(this);
             portal=GetComponent<PortalSetpiece>()??gameObject.AddComponent<PortalSetpiece>(); portal.Initialize(this);
             stomachTalk=GetComponent<Galaxies.Zyl.StomachTalkSetpiece>()??gameObject.AddComponent<Galaxies.Zyl.StomachTalkSetpiece>();stomachTalk.Initialize(this);
+            printingRequest=GetComponent<Galaxies.Zyl.MihuoerPrintingSetpiece>()??gameObject.AddComponent<Galaxies.Zyl.MihuoerPrintingSetpiece>();printingRequest.Initialize(this);
             combat=GetComponent<ExplosionBattleSetpieces>()??gameObject.AddComponent<ExplosionBattleSetpieces>();
             visitors=GetComponent<VisitorStationSetpieces>()??gameObject.AddComponent<VisitorStationSetpieces>();
             crimson=GetComponent<CrimsonEyeSetpiece>()??gameObject.AddComponent<CrimsonEyeSetpiece>();
@@ -132,7 +135,7 @@ namespace AstraCabin
         public bool TryDebugMode(int mode) { return allowDebugHotkeys && TriggerMode(mode); }
         public bool TriggerMode(int mode)
         {
-            if(mode<0 || mode>StomachTalkMode) return false;
+            if(mode<0 || mode>PrintingRequestMode) return false;
             Initialize();
             Quaternion previousPlanetRotation=planet?planet.transform.rotation:Quaternion.identity;
             ClearCurrent();
@@ -170,6 +173,7 @@ namespace AstraCabin
                 case PortalMode: portal.Show(); break;
                 case EncounterMode: encounter.Show(); break;
                 case StomachTalkMode: stomachTalk.Show();break;
+                case PrintingRequestMode: printingRequest.Show();break;
             }
             return true;
         }
@@ -179,7 +183,7 @@ namespace AstraCabin
             StopAllCoroutines();
             if(computer.IsOpen) computer.Close();
             controller.SetPaused(false); controller.observationAllowed=true;
-            stomachTalk.Clear();encounter.Clear(); portal.Clear(); combat.Clear(); visitors.Clear(); crimson.Clear(); whales.Clear(); mirror.Clear(); sorting.Clear(); eventAudio.StopAll();
+            printingRequest.Clear();stomachTalk.Clear();encounter.Clear(); portal.Clear(); combat.Clear(); visitors.Clear(); crimson.Clear(); whales.Clear(); mirror.Clear(); sorting.Clear(); eventAudio.StopAll();
             if(repairRoot) { repairRoot.SetActive(false); Destroy(repairRoot); }
             if(heldHammer) { heldHammer.SetActive(false); Destroy(heldHammer); }
             if(AlertRoot) { AlertRoot.SetActive(false); Destroy(AlertRoot); }
@@ -382,7 +386,7 @@ namespace AstraCabin
             {
                 Color oldColor=GUI.color; GUI.color=new Color(.018f,.025f,.025f,.87f);
                 GUI.DrawTexture(new Rect(28,110,385,CrisisActive?119:79),Texture2D.whiteTexture); GUI.color=oldColor;
-                string[] names={"","行星碎裂","不明飞行物靠近","舱体遭遇撞击","赤红星域","交战区","星际补给站","星海鲸群","另一艘你","耗材分拣站","未知撞击 / 引擎堵塞","误入星际传送门","初遇米霍尔","肚中会谈"};
+                string[] names={"","行星碎裂","不明飞行物靠近","舱体遭遇撞击","赤红星域","交战区","星际补给站","星海鲸群","另一艘你","耗材分拣站","未知撞击 / 引擎堵塞","误入星际传送门","初遇米霍尔","肚中会谈","泰德野里_米霍尔需要打印构件"};
                 GUI.Label(new Rect(43,116,350,31),ActiveMode < names.Length ? names[ActiveMode] : "舱内演出",heading);
                 string text=CrisisActive?(ModeTime<3?"电力中断…":HasHammer?"已持维修锤 / 修复 D 墙裂痕："+RepairedCount+" / 3":"前往 B 墙取下维修锤\n然后点击 D 墙三处黄色高亮裂痕"):ActiveMode==7?"小鲸鱼正在穿舱 / Q、E 环顾四周":ActiveMode==8?"移动鼠标、拨动电源，观察对面…":ActiveMode==9?"转向 D 墙观察 / 点击窗户可凑近":(allowDebugHotkeys?"[0] 随时恢复默认场景":"完成事件后返回导航继续");
                 GUI.Label(new Rect(43,153,352,65),text,body);

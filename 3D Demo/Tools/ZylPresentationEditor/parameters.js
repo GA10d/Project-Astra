@@ -8,7 +8,8 @@ window.ZYL_PARAMETERS={
     "12 · 通话画面与照明",
     "胃内 · 加载与淡入",
     "13 · 泰德野里_肚中会谈",
-    "米霍尔 · 皮下倒计时"
+    "米霍尔 · 皮下倒计时",
+    "14 · 泰德野里_米霍尔需要打印构件"
   ],
   "fields": [
     {
@@ -747,7 +748,14 @@ window.ZYL_PARAMETERS={
     "countdownOffsetX": 0,
     "countdownOffsetY": 0,
     "countdownColor": "#FF4D2E",
-    "countdownWarningColor": "#FF160B"
+    "countdownWarningColor": "#FF160B",
+    "printingDialogue": [
+      {
+        "text": "【占位台词，请在HTML中填写米霍尔的正式对白。】",
+        "duration": 5,
+        "replies": []
+      }
+    ]
   },
   "rules": [
     [

@@ -266,7 +266,7 @@
     field(panel, '事件类型', e.type, value => { e.type = value; if(value === 'performance') { e.performanceId=e.performanceId || 'relay'; } if (value === 'setpiece') { e.setpiece = e.setpiece || 1; e.duration = e.duration || 8; } }, { select: [['choice', '文字选择 / 资源流转'], ['setpiece', '舱内演出 + 处置选择'], ['performance', '视频会议 / Tool V2 演出树']] });
     if(e.type === 'performance') { field(panel, '演出包 ID', e.performanceId || '', value => e.performanceId=value); help(panel, '对应 Resources/Performances/<ID>.asset。交互选项在 Tool V2 演出树编辑；这里只保留一个无消耗结算项，会议结束后自动执行。'); }
     if (e.type === 'setpiece') {
-      const names = ['星球解体','陌生访客','撞击维修','赤红星域','战机交火','加油站','星海鲸群','另一艘你','耗材分拣站','泰德野里_未知撞击导致引擎堵塞','泰德野里_误入星际传送门','泰德野里_初遇米霍尔','泰德野里_肚中会谈'];
+      const names = ['星球解体','陌生访客','撞击维修','赤红星域','战机交火','加油站','星海鲸群','另一艘你','耗材分拣站','泰德野里_未知撞击导致引擎堵塞','泰德野里_误入星际传送门','泰德野里_初遇米霍尔','泰德野里_肚中会谈','泰德野里_米霍尔需要打印构件'];
       field(panel, '演出内容', e.setpiece, value => e.setpiece = Number(value), { select: names.map((name, i) => [String(i + 1), `${i + 1} · ${name}`]) });
       field(panel, '最短观看时间（秒）', e.duration, value => e.duration = value, { number: true, min: 1, max: 300, step: '.5' });
       if (e.setpiece === 3 || e.setpiece === 10) help(panel, '撞击事件还要求玩家实际修复全部三处裂痕。');

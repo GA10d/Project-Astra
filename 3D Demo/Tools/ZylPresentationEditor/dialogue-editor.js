@@ -6,7 +6,8 @@ function changeDialogue(action,key='freeDialogue'){const next=copy(values);actio
 function initDialogueEditor(){
  for(const spec of [
   {key:'freeDialogue',group:3,title:'米霍尔自由对话',help:'按顺序播放。时长结束后，无回复选项自动继续；有选项等待玩家选择，任意选项均继续下一段。等待回复不阻止巨兽靠近，达到疑惑距离后立即强制打断。',empty:'尚无自由对话。巨兽仍会靠近并触发疑惑与转场。'},
-  {key:'stomachDialogue',group:7,title:'肚中会谈 · 对话内容',help:'转舱面向米霍尔后开始，保持舷窗视角。每段填写台词、持续时间和可选玩家回复。计时结束后，无选项自动继续；有选项等待玩家选择，选后进入下一段。最后一段结束后自动打开导航，不自动选择事件处置选项。',empty:'没有会谈段落：转舱完成后立即返回导航。'}
+  {key:'stomachDialogue',group:7,title:'肚中会谈 · 对话内容',help:'转舱面向米霍尔后开始，保持舷窗视角。每段填写台词、持续时间和可选玩家回复。计时结束后，无选项自动继续；有选项等待玩家选择，选后进入下一段。最后一段结束后自动打开导航，不自动选择事件处置选项。',empty:'没有会谈段落：转舱完成后立即返回导航。'},
+  {key:'printingDialogue',group:9,title:'米霍尔需要打印构件 · 对话内容',help:'切到舷窗，米霍尔坐在现有飞船上面向玩家。每段可配置台词、时长、回复与计时操作；最后一段结束后自动返回导航，不自动结算事件。',empty:'没有对话段落：切到舷窗并就座后立即返回导航。'}
  ]){
   const group=$('group'+spec.group);const area=dialogueElement('section','dialogue-editor');
   const header=dialogueElement('div','group-title');header.append(dialogueElement('h3','',spec.title),dialogueButton('＋ 增加一段对话',()=>changeDialogue(lines=>lines.push({text:'请填写米霍尔的台词。',duration:5,replies:[]}),spec.key)));area.append(header);

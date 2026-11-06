@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace AstraCabin
 {
@@ -68,9 +68,12 @@ namespace AstraCabin
             SnapToWall(0);
         }
 
+        private bool FabricatorFocused { get { var f = GetComponent<CabinFabricator>(); return f && f.Focused; } }
+
         private void Update()
         {
             if (Galaxies.Zyl.ZylScreenCurtain.BlocksInput || automationMode || ComputerOpen || modalChangedFrame == Time.frameCount) return;
+            if (FabricatorFocused) return;
             if (Input.GetKeyDown(KeyCode.Escape)) { if(cinematicWindowLock) SetPaused(!IsPaused); else HandleEscape(); return; }
             if (IsPaused || cinematicWindowLock) return;
             if (IsObservingWindow && Input.GetMouseButtonDown(1)) { ExitWindowView(); return; }
@@ -112,7 +115,7 @@ namespace AstraCabin
             viewCamera.transform.position += viewCamera.transform.rotation * combatOffset;
             viewCamera.transform.rotation *= Quaternion.Euler(combatEuler);
             viewCamera.fieldOfView = Mathf.Lerp(fieldOfView, windowFieldOfView, approach) + combatFov;
-            if (!Galaxies.Zyl.ZylScreenCurtain.BlocksInput && !automationMode && !cinematicWindowLock && !IsPaused && !ComputerOpen && modalChangedFrame != Time.frameCount)
+            if (!Galaxies.Zyl.ZylScreenCurtain.BlocksInput && !automationMode && !FabricatorFocused && !cinematicWindowLock && !IsPaused && !ComputerOpen && modalChangedFrame != Time.frameCount)
             {
                 if (IsObservingWindow) { ChangeHovered(null); return; }
                 UpdateHover();
@@ -123,7 +126,7 @@ namespace AstraCabin
         /// <summary>+1 turns clockwise (E), -1 counter-clockwise (Q). Transitions never accumulate Euler drift.</summary>
         public void Turn(int direction)
         {
-            if (direction == 0 || IsTurning || IsPaused || ComputerOpen) return;
+            if (FabricatorFocused || direction == 0 || IsTurning || IsPaused || ComputerOpen) return;
             if (IsObservingWindow)
             {
                 ExitWindowView(); pendingObservationTurn = direction > 0 ? 1 : -1; return;
@@ -211,6 +214,11 @@ namespace AstraCabin
             CabinInteractable target = Physics.Raycast(ray, out hit, interactionDistance, interactionMask, QueryTriggerInteraction.Ignore)
                 ? hit.collider.GetComponentInParent<CabinInteractable>() : null;
             if (target && !target.isActiveAndEnabled) target = null;
+            if (!target)
+            {
+                var printer = GetComponent<CabinFabricator>();
+                if (printer && printer.Hit(ray)) target = printer.Button;
+            }
             ChangeHovered(target);
         }
 
@@ -285,7 +293,7 @@ namespace AstraCabin
 
         private void OnGUI()
         {
-            if (Galaxies.Zyl.ZylScreenCurtain.IsOpaque || !showUI || ComputerOpen) return;
+            if (Galaxies.Zyl.ZylScreenCurtain.IsOpaque || !showUI || ComputerOpen || FabricatorFocused) return;
             EnsureStyles();
             Matrix4x4 previous = GUI.matrix;
             float scale = Mathf.Min(Screen.width / 1600f, Screen.height / 900f);

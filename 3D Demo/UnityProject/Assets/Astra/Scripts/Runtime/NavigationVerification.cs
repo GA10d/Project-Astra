@@ -48,7 +48,7 @@ namespace AstraCabin
             Invalid(c, r, "duplicate resource", x => x.resources[1].id = x.resources[0].id);
             Invalid(c, r, "negative starting resource", x => x.resources[0].initial = -1);
             Invalid(c, r, "unknown handler", x => x.events[0].type = "missing");
-            Invalid(c, r, "invalid setpiece", x => x.events[0].setpiece = 13);
+            Invalid(c, r, "invalid setpiece", x => x.events[0].setpiece = SetpieceDirector.PrintingRequestMode+1);
             Invalid(c, r, "NaN duration", x => x.events[0].duration = float.NaN);
             Invalid(c, r, "null event", x => x.events[0] = null);
             Invalid(c, r, "null option", x => x.events[0].choices[0] = null);

@@ -134,7 +134,10 @@
         "你的话好像还没说完。"
       ],
       "timerKey": "timer_mw3nrb1b_6kovr1ih7l",
-      "timerAction": null,
+      "timerAction": {
+        "kind": "setStart",
+        "seconds": 5979
+      },
       "replyTimerActions": [
         null,
         null
@@ -214,12 +217,79 @@
   "countdownInitiallyVisible": 1,
   "countdownStartOnTalk": 1,
   "countdownWarningSeconds": 30,
-  "countdownBrightness": 2.5,
-  "countdownHalo": 0.08,
+  "countdownBrightness": 2,
+  "countdownHalo": 0.04,
   "countdownWidth": 0.12,
   "countdownHeight": 0.032,
   "countdownOffsetX": 0,
   "countdownOffsetY": 0,
-  "countdownColor": "#FF4D2E",
-  "countdownWarningColor": "#FF160B"
+  "countdownColor": "#bb51e1",
+  "countdownWarningColor": "#FF160B",
+  "printingDialogue": [
+    {
+      "text": "嘿！我想到办法了",
+      "duration": 4,
+      "replies": [
+        "什么办法。",
+        "我在听。"
+      ],
+      "timerKey": "timer_mw4rlejw_pgx1ith7k9",
+      "timerAction": {
+        "kind": "set",
+        "seconds": 5940
+      },
+      "replyTimerActions": [
+        null,
+        null
+      ]
+    },
+    {
+      "text": "你看这个，我飞船上的超长关节。",
+      "duration": 4,
+      "replies": []
+    },
+    {
+      "text": "原本是用来将飞船悬挂在不方便停泊的地方，但现在有新的用途了。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "只要我们用这个杆子去捅这个大家伙的肚子，让它觉得不舒服。也许……它就会将我们吐出去！",
+      "duration": 7,
+      "replies": [
+        "也许？",
+        "好阴险。"
+      ],
+      "timerKey": "timer_mw4rs1ln_1y4yq56mf8",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
+      ]
+    },
+    {
+      "text": "我明白……这确实不算太高明的办法。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "但是让我们试一下吧！不会很痛的，总比比炸成碎片强。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "但是，它的目前似乎有一些问题，好像少了一个构件，我倒是有图纸，只是不知道该怎么做出来。",
+      "duration": 5,
+      "replies": [
+        "等我一会。",
+        "知道了，我有办法。"
+      ],
+      "timerKey": "timer_mw4rv83v_1atazmsmuq",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
+      ]
+    }
+  ]
 }

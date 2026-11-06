@@ -20,7 +20,9 @@ namespace AstraCabin.Galaxies.Zyl
         public StomachMihuoerActor MihuoerActor {get;private set;}
         public float CabinYaw {get;private set;}
         Matrix4x4 authoredLandingPose;
-        bool savedTalkCompleted,orientationDirty;
+        bool savedTalkCompleted,savedPrintingReached,orientationDirty;
+        public float CabinYawTowardCraft(){if(!MihuoerShipAnchor)return CabinYaw;var direction=MihuoerShipAnchor.transform.position;direction.y=0;return CabinYaw+Vector3.SignedAngle(Vector3.right,direction,Vector3.up);}
+        public static bool HasPrintingRequestVoyage(string galaxy,NavigationSession session){return galaxy=="zyl"&&session!=null&&!session.Blocked&&((session.Engine.Pending!=null&&session.Engine.Pending.type=="setpiece"&&session.Engine.Pending.setpiece==SetpieceDirector.PrintingRequestMode)||session.Save.commands.Any(c=>c.kind=="observed"&&session.Engine.Campaign.events.Any(e=>e.id==c.id&&e.type=="setpiece"&&e.setpiece==SetpieceDirector.PrintingRequestMode)));}
         public float CabinYawTowardMihuoer(){if(!MihuoerAnchor)return CabinYaw;var direction=MihuoerAnchor.transform.position;direction.y=0;return CabinYaw+Vector3.SignedAngle(Vector3.right,direction,Vector3.up);}
         public void SetCabinYaw(float yaw){
             if(!environmentRoot)return;CabinYaw=yaw;var rotation=Quaternion.Euler(0,-yaw,0);
@@ -86,7 +88,7 @@ namespace AstraCabin.Galaxies.Zyl
             {
                 evaluatedSave = navigation.Session?.Save; evaluatedGalaxy = navigation.ActiveGalaxyId;
                 savedWantsStomach = HasSwallowedVoyage(evaluatedGalaxy, navigation.Session);
-                savedTalkCompleted=evaluatedGalaxy=="zyl"&&navigation.Session!=null&&navigation.Session.Save.commands.Any(c=>c.kind=="observed"&&navigation.Session.Engine.Campaign.events.Any(e=>e.id==c.id&&e.type=="setpiece"&&e.setpiece==SetpieceDirector.StomachTalkMode));orientationDirty=true;
+                savedTalkCompleted=evaluatedGalaxy=="zyl"&&navigation.Session!=null&&navigation.Session.Save.commands.Any(c=>c.kind=="observed"&&navigation.Session.Engine.Campaign.events.Any(e=>e.id==c.id&&e.type=="setpiece"&&e.setpiece==SetpieceDirector.StomachTalkMode));savedPrintingReached=HasPrintingRequestVoyage(evaluatedGalaxy,navigation.Session);orientationDirty=true;
             }
             // Restart/import replace Save; retain the transient request only during the actual black ending.
             bool entering = enteringSession == navigation.Session && navigation.ActiveGalaxyId == "zyl" &&
@@ -95,7 +97,7 @@ namespace AstraCabin.Galaxies.Zyl
             if (!entering) enteringSession = null;
             if (!desired && Error != null) Error = null;
             if (!Busy && Error == null && desired != Ready) StartCoroutine(ChangeEnvironment());
-            if(Ready&&!Busy&&orientationDirty&&(!navigation.Director.stomachTalk||!navigation.Director.stomachTalk.Active)){SetCabinYaw(savedTalkCompleted?CabinYawTowardMihuoer():0);orientationDirty=false;}
+            if(Ready&&!Busy&&orientationDirty&&(!navigation.Director.stomachTalk||!navigation.Director.stomachTalk.Active)&&(!navigation.Director.printingRequest||!navigation.Director.printingRequest.Active)){SetCabinYaw(savedPrintingReached?CabinYawTowardCraft():savedTalkCompleted?CabinYawTowardMihuoer():0);if(MihuoerActor)MihuoerActor.SetSeatedOnCraft(savedPrintingReached);orientationDirty=false;}
             if (!Busy && Error == null) curtain = Mathf.MoveTowards(curtain, 0, Time.deltaTime / 1.5f);
         }
 

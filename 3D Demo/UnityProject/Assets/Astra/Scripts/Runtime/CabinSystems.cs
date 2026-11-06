@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace AstraCabin
@@ -66,7 +66,7 @@ namespace AstraCabin
         private bool initialized;
 
         private void Awake() { Initialize(); }
-        private void Start() { Refresh(); }
+        private void Start() { Refresh(); CabinFabricator.Attach(this); }
 
         private void Initialize()
         {

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -61,6 +61,12 @@ namespace AstraCabin
         public bool TryInteract()
         {
             if (!isActiveAndEnabled || IsBusy) return false;
+            if (name == "ACT_PrintButton")
+            {
+                var systems = FindObjectOfType<CabinSystems>();
+                var printer = systems ? CabinFabricator.Attach(systems) : null;
+                if (printer) { printer.Open(); return true; }
+            }
             Initialize();
             StartCoroutine(AnimateInteraction());
             return true;
