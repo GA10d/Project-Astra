@@ -167,6 +167,8 @@ namespace AstraCabin
                     Registry.Find(e.type).Begin(this,e);OwnsPresentation=true;
                     computer.Open();computer.OpenApp("meeting");return true;
                 }
+                if(OwnsPresentation&&Director.ActiveMode==e.setpiece&&e.setpiece==SetpieceDirector.FarewellMode){Director.farewell.Resume();return true;}
+                if(OwnsPresentation&&Director.ActiveMode==e.setpiece&&e.setpiece==SetpieceDirector.EscapeMode){Director.escape.Resume();return true;}
                 if(OwnsPresentation&&Director.ActiveMode==e.setpiece&&e.setpiece==SetpieceDirector.FoolsMode){Director.fools.Resume();return true;}
                 if(OwnsPresentation&&Director.ActiveMode==e.setpiece&&e.setpiece==SetpieceDirector.PrintingRequestMode){Director.printingRequest.Resume();return true;}
                 if(OwnsPresentation&&Director.ActiveMode==e.setpiece&&e.setpiece==SetpieceDirector.StomachTalkMode){Director.stomachTalk.Resume();return true;}
@@ -174,7 +176,7 @@ namespace AstraCabin
                 if (OwnsPresentation && Director.ActiveMode == e.setpiece) { if(e.setpiece==SetpieceDirector.PortalMode && !Director.portal.Started)computer.Open();else computer.Close(); return true; }
                 OwnsPresentation = true;
                 Registry.Find(e.type).Begin(this, e);
-                if(e.setpiece==SetpieceDirector.StomachTalkMode||e.setpiece==SetpieceDirector.PrintingRequestMode||e.setpiece==SetpieceDirector.FoolsMode)return true;
+                if(e.setpiece==SetpieceDirector.StomachTalkMode||e.setpiece==SetpieceDirector.PrintingRequestMode||e.setpiece==SetpieceDirector.FoolsMode||e.setpiece==SetpieceDirector.EscapeMode||e.setpiece==SetpieceDirector.FarewellMode)return true;
                 if(e.setpiece==SetpieceDirector.PortalMode || e.setpiece==SetpieceDirector.EncounterMode) { computer.Open(); return true; }
                 computer.Close();
                 controller.ShowNotice(SetpieceDirector.RequiresRepair(e.setpiece) ? "导航事件：前往 B 墙取维修锤，修复 D 墙裂痕" : "导航事件：Q / E 转向 D 墙观察，结束后返回导航模式");
@@ -207,8 +209,20 @@ namespace AstraCabin
         }
         public bool Choose(string id)
         {
+            if(ActiveGalaxyId=="zyl"&&Session!=null&&Session.Engine.Pending!=null&&Session.Engine.Pending.type=="setpiece"&&Session.Engine.Pending.setpiece==SetpieceDirector.FoolsMode)
+            {
+                var departure=GetComponent<Galaxies.Zyl.FoolsDeparture>()??gameObject.AddComponent<Galaxies.Zyl.FoolsDeparture>();
+                if(!departure.Begin(this,id)){Message=departure.Active?"正在返回舷窗，请稍候。":departure.Error??Session.Engine.ChoiceError(id)??"暂时无法启动结算转场。";return false;}
+                Message="正在返回舷窗。";return true;
+            }
             if (Session == null || !Session.Commit("choose", id)) { Message = Session == null ? "尚无有效配置" : Session.Error; return false; }
             StopPresentation(); detailScroll = Vector2.zero; Message = "处置已记录，资源已结算。选择下一个信标继续航行。"; return true;
+        }
+        internal bool CommitFoolsDeparture(NavigationSession expected,string eventId,string choice)
+        {
+            if(Session!=expected||Session.Engine.Pending==null||Session.Engine.Pending.id!=eventId){Message="航程或事件已改变，未提交结算。";return false;}
+            if(!Session.Commit("choose",choice)){Message=Session.Error;return false;}
+            StopPresentation();detailScroll=Vector2.zero;Message="处置已记录，返回舷窗。";return true;
         }
         public bool Advance()
         {

@@ -65,6 +65,10 @@ namespace AstraCabin.Navigation
             if (command == null) { error = "指令为空"; return false; }
             switch (command.kind)
             {
+#if UNITY_EDITOR
+                case Galaxies.Zyl.ZylDebugInventory.CommandKind:
+                    return Galaxies.Zyl.ZylDebugInventory.Apply(this,command,out error);
+#endif
                 case "collectItems":
                     return CollectItems(command, out error);
                 case "travel":
@@ -156,7 +160,11 @@ namespace AstraCabin.Navigation
             if (save == null || save.schemaVersion != 1 || save.fingerprint != CampaignValidator.Fingerprint(campaign) || save.commands == null || save.commands.Count > 8192)
                 throw new InvalidDataException("配置版本不匹配或存档格式无效");
             var candidate = new NavigationEngine(campaign, registry);
-            foreach (var command in save.commands) { string why; if (!candidate.Apply(command, out why)) throw new InvalidDataException(why); }
+            foreach (var command in save.commands) {
+#if UNITY_EDITOR
+                if(command!=null&&command.kind==Galaxies.Zyl.ZylDebugInventory.CommandKind&&!Galaxies.Zyl.ZylDebugInventory.IsIsolatedPath(Path))throw new InvalidDataException("调试库存指令只能存在于启用中的隔离调试存档");
+#endif
+                string why; if (!candidate.Apply(command, out why)) throw new InvalidDataException(why); }
             return candidate;
         }
         public bool Commit(string kind, string id, string outcome = null)

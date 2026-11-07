@@ -9,7 +9,10 @@ window.ZYL_PARAMETERS={
     "胃内 · 加载与淡入",
     "13 · 泰德野里_肚中会谈",
     "米霍尔 · 皮下倒计时",
-    "14 · 泰德野里_米霍尔需要打印构件"
+    "14 · 泰德野里_米霍尔需要打印构件",
+    "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+    "16 · 泰德野里_逃出生天",
+    "17 · 泰德野里_别离"
   ],
   "fields": [
     {
@@ -539,7 +542,7 @@ window.ZYL_PARAMETERS={
       "value": 300,
       "min": 0,
       "max": 5999,
-      "unit": "分:秒",
+      "unit": "时:分:秒",
       "desc": "首次创建航程倒计时时使用，续玩保留存档时间。",
       "type": "time"
     },
@@ -570,7 +573,7 @@ window.ZYL_PARAMETERS={
       "value": 30,
       "min": 0,
       "max": 5999,
-      "unit": "分:秒",
+      "unit": "时:分:秒",
       "desc": "剩余时间低于此值时使用警告色。",
       "type": "time"
     },
@@ -653,6 +656,296 @@ window.ZYL_PARAMETERS={
       "unit": "颜色",
       "desc": "六位十六进制RGB颜色。",
       "maxLength": 7
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsStopHold",
+      "label": "STOP 停留时长",
+      "value": 4.5,
+      "min": 1,
+      "max": 30,
+      "unit": "秒",
+      "desc": "菌群完全组成STOP后停留，再开始回到裂口。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsReturnDuration",
+      "label": "菌群飞回时长",
+      "value": 4,
+      "min": 1,
+      "max": 15,
+      "unit": "秒",
+      "desc": "从STOP字形飞回原胃壁裂口，结束后切到已离船的米霍尔。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsWalkSpeed",
+      "label": "米霍尔上坡速度",
+      "value": 0.85,
+      "min": 0.2,
+      "max": 2,
+      "unit": "单位/秒",
+      "desc": "按真实坡面路径长度推进；与上坡台词时长相互独立，到坡顶立即打断。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsFrontHold",
+      "label": "坡顶正面特写停留",
+      "value": 2,
+      "min": 0.5,
+      "max": 15,
+      "unit": "秒",
+      "desc": "坡顶新台词开始时切正面特写，停留后开始绕头。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsOrbitDuration",
+      "label": "正面绕至后脑时长",
+      "value": 7,
+      "min": 2,
+      "max": 30,
+      "unit": "秒",
+      "desc": "正面到后脑的半圈旋转时长；转到约90度时同时开始镜头后拉。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsPullbackDuration",
+      "label": "绕头后半程拉开时长",
+      "value": 5,
+      "min": 1,
+      "max": 20,
+      "unit": "秒",
+      "desc": "从半圈旋转的中点（约90度）开始计时，与剩余旋转重叠；若更长，则旋转结束后补齐剩余后拉时间。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsFinalHold",
+      "label": "最终背影画面停留",
+      "value": 3,
+      "min": 1,
+      "max": 30,
+      "unit": "秒",
+      "desc": "拉开完成后至少停留此时长；坡顶台词尚未播完则继续等待。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsSceneFadeDuration",
+      "label": "转入最后对白 · 渐黑/显现时长",
+      "value": 1.2,
+      "min": 0.2,
+      "max": 5,
+      "unit": "秒",
+      "desc": "上坡结尾先渐黑，全黑实际绘制后切到新站位，再以相同时长显现。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsSettlementFadeDuration",
+      "label": "傻瓜结算 · 渐黑/显现时长",
+      "value": 1,
+      "min": 0.2,
+      "max": 5,
+      "unit": "秒",
+      "desc": "手动结算时先渐黑，全黑后关闭导航并回到舱内面向舷窗，再显现。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeFlightDuration",
+      "label": "牵引逃亡时长",
+      "value": 58,
+      "min": 24,
+      "max": 180,
+      "unit": "秒",
+      "desc": "从进入战斗画面到抵达出口。玩家不能操纵，米霍尔沿既定路线领航。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeExitDistance",
+      "label": "初始出口距离",
+      "value": 12000,
+      "min": 1000,
+      "max": 100000,
+      "unit": "米",
+      "desc": "随航程递减到零，仅用于演出显示。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeHullLoss",
+      "label": "米霍尔累计损伤",
+      "value": 36,
+      "min": 5,
+      "max": 70,
+      "unit": "点",
+      "desc": "由几次实际开路撞击分摊，最低保留船体，不触发普通战斗结算。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeFadeDuration",
+      "label": "黑屏淡入淡出时长",
+      "value": 1.2,
+      "min": 0.2,
+      "max": 5,
+      "unit": "秒",
+      "desc": "墓前转战斗、战斗退出时每次渐黑或显现的时长。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellChestLeadTime",
+      "label": "胸口爆炸提前量",
+      "value": 0.45,
+      "min": 0,
+      "max": 3,
+      "unit": "秒",
+      "desc": "倒计时还剩多少秒时，胸口内的能量开始扩张。0 表示归零时开始。台词仍在归零时打断。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellChestDuration",
+      "label": "胸口能量扩张",
+      "value": 2.8,
+      "min": 0.5,
+      "max": 10,
+      "unit": "秒",
+      "desc": "倒计时归零后，胸口能量继续扩张到信号切断的时长。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellSignalHold",
+      "label": "通话中断停留",
+      "value": 1.3,
+      "min": 0.5,
+      "max": 8,
+      "unit": "秒",
+      "desc": "显示连接中断后自动关闭电脑并转向舷窗。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellPlanetDuration",
+      "label": "星球能量扩张",
+      "value": 8,
+      "min": 3,
+      "max": 30,
+      "unit": "秒",
+      "desc": "从视频信号中断开始计时。若设得比转向和近窗过程更短，会延长至近窗后仍能看到扩张与强闪。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDebrisHold",
+      "label": "碎石停留",
+      "value": 4,
+      "min": 1,
+      "max": 20,
+      "unit": "秒",
+      "desc": "先观察星球碎裂，再让黑白照片飘过。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellPhotoDuration",
+      "label": "黑白照片飘过",
+      "value": 8,
+      "min": 3,
+      "max": 30,
+      "unit": "秒",
+      "desc": "照片横向飘过舷窗，结束返回导航，手动结算。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellShake",
+      "label": "碎裂峰值震动强度",
+      "value": 0.35,
+      "min": 0,
+      "max": 1,
+      "unit": "强度",
+      "desc": "控制整段震动的最大幅度。碎石显现时达到峰值，0 关闭。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellSurfaceWaveAmplitude",
+      "label": "球面起伏幅度",
+      "value": 1.63,
+      "min": 0,
+      "max": 6,
+      "unit": "%",
+      "desc": "胸口和行星能量球的凸起与凹陷，按各层球体半径的百分比计算。0 让球面保持光滑，明暗波纹仍会流动。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellInnerWaveHz",
+      "label": "球面起伏频率",
+      "value": 1.3,
+      "min": 0.1,
+      "max": 6,
+      "unit": "Hz",
+      "desc": "控制胸口和行星能量球的球面起伏与明暗波纹速度。单位为 Hz，值越大，起伏越快。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellHaloWaveHz",
+      "label": "外光晕波动频率",
+      "value": 0.55,
+      "min": 0.1,
+      "max": 6,
+      "unit": "Hz",
+      "desc": "连续外光晕独立起伏，默认比内圈慢。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellHaloIntensity",
+      "label": "外光晕亮度",
+      "value": 1.05,
+      "min": 0,
+      "max": 1.5,
+      "unit": "强度",
+      "desc": "同时控制胸口和行星光球外侧的柔亮光晕。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellFractureStart",
+      "label": "开始解体的时机",
+      "value": 0.64,
+      "min": 0.58,
+      "max": 0.82,
+      "unit": "进度",
+      "desc": "按行星扩张时长的比例计算。0.64 表示扩张到 64% 时在光球下开始碎裂。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellFinalFlashDuration",
+      "label": "末段核心强闪时长",
+      "value": 0.7,
+      "min": 0.1,
+      "max": 2,
+      "unit": "秒",
+      "desc": "扩张结束前白亮核心增强的时间。若超出解体后剩余时长，则从解体时开始。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellFinalFlashIntensity",
+      "label": "末段核心强闪强度",
+      "value": 1,
+      "min": 0.2,
+      "max": 1,
+      "unit": "强度",
+      "desc": "影响末段白亮核心的范围和亮度。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellShakeSustain",
+      "label": "持续震动比例",
+      "value": 0.42,
+      "min": 0.1,
+      "max": 0.85,
+      "unit": "比例",
+      "desc": "归零到近窗期间占峰值震动的比例，星球扩张阶段继续增强。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellImpactDecay",
+      "label": "碎裂峰值震动衰减",
+      "value": 1.4,
+      "min": 0.15,
+      "max": 3,
+      "unit": "秒",
+      "desc": "碎石显现时达到峰值，随后在该时间内平滑回落。"
     }
   ],
   "defaults": {
@@ -755,7 +1048,115 @@ window.ZYL_PARAMETERS={
         "duration": 5,
         "replies": []
       }
-    ]
+    ],
+    "foolsStopHold": 4.5,
+    "foolsReturnDuration": 4,
+    "foolsWalkSpeed": 0.85,
+    "foolsFrontHold": 2,
+    "foolsOrbitDuration": 7,
+    "foolsPullbackDuration": 5,
+    "foolsFinalHold": 3,
+    "foolsGroundDialogue": [
+      {
+        "text": "【占位：请填写米霍尔离开飞船后的台词。】",
+        "duration": 4,
+        "replies": []
+      }
+    ],
+    "foolsWalkDialogue": [
+      {
+        "text": "【占位：请填写米霍尔边上坡边说的台词；到达坡顶后会被打断。】",
+        "duration": 600,
+        "replies": []
+      }
+    ],
+    "foolsCrestDialogue": [
+      {
+        "text": "【占位：请填写到达坡顶时打断旧对白的新台词。】",
+        "duration": 5,
+        "replies": []
+      }
+    ],
+    "foolsSceneFadeDuration": 1.2,
+    "foolsSettlementFadeDuration": 1,
+    "foolsClosingDialogue": [
+      {
+        "text": "【占位：请在HTML填写黑屏转场后米霍尔的台词。】",
+        "duration": 5,
+        "replies": []
+      }
+    ],
+    "escapeFlightDuration": 58,
+    "escapeExitDistance": 12000,
+    "escapeHullLoss": 36,
+    "escapeFadeDuration": 1.2,
+    "escapeGravesDialogue": [
+      {
+        "text": "【占位：请在HTML填写三座墓碑前米霍尔的台词。】",
+        "duration": 6,
+        "replies": []
+      }
+    ],
+    "escapeEncouragement": [
+      {
+        "text": "抓紧，我来带路！",
+        "duration": 8,
+        "replies": []
+      },
+      {
+        "text": "跟着我的航线，别担心！",
+        "duration": 8,
+        "replies": []
+      },
+      {
+        "text": "前面有障碍，我来撞开！",
+        "duration": 8,
+        "replies": []
+      },
+      {
+        "text": "还撑得住，我们继续！",
+        "duration": 8,
+        "replies": []
+      },
+      {
+        "text": "就快到出口了，坚持住！",
+        "duration": 8,
+        "replies": []
+      },
+      {
+        "text": "看到亮光了，我们能出去！",
+        "duration": 8,
+        "replies": []
+      },
+      {
+        "text": "最后一段路，抓稳！",
+        "duration": 8,
+        "replies": []
+      }
+    ],
+    "farewellChestDuration": 2.8,
+    "farewellSignalHold": 1.3,
+    "farewellPlanetDuration": 8,
+    "farewellDebrisHold": 4,
+    "farewellPhotoDuration": 8,
+    "farewellShake": 0.35,
+    "farewellDialogue": [
+      {
+        "text": "【占位：请填写别离视频通话的台词，可添加玩家回复和倒计时操作。倒计时归零将立即打断。】",
+        "duration": 600,
+        "replies": []
+      }
+    ],
+    "farewellChestLeadTime": 0.45,
+    "farewellSurfaceWaveAmplitude": 1.63,
+    "farewellInnerWaveHz": 1.3,
+    "farewellHaloWaveHz": 0.55,
+    "farewellHaloIntensity": 1.05,
+    "farewellFractureStart": 0.64,
+    "farewellFinalFlashDuration": 0.7,
+    "farewellFinalFlashIntensity": 1,
+    "farewellShakeSustain": 0.42,
+    "farewellImpactDecay": 1.4
   },
   "rules": [
     [

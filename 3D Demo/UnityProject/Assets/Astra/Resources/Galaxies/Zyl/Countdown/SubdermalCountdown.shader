@@ -11,6 +11,7 @@ Shader "Astra/Zyl/SubdermalCountdown"
   _EmissionColor("Base emission",Color)=(0,0,0,1)
   _CountdownWoundMask("Authored wound mask",2D)="black"{}
   _CountdownColor("Subdermal glow",Color)=(1,.12,.04,1)
+  _CountdownHours("HH",Vector)=(0,0,0,0)
   _CountdownDigits("MMSS",Vector)=(0,5,0,0)
   _CountdownVisible("Visible",Float)=0
   _CountdownBrightness("Brightness",Float)=2.5
@@ -30,7 +31,7 @@ Shader "Astra/Zyl/SubdermalCountdown"
   #pragma shader_feature_local _NORMALMAP
   sampler2D _MainTex,_CountdownWoundMask,_BumpMap;
   fixed4 _Color,_EmissionColor,_CountdownColor;
-  float4 _CountdownDigits,_CountdownOffset;
+  float4 _CountdownHours,_CountdownDigits,_CountdownOffset;
   float _Glossiness,_Metallic,_BumpScale,_CountdownVisible,_CountdownBrightness,_CountdownWidth,_CountdownHeight,_CountdownHalo;
   struct Input {float2 uv_MainTex;float3 countdownPosition;};
   void CountdownVertex(inout appdata_full v,out Input o){UNITY_INITIALIZE_OUTPUT(Input,o);o.countdownPosition=v.texcoord2.xyz;}
@@ -71,11 +72,18 @@ Shader "Astra/Zyl/SubdermalCountdown"
    float2 maskUV=(chest-float2(-.17,.69))/float2(.34,.21);
    float wound=tex2D(_CountdownWoundMask,maskUV).r*step(.015,IN.countdownPosition.z)*step(0,maskUV.x)*step(maskUV.x,1)*step(0,maskUV.y)*step(maskUV.y,1);
    float2 physical=chest-float2(0,.795)-_CountdownOffset.xy;
-   float2 display=float2(physical.x/max(.001,_CountdownWidth),physical.y/max(.001,_CountdownHeight));
-   float cell=floor((display.x+.5)*5);float2 p=float2(frac((display.x+.5)*5)-.5,display.y);
-   float digit=cell<.5?_CountdownDigits.x:cell<1.5?_CountdownDigits.y:cell<3.5?_CountdownDigits.z:_CountdownDigits.w;
-   float dist=cell>1.5&&cell<2.5?min(length(p-float2(0,.18)),length(p-float2(0,-.18)))-.055:glyph(p,digit);
-   float inside=step(0,cell)*step(cell,4)*step(abs(display.y),.65);
+   float2 display=float2(physical.x/max(.001,_CountdownWidth*1.08),physical.y/max(.001,_CountdownHeight));
+   // Each separator takes half a digit slot to keep all six digits inside the wound.
+   float columns=(display.x+.5)*7;
+   bool separator=(columns>=2&&columns<2.5)||(columns>=4.5&&columns<5);
+   float digitColumn=columns-(columns>=5?1:columns>=2.5?.5:0);
+   int cell=(int)floor(digitColumn);
+   float localX=separator?columns-(columns<2.5?2.25:4.75):frac(digitColumn)-.5;
+   float2 p=float2(localX,display.y);
+   float digit=cell==0?_CountdownHours.x:cell==1?_CountdownHours.y:
+       cell==2?_CountdownDigits.x:cell==3?_CountdownDigits.y:cell==4?_CountdownDigits.z:_CountdownDigits.w;
+   float dist=separator?min(length(p-float2(0,.18)),length(p-float2(0,-.18)))-.055:glyph(p,digit);
+   float inside=step(0,columns)*step(columns,7)*step(abs(display.y),.65);
    float aa=max(fwidth(dist),.006);float core=1-smoothstep(-aa-.006,aa+.012,dist);
    float halo=exp(-max(0,dist)*max(4,1/max(.01,_CountdownHalo)));
    float visibility=saturate(_CountdownVisible)*wound;

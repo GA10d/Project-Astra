@@ -15,7 +15,10 @@ namespace AstraCabin.Galaxies.Zyl
                 if(!director)return 0;
                 float encounter=director.encounter&&director.encounter.Active?director.encounter.TransitionAlpha:0;
                 var exterior=director.computer&&director.computer.Navigation?director.computer.Navigation.Exterior:null;
-                return Mathf.Max(encounter,exterior?exterior.CurtainAlpha:0);
+                float escape=director.escape&&director.escape.Active?director.escape.TransitionAlpha:0;
+                float fools=director.fools&&director.fools.Active?director.fools.TransitionAlpha:0;
+                var departure=director.GetComponent<FoolsDeparture>();
+                return Mathf.Max(Mathf.Max(Mathf.Max(encounter,escape),exterior?exterior.CurtainAlpha:0),Mathf.Max(fools,departure&&departure.Active?departure.Alpha:0));
             }
         }
         public static bool BlocksInput {get{return instance&&instance.Alpha>0;}}

@@ -10,8 +10,8 @@ namespace AstraCabin
         public readonly CombatSimulation sim = new CombatSimulation();
         public bool automationMode, reducedMotion, muted;
         public bool IsVisible { get { return computer && computer.IsOpen && computer.CurrentApp == "combat"; } }
-        public bool IsLive { get { return IsVisible && sim.phase == CombatSimulation.Phase.Running; } }
-        public bool PhysicalFeedbackEnabled { get { return IsLive && !sim.training && !reducedMotion; } }
+        public bool IsLive { get { return IsVisible && (EscapeStory!=null?!EscapeStory.Paused:sim.phase == CombatSimulation.Phase.Running); } }
+        public bool PhysicalFeedbackEnabled { get { return IsLive && (EscapeStory!=null||!sim.training) && !reducedMotion; } }
         public float FieldZoom { get { return zoom; } }
         CabinComputer computer;
         CabinController controller;
@@ -39,9 +39,9 @@ namespace AstraCabin
         void OnApplicationFocus(bool value) { focused = value; if (!value && !automationMode) Suspend(); }
         void OnApplicationPause(bool value) { if (value) Suspend(); }
         public void StartSortie(bool practice)
-        { sim.Start(practice); accumulator = 0; armed = false; cameraPosition = sim.position; zoom = .83f; ClearFeedback(); sound.BeginSortie(); }
+        { if(EscapeStory!=null)return;sim.Start(practice); accumulator = 0; armed = false; cameraPosition = sim.position; zoom = .83f; ClearFeedback(); sound.BeginSortie(); }
         public void Suspend() { sim.Pause(); accumulator = 0; armed = false; ClearFeedback(); }
-        public void HandleEscape() { if (sim.phase == CombatSimulation.Phase.Running) Suspend(); else if (sim.phase == CombatSimulation.Phase.Paused) sim.Resume(); else computer.Close(); }
+        public void HandleEscape() { if(EscapeStory!=null){EscapeStory.Paused=!EscapeStory.Paused;return;} if (sim.phase == CombatSimulation.Phase.Running) Suspend(); else if (sim.phase == CombatSimulation.Phase.Paused) sim.Resume(); else computer.Close(); }
         public void ReturnToMenu() { sim.ToMenu(); ClearFeedback(); }
         void ClearFeedback()
         {
@@ -53,6 +53,13 @@ namespace AstraCabin
         }
         void Update()
         {
+            if(EscapeStory!=null)
+            {
+                if(IsVisible&&!automationMode&&Input.GetKeyDown(KeyCode.P))EscapeStory.Paused=!EscapeStory.Paused;
+                if(IsVisible&&!automationMode&&Input.GetKeyDown(KeyCode.M))muted=!muted;
+                if(!focused&&!automationMode)EscapeStory.Paused=true;
+                EscapeFeedback(Mathf.Min(Time.unscaledDeltaTime,.05f));return;
+            }
             bool visible = IsVisible;
             if ((!visible && wasVisible) || (!focused && !automationMode) || (visible && computer.HasPendingEventAlert)) Suspend();
             wasVisible = visible;
@@ -174,6 +181,7 @@ namespace AstraCabin
             EnsureArt(font); GUI.BeginGroup(content);
             float w = content.width, h = content.height;
             Fill(new Rect(0, 0, w, h), new Color(.024f, .047f, .043f));
+            if(EscapeStory!=null){DrawEscape(w,h);GUI.EndGroup();return;}
             if (sim.phase == CombatSimulation.Phase.Menu) DrawMenu(w, h);
             else
             {
@@ -294,6 +302,6 @@ namespace AstraCabin
         void Sprite(Texture2D texture, Vector2 c, float angle, float size, Color tint)
         { Color color = GUI.color; GUI.color = tint; int frame = Mathf.RoundToInt(Mathf.Repeat(angle, 360) / 5) % 72; GUI.DrawTexture(new Rect(c.x - size / 2, c.y - size / 2, size, size), rotations[texture][frame]); GUI.color = color; }
         void OnDisable() { Suspend(); }
-        void OnDestroy() { foreach (Texture2D t in new[] { ship, heavy, boss, nebula, ringTexture }) if (t) Destroy(t); foreach (var atlas in rotations.Values) foreach (var t in atlas) if (t) Destroy(t); }
+        void OnDestroy() { DisposeEscapeArt();foreach (Texture2D t in new[] { ship, heavy, boss, nebula, ringTexture }) if (t) Destroy(t); foreach (var atlas in rotations.Values) foreach (var t in atlas) if (t) Destroy(t); }
     }
 }

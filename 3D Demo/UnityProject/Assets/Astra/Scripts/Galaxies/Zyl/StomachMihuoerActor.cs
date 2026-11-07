@@ -15,6 +15,21 @@ namespace AstraCabin.Galaxies.Zyl
         Animation standingAnimation,seatedAnimation;
         Quaternion craftAuthoredLocalRotation;
         public bool SeatedOnCraft {get;private set;}
+        public bool CinematicControlled {get;private set;}
+        bool cinematicSeated;Vector3 cinematicLocalPosition;Quaternion cinematicLocalRotation,cinematicCraftRotation;
+        public Transform BeginCinematic()
+        {
+            if(CinematicControlled)return standingActor;
+            cinematicSeated=SeatedOnCraft;cinematicLocalPosition=standingActor.localPosition;cinematicLocalRotation=standingActor.localRotation;cinematicCraftRotation=Craft.rotation;
+            SetSeatedOnCraft(false);Craft.rotation=cinematicCraftRotation;CinematicControlled=true;return standingActor;
+        }
+        public void EndCinematic()
+        {
+            if(!CinematicControlled)return;CinematicControlled=false;Speaking=false;
+            if(!standingActor||!Craft||(cinematicSeated&&!seatedActor))return;
+            if(standingActor){standingActor.localPosition=cinematicLocalPosition;standingActor.localRotation=cinematicLocalRotation;}
+            SetSeatedOnCraft(cinematicSeated);Craft.rotation=cinematicCraftRotation;Sample();
+        }
         public bool Speaking {get;set;}
         public Transform Craft {get;private set;}
         public Transform Actor {get;private set;}
@@ -50,7 +65,7 @@ namespace AstraCabin.Galaxies.Zyl
             else Craft.localRotation=craftAuthoredLocalRotation;
             Sample();
         }
-        void Update(){if(!director||director.controller.IsPaused)return;clock+=Time.deltaTime;Sample();}
+        void Update(){if(!director||director.controller.IsPaused||CinematicControlled)return;clock+=Time.deltaTime;Sample();}
         void Sample()
         {
             if(!animationPlayer)return;string clip=SeatedOnCraft?(Speaking?"SeatedTalk":"Think"):StandingClip;var state=animationPlayer[clip];if(state==null)return;

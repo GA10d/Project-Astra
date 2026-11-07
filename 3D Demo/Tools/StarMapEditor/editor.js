@@ -298,7 +298,7 @@
     field(panel, '事件类型', e.type, value => { e.type = value; if(value === 'performance') { e.performanceId=e.performanceId || 'relay'; } if (value === 'setpiece') { e.setpiece = e.setpiece || 1; e.duration = e.duration || 8; } }, { select: [['choice', '文字选择 / 资源流转'], ['setpiece', '舱内演出 + 处置选择'], ['performance', '视频会议 / Tool V2 演出树']] });
     if(e.type === 'performance') { field(panel, '演出包 ID', e.performanceId || '', value => e.performanceId=value); help(panel, '对应 Resources/Performances/<ID>.asset。交互选项在 Tool V2 演出树编辑；这里只保留一个无消耗结算项，会议结束后自动执行。'); }
     if (e.type === 'setpiece') {
-      const names = ['星球解体','陌生访客','撞击维修','赤红星域','战机交火','加油站','星海鲸群','另一艘你','耗材分拣站','泰德野里_未知撞击导致引擎堵塞','泰德野里_误入星际传送门','泰德野里_初遇米霍尔','泰德野里_肚中会谈','泰德野里_米霍尔需要打印构件','泰德野里_都是傻瓜'];
+      const names = ['星球解体','陌生访客','撞击维修','赤红星域','战机交火','加油站','星海鲸群','另一艘你','耗材分拣站','泰德野里_未知撞击导致引擎堵塞','泰德野里_误入星际传送门','泰德野里_初遇米霍尔','泰德野里_肚中会谈','泰德野里_米霍尔需要打印构件','泰德野里_都是傻瓜','泰德野里_逃出生天','泰德野里_别离'];
       field(panel, '演出内容', e.setpiece, value => e.setpiece = Number(value), { select: names.map((name, i) => [String(i + 1), `${i + 1} · ${name}`]) });
       field(panel, '最短观看时间（秒）', e.duration, value => e.duration = value, { number: true, min: 1, max: 300, step: '.5' });
       if (e.setpiece === 3 || e.setpiece === 10) help(panel, '撞击事件还要求玩家实际修复全部三处裂痕。');
@@ -328,7 +328,7 @@
     const body = $('modal-body'); body.replaceChildren(element('h2', '将星域配置导入游戏'));
     const list = element('ol');
     ['完成星域、节点、连线和事件设置；处理地图下方的所有校验错误。', '点击「导出到游戏」，保存下载的 campaign.json。', '将文件复制到游戏旁 Astra Cabin_Data / StreamingAssets / Navigation 文件夹，替换同名 campaign.json。', '打开游戏 A 墙电脑 → 导航模式 → 导入星域配置 → 校验并导入。旧航程会备份，并开始新航程。'].forEach(t => list.append(element('li', t)));
-    body.append(list, element('p', 'Unity 工程中对应路径：Assets/StreamingAssets/Navigation/campaign.json。游戏启动后优先继续已导入的配置；修改文件后需要在导航模式中再次导入。'), element('p', '演出编号 1–15 直接复用现有舱内演出（10 为引擎堵塞撞击，11 为泰德野里_误入星际传送门）。新增代码事件类型需在游戏 EventRegistry 注册处理器，并扩展此编辑器的类型选项和校验。'));
+    body.append(list, element('p', 'Unity 工程中对应路径：Assets/StreamingAssets/Navigation/campaign.json。游戏启动后优先继续已导入的配置；修改文件后需要在导航模式中再次导入。'), element('p', '演出编号 1–17 直接复用现有舱内演出（10 为引擎堵塞撞击，11 为泰德野里_误入星际传送门）。新增代码事件类型需在游戏 EventRegistry 注册处理器，并扩展此编辑器的类型选项和校验。'));
     $('modal').showModal();
   }
   $('close-dialog').onclick = () => $('modal').close(); $('help').onclick = helpDialog;

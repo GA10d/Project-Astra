@@ -67,10 +67,14 @@ namespace AstraCabin.Galaxies.Zyl
         public static bool HasSwallowedVoyage(string galaxy, NavigationSession session)
         {
             if (galaxy != "zyl" || session == null || session.Blocked) return false;
-            return session.Save.commands.Any(c => c.kind == "observed" &&
+            return !HasEscapedVoyage(galaxy,session)&&session.Save.commands.Any(c => c.kind == "observed" &&
                 session.Engine.Campaign.events.Any(e => e.id == c.id && e.type == "setpiece" && e.setpiece == SetpieceDirector.EncounterMode));
         }
 
+        public static bool HasEscapedVoyage(string galaxy,NavigationSession session)
+        {
+            return galaxy=="zyl"&&session!=null&&!session.Blocked&&session.Save.commands.Any(c=>c.kind=="observed"&&session.Engine.Campaign.events.Any(e=>e.id==c.id&&e.type=="setpiece"&&e.setpiece==SetpieceDirector.EscapeMode));
+        }
         public bool AwaitSwallowEnvironment()
         {
             if (!navigation || navigation.ActiveGalaxyId != "zyl" || !navigation.OwnsPresentation ||
@@ -93,11 +97,15 @@ namespace AstraCabin.Galaxies.Zyl
             // Restart/import replace Save; retain the transient request only during the actual black ending.
             bool entering = enteringSession == navigation.Session && navigation.ActiveGalaxyId == "zyl" &&
                 navigation.OwnsPresentation && navigation.Director.encounter && (navigation.Director.encounter.LoadingEnvironment || navigation.Director.encounter.Complete);
-            desired = savedWantsStomach || entering;
+            var escape=navigation.Director.escape;
+            bool escapeActive=escape&&escape.Active&&escape.Phase!=EscapeSetpiece.Step.Error;
+            desired = escapeActive ? !escape.LeavingStomach : savedWantsStomach || entering;
+            // Recompute durable completion: observed appends to the same Save instance.
+            if(!escapeActive&&HasEscapedVoyage(navigation.ActiveGalaxyId,navigation.Session))desired=false;
             if (!entering) enteringSession = null;
             if (!desired && Error != null) Error = null;
             if (!Busy && Error == null && desired != Ready) StartCoroutine(ChangeEnvironment());
-            if(Ready&&!Busy&&orientationDirty&&(!navigation.Director.stomachTalk||!navigation.Director.stomachTalk.Active)&&(!navigation.Director.printingRequest||!navigation.Director.printingRequest.Active)&&(!navigation.Director.fools||!navigation.Director.fools.Active)){SetCabinYaw(savedPrintingReached?CabinYawTowardCraft():savedTalkCompleted?CabinYawTowardMihuoer():0);if(MihuoerActor)MihuoerActor.SetSeatedOnCraft(savedPrintingReached);orientationDirty=false;}
+            if(Ready&&!Busy&&orientationDirty&&(!escape||!escape.Active)&&(!navigation.Director.stomachTalk||!navigation.Director.stomachTalk.Active)&&(!navigation.Director.printingRequest||!navigation.Director.printingRequest.Active)&&(!navigation.Director.fools||!navigation.Director.fools.Active)){SetCabinYaw(savedPrintingReached?CabinYawTowardCraft():savedTalkCompleted?CabinYawTowardMihuoer():0);if(MihuoerActor)MihuoerActor.SetSeatedOnCraft(savedPrintingReached);orientationDirty=false;}
             if (!Busy && Error == null) curtain = Mathf.MoveTowards(curtain, 0, Time.deltaTime / 1.5f);
         }
 

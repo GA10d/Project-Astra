@@ -21,6 +21,10 @@ namespace AstraCabin
         public const int StomachTalkMode=13;
         public const int PrintingRequestMode=14;
         public const int FoolsMode=15;
+        public const int EscapeMode=16;
+        public const int FarewellMode=17;
+        public Galaxies.Zyl.FarewellSetpiece farewell;
+        public Galaxies.Zyl.EscapeSetpiece escape;
         public Galaxies.Zyl.FoolsSetpiece fools;
         public Galaxies.Zyl.MihuoerPrintingSetpiece printingRequest;
         public Galaxies.Zyl.StomachTalkSetpiece stomachTalk;
@@ -78,6 +82,8 @@ namespace AstraCabin
             encounter=GetComponent<Galaxies.Zyl.MihuoerEncounter>()??gameObject.AddComponent<Galaxies.Zyl.MihuoerEncounter>(); encounter.Initialize(this);
             portal=GetComponent<PortalSetpiece>()??gameObject.AddComponent<PortalSetpiece>(); portal.Initialize(this);
             stomachTalk=GetComponent<Galaxies.Zyl.StomachTalkSetpiece>()??gameObject.AddComponent<Galaxies.Zyl.StomachTalkSetpiece>();stomachTalk.Initialize(this);
+            farewell=GetComponent<Galaxies.Zyl.FarewellSetpiece>()??gameObject.AddComponent<Galaxies.Zyl.FarewellSetpiece>();farewell.Initialize(this);
+            escape=GetComponent<Galaxies.Zyl.EscapeSetpiece>()??gameObject.AddComponent<Galaxies.Zyl.EscapeSetpiece>();escape.Initialize(this);
             fools=GetComponent<Galaxies.Zyl.FoolsSetpiece>()??gameObject.AddComponent<Galaxies.Zyl.FoolsSetpiece>();fools.Initialize(this);
             printingRequest=GetComponent<Galaxies.Zyl.MihuoerPrintingSetpiece>()??gameObject.AddComponent<Galaxies.Zyl.MihuoerPrintingSetpiece>();printingRequest.Initialize(this);
             combat=GetComponent<ExplosionBattleSetpieces>()??gameObject.AddComponent<ExplosionBattleSetpieces>();
@@ -125,7 +131,9 @@ namespace AstraCabin
             }
             shakeRemaining=Mathf.Max(0,shakeRemaining-Time.deltaTime);
             ShakeAmount=shakeDuration>0?shakeStrength*Mathf.Pow(shakeRemaining/shakeDuration,1.2f):0;
-            float t=Time.time;
+            float farewellShake = farewell ? farewell.CinematicShake : 0;
+            ShakeAmount = Mathf.Max(ShakeAmount, farewellShake);
+            float t = farewellShake > 0 ? farewell.Elapsed : Time.time;
             controller.cinematicEuler=new Vector3(Mathf.Sin(t*41),Mathf.Sin(t*33+1)*.75f,Mathf.Sin(t*29+.5f)*.55f)*ShakeAmount*4.4f;
             controller.cinematicOffset=new Vector3(Mathf.Sin(t*37),Mathf.Sin(t*47+2),Mathf.Sin(t*31)*.35f)*ShakeAmount*.027f;
         }
@@ -138,7 +146,7 @@ namespace AstraCabin
         public bool TryDebugMode(int mode) { return allowDebugHotkeys && TriggerMode(mode); }
         public bool TriggerMode(int mode)
         {
-            if(mode<0 || mode>FoolsMode) return false;
+            if(mode<0 || mode>FarewellMode) return false;
             Initialize();
             Quaternion previousPlanetRotation=planet?planet.transform.rotation:Quaternion.identity;
             ClearCurrent();
@@ -178,6 +186,8 @@ namespace AstraCabin
                 case StomachTalkMode: stomachTalk.Show();break;
                 case PrintingRequestMode: printingRequest.Show();break;
                 case FoolsMode: fools.Show();break;
+                case EscapeMode: escape.Show();break;
+                case FarewellMode: farewell.Show();break;
             }
             return true;
         }
@@ -187,7 +197,7 @@ namespace AstraCabin
             StopAllCoroutines();
             if(computer.IsOpen) computer.Close();
             controller.SetPaused(false); controller.observationAllowed=true;
-            fools.Clear();printingRequest.Clear();stomachTalk.Clear();encounter.Clear(); portal.Clear(); combat.Clear(); visitors.Clear(); crimson.Clear(); whales.Clear(); mirror.Clear(); sorting.Clear(); eventAudio.StopAll();
+            farewell.Clear();escape.Clear();fools.Clear();printingRequest.Clear();stomachTalk.Clear();encounter.Clear(); portal.Clear(); combat.Clear(); visitors.Clear(); crimson.Clear(); whales.Clear(); mirror.Clear(); sorting.Clear(); eventAudio.StopAll();
             if(repairRoot) { repairRoot.SetActive(false); Destroy(repairRoot); }
             if(heldHammer) { heldHammer.SetActive(false); Destroy(heldHammer); }
             if(AlertRoot) { AlertRoot.SetActive(false); Destroy(AlertRoot); }
@@ -371,7 +381,7 @@ namespace AstraCabin
         void RefreshFontAtlas(Font updated) { if(updated==font && worldText) worldText.mainTexture=font.material.mainTexture; }
         void OnGUI()
         {
-            if(Galaxies.Zyl.ZylScreenCurtain.IsOpaque || (fools&&fools.Active&&!fools.Complete&&fools.Phase!=Galaxies.Zyl.FoolsSetpiece.Step.Error))return;
+            if((farewell&&farewell.Active&&!farewell.Complete&&farewell.Phase!=Galaxies.Zyl.FarewellSetpiece.Step.Error)||(escape&&escape.Active&&!escape.Complete&&escape.Phase!=Galaxies.Zyl.EscapeSetpiece.Step.Error)||Galaxies.Zyl.ZylScreenCurtain.IsOpaque || (fools&&fools.Active&&!fools.Complete&&fools.Phase!=Galaxies.Zyl.FoolsSetpiece.Step.Error))return;
             if(!initialized) return;
             if(controller.ComputerOpen) { DrawEngineWarning(); return; }
             if(small==null)
@@ -390,7 +400,7 @@ namespace AstraCabin
             {
                 Color oldColor=GUI.color; GUI.color=new Color(.018f,.025f,.025f,.87f);
                 GUI.DrawTexture(new Rect(28,110,385,CrisisActive?119:79),Texture2D.whiteTexture); GUI.color=oldColor;
-                string[] names={"","行星碎裂","不明飞行物靠近","舱体遭遇撞击","赤红星域","交战区","星际补给站","星海鲸群","另一艘你","耗材分拣站","未知撞击 / 引擎堵塞","误入星际传送门","初遇米霍尔","肚中会谈","泰德野里_米霍尔需要打印构件","泰德野里_都是傻瓜"};
+                string[] names={"","行星碎裂","不明飞行物靠近","舱体遭遇撞击","赤红星域","交战区","星际补给站","星海鲸群","另一艘你","耗材分拣站","未知撞击 / 引擎堵塞","误入星际传送门","初遇米霍尔","肚中会谈","泰德野里_米霍尔需要打印构件","泰德野里_都是傻瓜","泰德野里_逃出生天","泰德野里_别离"};
                 GUI.Label(new Rect(43,116,350,31),ActiveMode < names.Length ? names[ActiveMode] : "舱内演出",heading);
                 string text=CrisisActive?(ModeTime<3?"电力中断…":HasHammer?"已持维修锤 / 修复 D 墙裂痕："+RepairedCount+" / 3":"前往 B 墙取下维修锤\n然后点击 D 墙三处黄色高亮裂痕"):ActiveMode==7?"小鲸鱼正在穿舱 / Q、E 环顾四周":ActiveMode==8?"移动鼠标、拨动电源，观察对面…":ActiveMode==9?"转向 D 墙观察 / 点击窗户可凑近":(allowDebugHotkeys?"[0] 随时恢复默认场景":"完成事件后返回导航继续");
                 GUI.Label(new Rect(43,153,352,65),text,body);

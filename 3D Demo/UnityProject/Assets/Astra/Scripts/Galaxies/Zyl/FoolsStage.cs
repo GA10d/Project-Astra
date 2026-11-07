@@ -178,7 +178,7 @@ namespace AstraCabin.Galaxies.Zyl
         }
         public void Sample(float t)
         {
-            TimeSample=Mathf.Clamp(t,0,Duration);t=TimeSample;
+            TimeSample=Mathf.Max(0,t);t=TimeSample;
             float grown=Mathf.Lerp(.06f,distance-.35f,Ease(0,10.7f,t));
             float impact=Jab(t,12.1f,.32f)+Jab(t,14.4f,.32f)+Jab(t,16.8f,.9f);
             float retract=Mathf.Lerp(0,1.3f,Ease(19,21,t));
@@ -198,6 +198,22 @@ namespace AstraCabin.Galaxies.Zyl
                 float settle=Ease(WordCut+(i%11)*.035f,WordReady,t);
                 m.position=Vector3.Lerp(cloud,targets[i],settle)+(right*Mathf.Sin(i+t*2)+up*Mathf.Cos(i*.7f+t*1.6f))*.026f*settle;
                 m.rotation=Quaternion.AngleAxis(i*47+t*28,forward)*Quaternion.FromToRotation(Vector3.up,right);
+            }
+        }
+        public int VisibleMicrobes {get{return microbes.FindAll(m=>m&&m.gameObject.activeSelf).Count;}}
+        public void UpdateBreathing(float time){foreach(var material in membranes)material.SetFloat("_BreathPreviewTime",time);}
+        public void SampleReturn(float time,float duration)
+        {
+            Sample(Duration);
+            float follow=Mathf.SmoothStep(0,1,Mathf.Clamp01(time/duration));
+            Camera.transform.rotation=Quaternion.LookRotation(Vector3.Lerp(wordCenter,Contact,follow)-FinalCameraPosition,up);
+            for(int i=0;i<microbes.Count;i++)
+            {
+                float u=Mathf.SmoothStep(0,1,Mathf.InverseLerp((i%31)/31f*duration*.18f,duration,time));var m=microbes[i];
+                var middle=Vector3.Lerp(targets[i],Contact,.5f)-axis*2+cutRight*Mathf.Sin(i*1.73f)*1.2f;
+                m.position=(1-u)*(1-u)*targets[i]+2*(1-u)*u*middle+u*u*(Contact+axis*.45f);
+                m.rotation=Quaternion.LookRotation((Contact-m.position).sqrMagnitude>.001f?Contact-m.position:axis,up)*Quaternion.Euler(90,0,i*31);
+                m.gameObject.SetActive(u<.995f);
             }
         }
         public void Dispose()

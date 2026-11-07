@@ -240,23 +240,38 @@
       "nodes": [
         {
           "id": "entry",
-          "name": "跃迁入口",
+          "name": "星域入口",
           "x": 0,
           "y": 0.5,
           "eventId": "",
           "next": [
-            "exit"
+            "us"
           ],
           "exit": false
         },
         {
-          "id": "exit",
-          "name": "星域出口",
-          "x": 1,
+          "id": "us",
+          "name": "我们仨",
+          "x": 0.333,
           "y": 0.5,
-          "eventId": "",
+          "eventId": "zyl_farewell_us",
+          "next": [
+            "farewell"
+          ],
+          "exit": false,
+          "travelButtonText": "确定",
+          "archiveDescription": "你睡醒了，米霍尔昨天说还会进行新的尝试，去看看他在干嘛。"
+        },
+        {
+          "id": "farewell",
+          "name": "泰德野里的别离",
+          "x": 0.673,
+          "y": 0.506,
+          "eventId": "zyl_farewell_departure",
           "next": [],
-          "exit": true
+          "exit": true,
+          "travelButtonText": "发起视频通话",
+          "archiveDescription": "你们成功从巨兽肚子中逃出，但是米霍尔独自飞走了。"
         }
       ]
     }
@@ -478,6 +493,57 @@
           "id": "confirm",
           "text": "确定",
           "result": "接演出",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_farewell_us",
+      "type": "setpiece",
+      "title": "我们仨",
+      "description": "你睡醒了，米霍尔昨天说还会进行新的尝试，去看看他在干嘛。",
+      "setpiece": 16,
+      "duration": 1,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "演出事件",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_farewell_departure",
+      "type": "choice",
+      "title": "泰德野里的别离",
+      "description": "米霍尔死亡了……引擎堵塞物质似乎因为巨兽体内的环境影响而分解，可以继续出发了。",
+      "setpiece": 0,
+      "duration": 0,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "启航",
+          "result": "米霍尔死亡了……引擎堵塞物质似乎因为巨兽体内的环境影响而分解，可以继续出发了。",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "event_1",
+      "type": "choice",
+      "title": "再见泰德野里",
+      "description": "在这里描述玩家遇到的事件。",
+      "setpiece": 1,
+      "duration": 8,
+      "choices": [
+        {
+          "id": "continue",
+          "text": "记录并离开",
+          "result": "事件已记录。",
           "costs": [],
           "rewards": []
         }

@@ -4,6 +4,35 @@ using UnityEngine;
 namespace AstraCabin.Galaxies.Zyl {
  [Serializable] public sealed class ZylPresentationParameters {
   public int schemaVersion=1;
+  public float farewellChestLeadTime = .45f;
+  public float farewellSurfaceWaveAmplitude = 1.63f;
+  public float farewellInnerWaveHz = 1.3f;
+  public float farewellHaloWaveHz = 0.55f;
+  public float farewellHaloIntensity = 1.05f;
+  public float farewellFractureStart = 0.64f;
+  public float farewellFinalFlashDuration = 0.7f;
+  public float farewellFinalFlashIntensity = 1f;
+  public float farewellShakeSustain = 0.42f;
+  public float farewellImpactDecay = 1.4f;
+  public float farewellChestDuration=2.8f,farewellSignalHold=1.3f,farewellPlanetDuration=8f,farewellDebrisHold=4f,farewellPhotoDuration=8f,farewellShake=0.35f;
+  public MihuoerDialogueLine[] farewellDialogue=new[]{new MihuoerDialogueLine{text="【占位：请填写别离视频通话的台词，可添加玩家回复和倒计时操作。倒计时归零将立即打断。】",duration=600f,replies=new string[0]}};
+
+  public float escapeFlightDuration=58f,escapeExitDistance=12000f,escapeHullLoss=36f,escapeFadeDuration=1.2f;
+  public MihuoerDialogueLine[] escapeGravesDialogue=new[]{new MihuoerDialogueLine{text="【占位：请在HTML填写三座墓碑前米霍尔的台词。】",duration=6f,replies=new string[0]}};
+  public MihuoerDialogueLine[] escapeEncouragement=new[]{new MihuoerDialogueLine{text="抓紧，我来带路！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="跟着我的航线，别担心！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="前面有障碍，我来撞开！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="还撑得住，我们继续！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="就快到出口了，坚持住！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="看到亮光了，我们能出去！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="最后一段路，抓稳！",duration=8f,replies=new string[0]}};
+
+  public float foolsSceneFadeDuration=1.2f,foolsSettlementFadeDuration=1f;
+  public MihuoerDialogueLine[] foolsClosingDialogue=new[]{new MihuoerDialogueLine{text="【占位：请在HTML填写黑屏转场后米霍尔的台词。】",duration=5f,replies=new string[0]}};
+  public float foolsStopHold=4.5f;
+  public float foolsReturnDuration=4f;
+  public float foolsWalkSpeed=0.85f;
+  public float foolsFrontHold=2f;
+  public float foolsOrbitDuration=7f;
+  public float foolsPullbackDuration=5f;
+  public float foolsFinalHold=3f;
+  public MihuoerDialogueLine[] foolsGroundDialogue=new[]{new MihuoerDialogueLine{text="【占位：请填写米霍尔离开飞船后的台词。】",duration=4f,replies=new string[0]}};
+  public MihuoerDialogueLine[] foolsWalkDialogue=new[]{new MihuoerDialogueLine{text="【占位：请填写米霍尔边上坡边说的台词；到达坡顶后会被打断。】",duration=600f,replies=new string[0]}};
+  public MihuoerDialogueLine[] foolsCrestDialogue=new[]{new MihuoerDialogueLine{text="【占位：请填写到达坡顶时打断旧对白的新台词。】",duration=5f,replies=new string[0]}};
   public float countdownEnabled=1f;
   public float countdownInitialSeconds=300f;
   public float countdownInitiallyVisible=0f;
@@ -79,6 +108,39 @@ namespace AstraCabin.Galaxies.Zyl {
    catch(Exception e){Debug.LogError("zyl演出参数无效，整份回退默认值："+e.Message);var fallback=new ZylPresentationParameters();fallback.NormalizeDialogue();return fallback;}
   }
   public void Validate(){
+   Check("escapeFlightDuration",escapeFlightDuration,24f,180f);
+   Check("escapeExitDistance",escapeExitDistance,1000f,100000f);
+   Check("escapeHullLoss",escapeHullLoss,5f,70f);
+   Check("escapeFadeDuration",escapeFadeDuration,0.2f,5f);
+   ValidateCinematicDialogue(escapeGravesDialogue);ValidateCinematicDialogue(escapeEncouragement);
+   Check("farewellChestLeadTime",farewellChestLeadTime,0f,3f);
+   Check("farewellChestDuration",farewellChestDuration,0.5f,10f);
+   Check("farewellSignalHold",farewellSignalHold,0.5f,8f);
+   Check("farewellPlanetDuration",farewellPlanetDuration,3f,30f);
+   Check("farewellDebrisHold",farewellDebrisHold,1f,20f);
+   Check("farewellPhotoDuration",farewellPhotoDuration,3f,30f);
+   Check("farewellShake",farewellShake,0f,1f);
+   Check("farewellSurfaceWaveAmplitude",farewellSurfaceWaveAmplitude,0f,6f);
+   Check("farewellInnerWaveHz",farewellInnerWaveHz,0.1f,6f);
+   Check("farewellHaloWaveHz",farewellHaloWaveHz,0.1f,6f);
+   Check("farewellHaloIntensity",farewellHaloIntensity,0f,1.5f);
+   Check("farewellFractureStart",farewellFractureStart,0.58f,0.82f);
+   Check("farewellFinalFlashDuration",farewellFinalFlashDuration,0.1f,2f);
+   Check("farewellFinalFlashIntensity",farewellFinalFlashIntensity,0.2f,1f);
+   Check("farewellShakeSustain",farewellShakeSustain,0.1f,0.85f);
+   Check("farewellImpactDecay",farewellImpactDecay,0.15f,3f);
+   MihuoerDialogueLine.Validate(farewellDialogue);
+   Check("foolsSceneFadeDuration",foolsSceneFadeDuration,.2f,5f);Check("foolsSettlementFadeDuration",foolsSettlementFadeDuration,.2f,5f);ValidateCinematicDialogue(foolsClosingDialogue);
+   Check("foolsStopHold",foolsStopHold,1f,30f);
+   Check("foolsReturnDuration",foolsReturnDuration,1f,15f);
+   Check("foolsWalkSpeed",foolsWalkSpeed,0.2f,2f);
+   Check("foolsFrontHold",foolsFrontHold,0.5f,15f);
+   Check("foolsOrbitDuration",foolsOrbitDuration,2f,30f);
+   Check("foolsPullbackDuration",foolsPullbackDuration,1f,20f);
+   Check("foolsFinalHold",foolsFinalHold,1f,30f);
+   ValidateCinematicDialogue(foolsGroundDialogue);
+   ValidateCinematicDialogue(foolsWalkDialogue);
+   ValidateCinematicDialogue(foolsCrestDialogue);
    Check("countdownEnabled",countdownEnabled,0f,1f);
    Check("countdownInitialSeconds",countdownInitialSeconds,0f,5999f);
    Check("countdownInitiallyVisible",countdownInitiallyVisible,0f,1f);
@@ -157,6 +219,7 @@ namespace AstraCabin.Galaxies.Zyl {
    if(portalInitialOpening>=portalFinalOpening)throw new InvalidDataException("portalInitialOpening必须小于portalFinalOpening");
    if(visitorArrivalDuration>=visitorInvitationTime)throw new InvalidDataException("visitorArrivalDuration必须小于visitorInvitationTime");
   }
+  static void ValidateCinematicDialogue(MihuoerDialogueLine[] lines){MihuoerDialogueLine.Validate(lines);foreach(var line in lines)if(line.replies.Length>0)throw new InvalidDataException("连续演出对白不支持玩家回复");}
   static void CheckText(string key,string value,int max){
    if(string.IsNullOrWhiteSpace(value)||value.Length>max)throw new InvalidDataException(key+"台词不能为空且不能超过"+max+"个UTF-16字符");
    foreach(char c in value)if(char.IsControl(c)&&c!='\n'&&c!='\r'&&c!='\t')throw new InvalidDataException(key+"含不支持的控制字符");

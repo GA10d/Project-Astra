@@ -406,6 +406,7 @@ namespace AstraCabin
             editorScroll = Vector2.zero;
         }
 
+        public void CloseEscapeCombatApp(){runningApps.Remove("combat");if(activeApp=="combat")activeApp="";}
         public void CloseEncounterApp(bool returnToNavigation=false)
         {
             runningApps.Remove("encounter");
@@ -423,9 +424,9 @@ namespace AstraCabin
             if (app == "text" || app == "notepad") app = "editor";
             if (app == "recyclebin") app = "trash";
             if (app != "files" && app != "editor" && app != "browser" && app != "trash" && app != "combat" && app != "navigation" && app != "meeting" && app != "encounter") return;
-            if(app=="encounter" && (!GetComponent<SetpieceDirector>().encounter || !GetComponent<SetpieceDirector>().encounter.Active))return;
+            if(app=="encounter" && !((GetComponent<SetpieceDirector>().encounter&&GetComponent<SetpieceDirector>().encounter.Active)||(GetComponent<SetpieceDirector>().farewell&&GetComponent<SetpieceDirector>().farewell.Active)))return;
             if(app=="meeting" && (!Meeting || !Meeting.HasSession))return;
-            if (app == "combat" && Navigation && Navigation.PresentationPending) { SetStatus("请先在导航模式完成当前演出事件。", true); return; }
+            if (app == "combat" && Navigation && Navigation.PresentationPending && (!Combat||Combat.EscapeStory==null)) { SetStatus("请先在导航模式完成当前演出事件。", true); return; }
             if (activeApp == "combat" && app != "combat" && Combat) Combat.Suspend();
             SaveCurrentDocument();
             if (app == "editor" && string.IsNullOrEmpty(editorDocumentId))
@@ -590,15 +591,18 @@ namespace AstraCabin
         {
             get
             {
-                if (!IsOpen || !Combat || !Combat.PhysicalFeedbackEnabled || !controller)
-                    return Matrix4x4.identity;
-                Vector3 euler = controller.combatEuler;
+                if (!IsOpen || !controller) return Matrix4x4.identity;
+                bool combatMotion = Combat && Combat.PhysicalFeedbackEnabled;
+                var farewell = activeApp == "encounter" ? GetComponent<SetpieceDirector>()?.farewell : null;
+                bool farewellMotion = farewell && farewell.CinematicShake > 0;
+                if (!combatMotion && !farewellMotion) return Matrix4x4.identity;
+                Vector3 euler = farewellMotion ? controller.cinematicEuler : controller.combatEuler;
                 float fov = controller.viewCamera ? controller.viewCamera.fieldOfView : 74f;
                 float focal = Screen.height * .5f / Mathf.Tan(fov * .5f * Mathf.Deg2Rad);
                 Vector3 center = new Vector3(Screen.width * .5f, Screen.height * .5f, 0);
                 Vector3 offset = new Vector3(-Mathf.Tan(euler.y * Mathf.Deg2Rad) * focal,
                     -Mathf.Tan(euler.x * Mathf.Deg2Rad) * focal, 0);
-                float fovScale = Mathf.Tan((fov - controller.combatFov) * .5f * Mathf.Deg2Rad) / Mathf.Tan(fov * .5f * Mathf.Deg2Rad);
+                float fovScale = combatMotion ? Mathf.Tan((fov - controller.combatFov) * .5f * Mathf.Deg2Rad) / Mathf.Tan(fov * .5f * Mathf.Deg2Rad) : 1;
                 return Matrix4x4.Translate(center + offset) * Matrix4x4.Rotate(Quaternion.Euler(0, 0, euler.z))
                     * Matrix4x4.Scale(new Vector3(fovScale, fovScale, 1)) * Matrix4x4.Translate(-center);
             }
@@ -623,7 +627,7 @@ namespace AstraCabin
             Fill(new Rect(0, 0, DesktopWidth, DesktopHeight), desktopColor);
             Fill(new Rect(0, 0, DesktopWidth, 34), new Color(0.025f, 0.08f, 0.075f));
             GUI.Label(new Rect(18, 0, 600, 34), "ASTRA / OS 3.1      •      CIVIL TERMINAL 04", lightLabel);
-            GUI.Label(new Rect(916, 0, 424, 34), activeApp == "combat" ? "LOCAL MODE   |   [ ESC ] 战斗菜单" : "LOCAL MODE   |   [ ESC ] 保存并离开", lightLabel);
+            GUI.Label(new Rect(916, 0, 424, 34), activeApp == "combat" ? (Combat&&Combat.EscapeStory!=null?"TOW LINK   |   [ ESC ] 暂停 / 继续":"LOCAL MODE   |   [ ESC ] 战斗菜单") : "LOCAL MODE   |   [ ESC ] 保存并离开", lightLabel);
             for (int lineIndex = 37; lineIndex < 736; lineIndex += 4) Fill(new Rect(0, lineIndex, DesktopWidth, 1), new Color(0, 0, 0, 0.045f));
             DrawDesktop();
             if (!string.IsNullOrEmpty(activeApp))
@@ -769,15 +773,15 @@ namespace AstraCabin
             if (RetroButton(new Rect(width - 65, 8, 26, 23), "□")) toggleMaximize = true;
             if (RetroButton(new Rect(width - 34, 8, 26, 23), "×")) { SaveCurrentDocument(); if(activeApp=="meeting")FinishMeeting();else {runningApps.Remove(activeApp); activeApp = "";} }
             if (string.IsNullOrEmpty(activeApp)) return;
-            if(activeApp=="encounter") { GetComponent<SetpieceDirector>().encounter.DrawCall(new Rect(8,39,width-16,height-45),font); return; }
+            if(activeApp=="encounter") { var d=GetComponent<SetpieceDirector>();if(d.farewell&&d.farewell.Active)d.farewell.DrawCall(new Rect(8,39,width-16,height-45),font);else d.encounter.DrawCall(new Rect(8,39,width-16,height-45),font); return; }
             if(activeApp=="meeting" && Meeting)
             {
                 Meeting.Draw(new Rect(8,39,width-16,height-45),font);
                 if(!maximized)GUI.DragWindow(new Rect(4,4,width-106,31));
                 return;
             }
-            GUI.Label(new Rect(15, 37, 620, 24), activeApp == "meeting" ? "ASTRA LINK  /  加密中继通话  /  交互会议" : activeApp == "navigation" ? "信标导航  /  PROBE 04  /  航行进度自动保存" : activeApp == "combat" ? "舰载战术重建  /  PROBE 04  /  独立演练任务" : "文件(F)      编辑(E)      查看(V)      帮助(H)", small);
-            GUI.Label(new Rect(width - 390, 37, 374, 24), activeApp == "combat" ? "[ P ] 暂停     [ ESC ] 战斗菜单" : "[ CTRL+S ] 保存     [ ESC ] 返回舱室", right);
+            GUI.Label(new Rect(15, 37, 620, 24), activeApp == "meeting" ? "ASTRA LINK  /  加密中继通话  /  交互会议" : activeApp == "navigation" ? "信标导航  /  PROBE 04  /  航行进度自动保存" : activeApp == "combat" ? (Combat&&Combat.EscapeStory!=null?"逃出生天  /  PROBE 04  /  米霍尔牵引航线":"舰载战术重建  /  PROBE 04  /  独立演练任务") : "文件(F)      编辑(E)      查看(V)      帮助(H)", small);
+            GUI.Label(new Rect(width - 390, 37, 374, 24), activeApp == "combat" ? (Combat&&Combat.EscapeStory!=null?"[ P / ESC ] 暂停 / 继续":"[ P ] 暂停     [ ESC ] 战斗菜单") : "[ CTRL+S ] 保存     [ ESC ] 返回舱室", right);
             Fill(new Rect(8, 64, width - 16, 1), new Color(0.35f, 0.39f, 0.34f));
             bool wasEnabled = GUI.enabled;
             if (!string.IsNullOrEmpty(confirmationId)) GUI.enabled = false;

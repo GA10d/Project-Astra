@@ -29,6 +29,11 @@ namespace AstraCabin
                 if(candidate.Sector.id!=request.sectorId||!candidate.Sector.nodes.Any(n=>n.id==request.nodeId))throw new InvalidDataException("目标信标与前置路线不匹配");
                 bool atTarget=candidate.Node.id==request.nodeId;
                 if(!atTarget&&candidate.TravelError(request.nodeId)!=null)throw new InvalidDataException(candidate.TravelError(request.nodeId));
+                if(request.autoSupplyItems)
+                {
+                    if(!atTarget){string error;if(!candidate.Apply(new Command{kind="travel",id=request.nodeId},out error))throw new InvalidDataException(error);}
+                    var needed=ZylDebugInventory.ChoiceMinimum(candidate.Pending);string invalid=ZylDebugInventory.Validate(request.campaign,needed);if(invalid!=null)throw new InvalidDataException(invalid);
+                }
                 // All validation precedes presentation cleanup and any writes, always inside the per-run sandbox.
                 OwnsPresentation=false;Session=null;
                 if(computer.Meeting&&computer.Meeting.HasSession)computer.Meeting.Stop();
@@ -56,6 +61,11 @@ namespace AstraCabin
                 computer.Open();computer.OpenApp("navigation");IsGalaxyOverview=false;
                 selectedId=request.nodeId;detailScroll=journalScroll=Vector2.zero;
                 if(Session.Engine.Node.id!=request.nodeId&&!Travel(request.nodeId))throw new InvalidOperationException(Message);
+                if(request.autoSupplyItems)
+                {
+                    var topup=ZylDebugInventory.TopUp(Session.Engine,ZylDebugInventory.ChoiceMinimum(Session.Engine.Pending));
+                    if(topup.Length>0){var command=ZylDebugInventory.Create(Campaign,topup);if(!Session.Commit(command.kind,command.id,command.outcome))throw new InvalidOperationException(Session.Error);}
+                }
                 Message="隔离调试 · "+Session.Engine.Node.name+"（前置演出已跳过）";
             }
             catch(Exception e){EditorDebugError=e.Message;}
