@@ -11,7 +11,7 @@ function initDialogueEditor(){
   {key:'foolsWalkDialogue',group:10,cinematic:true,title:'上坡途中 · 台词',help:'边走边说。对白结束不停止行走；到坡顶立即打断当前段落并替换为坡顶新台词，不等待此处时长结束。',empty:'无上坡对白：静默行走，仍在坡顶触发新台词。'},
   {key:'foolsCrestDialogue',group:10,cinematic:true,title:'到达坡顶 · 打断台词',help:'到坡顶立即开始，镜头切正面、绕半圈到后脑并拉开。台词可贯穿镜头；最后一段播完且最终停留结束后返回导航。',empty:'无坡顶对白：只播放镜头并返回导航。'},
   {key:'farewellDialogue',group:12,title:'别离 · 米霍尔视频通话',help:'沿用航程现有倒计时，不自动重置。支持多段台词、玩家回复和每句/回复计时操作；归零优先打断任何台词及待选回复。台词播完也会等待归零。',empty:'无对白：保留实时画面，等待现有倒计时归零。'},
-  {key:'escapeGravesDialogue',group:11,cinematic:true,title:'三座墓碑前 · 固定镜头对白',help:'米霍尔站在三座墓碑前，镜头位置和视角保持不动。最后一句结束后黑屏进入牵引逃亡。',empty:'无墓前对白：展示固定镜头后进入转场。'},
+  {key:'escapeGravesDialogue',group:11,cinematic:true,title:'三座墓碑前 · 固定镜头对白',help:'勾选一段台词，米霍尔会在这句开始时弯腰拔肉芽。根须连着地面，拔出后等待设定的时间再晃动。对白和拔取演出结束后黑屏进入牵引逃亡。',empty:'无墓前对白：展示固定镜头后进入转场。'},
   {key:'escapeEncouragement',group:11,cinematic:true,title:'牵引逃亡 · 米霍尔鼓励台词',help:'战斗右侧通讯栏按段落时长播放，可自由增删。整段飞行以牵引逃亡时长为准；抵达出口会结束尚未播完的台词。',empty:'无飞行台词：右侧只显示船体和距离。'},
   {key:'foolsClosingDialogue',group:10,cinematic:true,title:'黑屏转场后 · 最后对白',help:'前段背影画面结束后先黑屏，再显现新站位。镜头固定，按顺序播放本组台词；全部结束后返回导航，仍手动结算傻瓜。',empty:'没有最后对白：新镜头显现后返回导航。'},
   {key:'printingDialogue',group:9,title:'米霍尔需要打印构件 · 对话内容',help:'切到舷窗，米霍尔坐在现有飞船上面向玩家。每段可配置台词、时长、回复与计时操作；最后一段结束后自动返回导航，不自动结算事件。',empty:'没有对话段落：切到舷窗并就座后立即返回导航。'}
@@ -29,15 +29,24 @@ function renderDialogueSequence(spec){
  spec.description.textContent=`当前 ${list.length} 段 · 可增删、复制、排序。台词建议20–200字，时长建议3–20秒；允许0.1–600秒。`;
  if(!list.length)spec.list.append(dialogueElement('p','dialogue-empty',spec.empty));
  list.forEach((line,i)=>{
-  const card=dialogueElement('article','card dialogue-block');card.dataset.search=[spec.title,'玩家回复 台词 持续时间',line.text,...(line.replies||[])].join(' ').toLowerCase();
+  const card=dialogueElement('article','card dialogue-block');card.dataset.search=[spec.title,'玩家回复 台词 持续时间',key==='escapeGravesDialogue'?'肉芽 拔取 触发':'',line.text,...(line.replies||[])].join(' ').toLowerCase();
   const header=dialogueElement('div','dialogue-block-head');header.append(dialogueElement('strong','',`对话 ${String(i+1).padStart(2,'0')}`));const actions=dialogueElement('div','dialogue-actions');
   const up=dialogueButton('上移',()=>change(lines=>[lines[i-1],lines[i]]=[lines[i],lines[i-1]]));up.disabled=i===0;
   const down=dialogueButton('下移',()=>change(lines=>[lines[i+1],lines[i]]=[lines[i],lines[i+1]]));down.disabled=i===list.length-1;
-  actions.append(up,down,dialogueButton('复制',()=>change(lines=>lines.splice(i+1,0,ZYL_TIMER_DATA.copyLine(lines[i])))),dialogueButton('删除本段',()=>change(lines=>lines.splice(i,1))));header.append(actions);card.append(header);
+  actions.append(up,down,dialogueButton('复制',()=>change(lines=>{const duplicate=ZYL_TIMER_DATA.copyLine(lines[i]);if(key==='escapeGravesDialogue')delete duplicate.pullSprout;lines.splice(i+1,0,duplicate);})),dialogueButton('删除本段',()=>change(lines=>lines.splice(i,1))));header.append(actions);card.append(header);
   const textLabel=dialogueElement('label','','米霍尔台词');textLabel.htmlFor=key+'-text-'+i;card.append(textLabel);
   const text=dialogueElement('textarea');Object.assign(text,{id:textLabel.htmlFor,rows:3,maxLength:1000,value:line.text,required:true});text.onchange=()=>change(lines=>lines[i].text=text.value);card.append(text);
   const timing=dialogueElement('div','dialogue-timing'),label=dialogueElement('label','','米霍尔台词持续时间');label.htmlFor=key+'-duration-'+i;timing.append(label);
   const duration=dialogueElement('input');Object.assign(duration,{id:label.htmlFor,type:'number',min:.1,max:600,step:'any',value:line.duration,required:true});duration.onchange=()=>change(lines=>lines[i].duration=duration.value.trim()===''?null:Number(duration.value));timing.append(duration,dialogueElement('span','','秒'));card.append(timing);renderTimerAction(card,line.timerAction,action=>change(lines=>{ZYL_TIMER_DATA.normalizeLine(lines[i]);lines[i].timerAction=action;}));
+  if(key==='escapeGravesDialogue'){
+   const cue=dialogueElement('label','dialogue-timing');
+   const checkbox=dialogueElement('input');Object.assign(checkbox,{type:'checkbox',checked:line.pullSprout===true});
+   checkbox.onchange=()=>change(lines=>{
+    if(checkbox.checked)lines.forEach(row=>delete row.pullSprout);
+    if(checkbox.checked)lines[i].pullSprout=true;else delete lines[i].pullSprout;
+   });
+   cue.append(checkbox,dialogueElement('span','','在这句开始拔肉芽'));card.append(cue);
+  }
   if(spec.cinematic){card.append(dialogueElement('p','dialogue-help','此处为连续演出对白，不设置玩家回复。'));spec.list.append(card);return;}
   const replyHead=dialogueElement('div','dialogue-block-head');replyHead.append(dialogueElement('strong','','玩家回复选项'),dialogueButton('＋ 增加玩家回复选项',()=>change(lines=>{const row=lines[i];ZYL_TIMER_DATA.normalizeLine(row);row.replies.push('请填写玩家回复。');row.replyTimerActions.push(null);})));card.append(replyHead);
   if(!line.replies.length)card.append(dialogueElement('p','dialogue-help','没有回复选项：计时结束后自动进入下一段。'));

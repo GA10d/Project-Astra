@@ -57,10 +57,10 @@ namespace AstraCabin.Galaxies.Zyl
             }
             owner.Speaking=speaking;
         }
-        public void SampleStandingAt(Vector3 ground,Vector3 facing,bool speaking,float time)
+        public void SampleStandingAt(Vector3 ground,Vector3 facing,bool speaking,float time,Vector3 weightShift=default,float lowering=0f)
         {
             Root.rotation=Quaternion.LookRotation(Vector3.ProjectOnPlane(facing,slope.Up).normalized,slope.Up);
-            Root.position=ground+slope.Up*rootOffset;SampleBase(speaking,time);FootError=0;
+            Root.position=ground+weightShift+slope.Up*(rootOffset-lowering);SampleBase(speaking,time);FootError=0;
             for(int i=0;i<2;i++)
             {
                 var target=slope.Ground(ground+Root.right*side[i])+slope.Up*.07f;
@@ -69,7 +69,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
             owner.Speaking=speaking;
         }
-        static void Solve(Transform hip,Transform knee,Transform ankle,Vector3 target,Vector3 bend)
+        internal static void Solve(Transform hip,Transform knee,Transform ankle,Vector3 target,Vector3 bend)
         {
             var origin=hip.position;float a=Vector3.Distance(origin,knee.position),b=Vector3.Distance(knee.position,ankle.position);var delta=target-origin;
             float d=Mathf.Clamp(delta.magnitude,.001f,a+b-.001f);var along=delta.normalized;

@@ -779,6 +779,16 @@
     },
     {
       "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeSproutShakeDelay",
+      "label": "拔出肉芽后 · 晃动延迟",
+      "value": 1.15,
+      "min": 0,
+      "max": 8,
+      "unit": "秒",
+      "desc": "肉芽提起到手上后，等待多久开始墓前镜头晃动。仅在勾选拔取台词时生效。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
       "key": "escapeFadeDuration",
       "label": "黑屏淡入淡出时长",
       "value": 1.2,
@@ -1050,6 +1060,7 @@
   ],
   "defaults": {
     "schemaVersion": 1,
+    "escapeSproutShakeDelay": 1.15,
     "repairAlarmDelay": 3,
     "repairStrikeDuration": 0.48,
     "repairImpactStrength": 0.95,

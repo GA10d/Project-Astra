@@ -18,6 +18,13 @@ namespace AstraCabin.Galaxies.Zyl
         public static readonly Vector3[] GraveAuth={new Vector3(5.7751f,0,6.5558f),new Vector3(4.2910f,0,4.7240f),new Vector3(2.6227f,0,2.7001f)};
         SetpieceDirector director;ZylPresentationParameters p;MihuoerDialoguePlayer dialogue,encouragement;
         float phaseTime,elapsed;bool leaving,oldUI,captured;Vector3 actorGround,actorFacing;Font font;GUIStyle subtitle;
+        // Fitted from the marked ground point in the grave reference view.
+        static readonly Vector3 SproutAuth = new Vector3(2.27f, 0f, 6.52f);
+        EscapeSprout sprout;
+        EscapeGust gust;
+        float sproutCue, shakeTime;
+        Vector3 shotPosition;
+        Quaternion shotRotation;
         Vector2 scroll;readonly List<UnityEngine.Object> resources=new List<UnityEngine.Object>();
         ZylStomachEnvironment Exterior {get{return director.computer.Navigation.Exterior;}}
         ZylScreenCurtain Curtain {get{return director.GetComponent<ZylScreenCurtain>();}}
@@ -48,7 +55,10 @@ namespace AstraCabin.Galaxies.Zyl
             var exterior=Exterior;var frame=exterior.AuthoredToRuntime;
             Ground=new FoolsSlope(exterior.MihuoerShipAnchor.transform.parent,frame,exterior.MihuoerAnchor.transform.position);
             Walker=new FoolsWalker(exterior.MihuoerActor,Ground);
-            actorGround=Ground.Ground(frame.MultiplyPoint3x4(ActorAuth));
+            var actorMark = Ground.Ground(frame.MultiplyPoint3x4(ActorAuth));
+            var sproutSoil = Ground.Ground(frame.MultiplyPoint3x4(SproutAuth));
+            var towardSprout = Vector3.ProjectOnPlane(sproutSoil - actorMark, Ground.Up).normalized;
+            actorGround = Ground.Ground(actorMark + towardSprout * .53f);
             var cameraPosition=Ground.Ground(frame.MultiplyPoint3x4(CameraAuth))+Ground.Up*1.55f;actorFacing=cameraPosition-actorGround;
             var root=new GameObject("Zyl16 | three graves");GravesRoot=root.transform;
             var stone=new Material(Shader.Find("Standard"));stone.name="Zyl16 weathered memorial stone";stone.color=new Color(.28f,.25f,.21f);stone.SetFloat("_Glossiness",.08f);resources.Add(stone);
@@ -62,10 +72,28 @@ namespace AstraCabin.Galaxies.Zyl
                 var mound=GameObject.CreatePrimitive(PrimitiveType.Sphere);mound.name="Grave soil";mound.transform.SetParent(t,false);mound.transform.localPosition=new Vector3(0,.025f,.4f);mound.transform.localScale=new Vector3(1.15f,.12f,1.8f);mound.layer=25;Destroy(mound.GetComponent<Collider>());mound.GetComponent<Renderer>().sharedMaterial=soil;
             }
             var cameraObject=new GameObject("Zyl16 | fixed graves camera");Camera=cameraObject.AddComponent<Camera>();Camera.CopyFrom(director.controller.viewCamera);Camera.targetTexture=null;Camera.rect=new Rect(0,0,1,1);Camera.cullingMask=1<<25;Camera.nearClipPlane=.05f;Camera.depth=director.controller.viewCamera.depth+10;Camera.farClipPlane=Mathf.Max(500,Camera.farClipPlane);Camera.clearFlags=CameraClearFlags.SolidColor;
-            Camera.transform.position=cameraPosition;Camera.transform.rotation=Quaternion.LookRotation(actorGround+Ground.Up*.95f-cameraPosition,Ground.Up);Camera.fieldOfView=57;
+            Camera.transform.position=cameraPosition;Camera.transform.rotation=Quaternion.LookRotation(actorMark+Ground.Up*.95f-cameraPosition,Ground.Up);Camera.fieldOfView=57;
             var light=new GameObject("Graves soft fill").AddComponent<Light>();light.transform.SetParent(root.transform);light.transform.position=cameraPosition+Ground.Up*2;light.type=LightType.Point;light.range=18;light.intensity=1.1f;light.color=new Color(1,.77f,.58f);light.cullingMask=1<<25;
             oldUI=director.controller.showUI;captured=true;director.controller.showUI=false;
-            dialogue=Dialogue(p.escapeGravesDialogue,"graves");Walker.SampleStandingAt(actorGround,actorFacing,dialogue.Current!=null,0);
+            dialogue=Dialogue(p.escapeGravesDialogue,"graves");
+            Walker.SampleStandingAt(actorGround,actorFacing,dialogue.Current!=null,0);
+            sprout = new EscapeSprout(GravesRoot, Walker, sproutSoil, actorGround, actorFacing, Ground.Up, resources);
+            shotPosition = Camera.transform.position;
+            shotRotation = Camera.transform.rotation;
+            sproutCue = float.PositiveInfinity;
+            shakeTime = float.NegativeInfinity;
+            float lineStart = 0f;
+            foreach (var line in p.escapeGravesDialogue)
+            {
+                if (line.pullSprout)
+                {
+                    sproutCue = lineStart;
+                    break;
+                }
+                lineStart += line.duration;
+            }
+            if (!float.IsPositiveInfinity(sproutCue))
+                gust = new EscapeGust(GravesRoot, exterior.MihuoerShipAnchor.transform.parent, Camera, resources);
         }
         static Mesh StoneMesh()
         {
@@ -96,10 +124,25 @@ namespace AstraCabin.Galaxies.Zyl
                         if(!Exterior.Ready||Exterior.Busy||ZylScreenCurtain.BlocksInput)return;
                         BuildShot();Enter(Step.GravesDialogue);break;
                     case Step.GravesDialogue:
-                        dialogue.Tick(dt,false);Walker.SampleStandingAt(actorGround,actorFacing,dialogue.Current!=null,elapsed);
-                        if(dialogue.Ended){Curtain.ResetPaintConfirmation();TransitionAlpha=.001f;Enter(Step.FadeToBattle);}break;
+                        dialogue.Tick(dt,false);
+                        float age = phaseTime - sproutCue;
+                        sprout.Sample(age, dialogue.Current != null, elapsed);
+                        shakeTime = age - EscapeSprout.LiftEnd - p.escapeSproutShakeDelay;
+                        ShakeGravesCamera(1f);
+                        if (dialogue.Ended && (float.IsPositiveInfinity(sproutCue) || shakeTime >= .85f))
+                        {
+                            Curtain.ResetPaintConfirmation();
+                            TransitionAlpha = .001f;
+                            Enter(Step.FadeToBattle);
+                        }
+                        break;
                     case Step.FadeToBattle:
                         TransitionAlpha=Mathf.SmoothStep(0,1,Mathf.Clamp01(phaseTime/p.escapeFadeDuration));
+                        if (!float.IsNegativeInfinity(shakeTime))
+                        {
+                            shakeTime += dt;
+                            ShakeGravesCamera(1f - TransitionAlpha);
+                        }
                         if(phaseTime>=p.escapeFadeDuration){TransitionAlpha=1;Enter(Step.BlackBeforeBattle);}break;
                     case Step.BlackBeforeBattle:
                         if(!Painted()||phaseTime<.15f)return;
@@ -127,11 +170,24 @@ namespace AstraCabin.Galaxies.Zyl
             }
             catch(Exception e){Fail("逃出生天："+e.Message);}
         }
+        void ShakeGravesCamera(float fade)
+        {
+            if (shakeTime <= 0f) return;
+            float t = shakeTime;
+            gust?.Sample(t, Camera.aspect);
+            float strength = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / .24f)) *
+                Mathf.Lerp(1f, .38f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - .65f) / 1.45f))) * fade;
+            float x = Mathf.Sin(t * 37f) + .4f * Mathf.Sin(t * 19f);
+            float y = Mathf.Sin(t * 31f + .7f) - .3f * Mathf.Sin(t * 48f);
+            Camera.transform.SetPositionAndRotation(shotPosition + shotRotation * new Vector3(x * .055f, y * .044f, 0f) * strength,
+                shotRotation * Quaternion.Euler(y * 1.3f * strength, x * .7f * strength, x * 1.8f * strength));
+        }
         bool Painted(){return Curtain&&Curtain.OpaquePaintedFrame>=0&&Time.frameCount>Curtain.OpaquePaintedFrame;}
         void Fail(string error){Error=error;TransitionAlpha=0;Phase=Step.Error;if(Combat)Combat.EndEscapeStory();ReleaseShot();RestoreUI();director.controller.cinematicWindowLock=false;director.controller.ShowNotice(error);}
         void RestoreUI(){if(captured)director.controller.showUI=oldUI;captured=false;}
         void ReleaseShot()
         {
+            sprout=null;gust=null;
             if(Camera){Camera.enabled=false;Destroy(Camera.gameObject);}Camera=null;if(Walker!=null)Walker.Dispose();Walker=null;if(Ground!=null)Ground.Dispose();Ground=null;
             if(GravesRoot){GravesRoot.gameObject.SetActive(false);Destroy(GravesRoot.gameObject);}GravesRoot=null;foreach(var r in resources)if(r)Destroy(r);resources.Clear();
         }

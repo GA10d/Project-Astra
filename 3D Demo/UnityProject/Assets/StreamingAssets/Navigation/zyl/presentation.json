@@ -349,7 +349,7 @@
       "replyTimerActions": []
     },
     {
-      "text": "它马山就会饿得“ru~ru~”地叫，说不定到时我们还要捂住耳朵呢。",
+      "text": "它马上就会饿得“ru~ru~”地叫，说不定到时我们还要捂住耳朵呢。",
       "duration": 5,
       "replies": [],
       "timerKey": "timer_mw6d1jo0_xb4927aeor",
@@ -573,6 +573,7 @@
       "duration": 6,
       "replies": [],
       "timerKey": "timer_mw6d1jo0_w5grby62w3",
+      "pullSprout": true,
       "timerAction": null,
       "replyTimerActions": []
     },
@@ -593,7 +594,7 @@
       "replyTimerActions": []
     },
     {
-      "text": "3",
+      "text": "……",
       "duration": 5,
       "replies": [],
       "timerKey": "timer_mw6d1jo0_uydph4gsng",
@@ -609,7 +610,7 @@
       "replyTimerActions": []
     },
     {
-      "text": "这个大家伙好像张嘴，我们快趁这个时候出去！",
+      "text": "这个大家伙好像张嘴了，我们快趁这个时候出去！",
       "duration": 6,
       "replies": [],
       "timerKey": "timer_mw6d1jo0_r0t6nr976g",
