@@ -789,6 +789,106 @@ window.ZYL_PARAMETERS={
     },
     {
       "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureHold",
+      "label": "启航舷窗停留",
+      "value": 0.65,
+      "min": 0,
+      "max": 4,
+      "unit": "秒",
+      "desc": "点击启航后，在舱内正对舷窗停留的时间。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureCameraTime",
+      "label": "镜头后上方拉远时长",
+      "value": 4.7,
+      "min": 1.5,
+      "max": 12,
+      "unit": "秒",
+      "desc": "飞船开始移动后，镜头向后上方拉远到固定机位所用的时间。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureCameraBack",
+      "label": "镜头后退距离",
+      "value": 6,
+      "min": 0,
+      "max": 16,
+      "unit": "单位",
+      "desc": "从舱内起始机位沿航向反向拉开的距离。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureCameraRise",
+      "label": "镜头升高距离",
+      "value": 8.8,
+      "min": 2,
+      "max": 15,
+      "unit": "单位",
+      "desc": "从舱内起始机位向上抬升的距离。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureCameraFov",
+      "label": "追拍视野",
+      "value": 43,
+      "min": 30,
+      "max": 65,
+      "unit": "度",
+      "desc": "后方追拍镜头的垂直视野角，值越小画面越近。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureShipScreenY",
+      "label": "飞船画面高度",
+      "value": 24,
+      "min": 14,
+      "max": 42,
+      "unit": "%",
+      "desc": "以屏幕底部为0%、顶部为100%，控制追拍稳定后船身中心的位置。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureFlightTime",
+      "label": "飞船远去时长",
+      "value": 11.8,
+      "min": 5,
+      "max": 30,
+      "unit": "秒",
+      "desc": "走完同一段航线所用的时间，值越大飞船越慢。若镜头或标题还需要时间，整段会自动延长。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureTitleDelay",
+      "label": "标题开始时间",
+      "value": 4.5,
+      "min": 0,
+      "max": 20,
+      "unit": "秒",
+      "desc": "从点击启航算起，到标题第一个字出现的时间。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureTitleInterval",
+      "label": "标题逐字间隔",
+      "value": 0.48,
+      "min": 0.08,
+      "max": 1.5,
+      "unit": "秒/字",
+      "desc": "每隔多久出现下一个字。值越大，打字越慢。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellDepartureTitleWidth",
+      "label": "标题宽度",
+      "value": 84,
+      "min": 40,
+      "max": 90,
+      "unit": "%",
+      "desc": "标题完整出现时占屏幕宽度的目标比例。窄屏或宽屏都会按可用空间适配。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
       "key": "farewellChestLeadTime",
       "label": "胸口爆炸提前量",
       "value": 0.45,
@@ -1147,6 +1247,16 @@ window.ZYL_PARAMETERS={
         "replies": []
       }
     ],
+    "farewellDepartureHold": 0.65,
+    "farewellDepartureCameraTime": 4.7,
+    "farewellDepartureCameraBack": 6,
+    "farewellDepartureCameraRise": 8.8,
+    "farewellDepartureCameraFov": 43,
+    "farewellDepartureShipScreenY": 24,
+    "farewellDepartureFlightTime": 11.8,
+    "farewellDepartureTitleDelay": 4.5,
+    "farewellDepartureTitleInterval": 0.48,
+    "farewellDepartureTitleWidth": 84,
     "farewellChestLeadTime": 0.45,
     "farewellSurfaceWaveAmplitude": 1.63,
     "farewellInnerWaveHz": 1.3,

@@ -4,7 +4,7 @@ namespace AstraCabin.Galaxies.Zyl
 {
     public sealed class FarewellSetpiece:MonoBehaviour
     {
-        public enum Step {Talking,ChestBurst,SignalLost,ApproachingWindow,PlanetEnergy,Fragments,Photograph,Finished,Error}
+        public enum Step {Talking,ChestBurst,SignalLost,ApproachingWindow,PlanetEnergy,Fragments,Photograph,Finished,Departing,DepartureReturn,Error}
         public bool Active {get;private set;}public bool Complete {get;private set;}public Step Phase {get;private set;}
         public string Error {get;private set;}public FarewellStage Stage {get;private set;}public bool ZeroTriggered {get;private set;}
         public bool DialogueInterrupted {get{return dialogue!=null&&dialogue.Interrupted;}}public ConferenceCallSurface Surface {get;private set;}
@@ -39,6 +39,116 @@ namespace AstraCabin.Galaxies.Zyl
             }
         }
 
+        public const string EngineRestoredMessage = "引擎堵塞物质被分解，动力恢复。";
+        const string DepartureTitle = "泰德野里的别离";
+        float departureDuration;
+        const float DepartureFade = .85f;
+        const float CabinFade = .7f;
+        public bool DepartureActive => Phase == Step.Departing || Phase == Step.DepartureReturn;
+        public float DepartureAlpha => Phase == Step.Departing
+            ? Mathf.SmoothStep(0, 1, (PhaseTime - departureDuration + DepartureFade) / DepartureFade)
+            : Phase == Step.DepartureReturn ? 1 - Mathf.SmoothStep(0, 1, PhaseTime / CabinFade) : 0;
+        public int DepartureTitleCount
+        {
+            get
+            {
+                if (Phase != Step.Departing || PhaseTime < p.farewellDepartureTitleDelay) return 0;
+                float typingTime = PhaseTime - p.farewellDepartureTitleDelay;
+                return Mathf.Min(DepartureTitle.Length, 1 + Mathf.FloorToInt(typingTime / p.farewellDepartureTitleInterval));
+            }
+        }
+        GUIStyle departureTitle;
+        bool previousCabinHud;
+
+        public void PrepareDeparture()
+        {
+            var controller = director.controller;
+            if (Stage == null)
+            {
+                // An observed event can be settled after reopening the game, without replaying the call.
+                p = ZylPresentationParameters.Load();
+                Stage = new FarewellStage(controller.viewCamera, p);
+                Stage.ShowExterior(controller);
+                Stage.SamplePlanetEnergy(p.farewellPlanetDuration, p.farewellPlanetDuration);
+                Stage.FinishPlanetEnergy();
+                Stage.SampleFragments(p.farewellDebrisHold + p.farewellPhotoDuration);
+            }
+            float flightEnd = p.farewellDepartureHold + p.farewellDepartureFlightTime;
+            float cameraEnd = p.farewellDepartureHold + p.farewellDepartureCameraTime;
+            float titleEnd = p.farewellDepartureTitleDelay + (DepartureTitle.Length - 1) * p.farewellDepartureTitleInterval;
+            // Keep the complete title on screen and let the camera settle before the closing fade.
+            departureDuration = Mathf.Max(flightEnd, Mathf.Max(cameraEnd + .6f, titleEnd + 1.2f) + DepartureFade);
+            Stage.PrepareDeparture(controller, director.stars, departureDuration);
+        }
+
+        public void BeginDeparture()
+        {
+            director.computer.ClearEventAlert();
+            director.computer.Close();
+            var controller = director.controller;
+            previousCabinHud = controller.showUI;
+            controller.showUI = false;
+            controller.cinematicWindowLock = true;
+            controller.ShowNotice("");
+            director.GetComponent<ZylScreenCurtain>().ResetPaintConfirmation();
+            Stage.BeginDeparture();
+            director.PlayCue("engine", .65f);
+            Enter(Step.Departing);
+        }
+
+        void TickDeparture(float dt)
+        {
+            PhaseTime += dt;
+            if (Phase == Step.Departing)
+            {
+                Stage.SampleDeparture(PhaseTime);
+                if (PhaseTime < departureDuration) return;
+                int painted = director.GetComponent<ZylScreenCurtain>().OpaquePaintedFrame;
+                if (painted < 0 || Time.frameCount <= painted) return;
+                Stage.EndDeparture();
+                director.controller.SnapToWall(1);
+                Enter(Step.DepartureReturn);
+                return;
+            }
+            if (PhaseTime >= CabinFade) director.computer.Navigation.FinishFarewellDeparture();
+        }
+
+        internal void DrawDepartureTitle(Font font)
+        {
+            if (Phase != Step.Departing || Event.current.type != EventType.Repaint) return;
+            if (departureTitle == null)
+                departureTitle = new GUIStyle(GUI.skin.label) { font = font, fontStyle = FontStyle.Bold,
+                    alignment = TextAnchor.MiddleCenter };
+            float scale = Mathf.Min(Screen.width / 1600f, Screen.height / 900f);
+            int visible = DepartureTitleCount;
+            var color = GUI.color;
+            if (visible > 0)
+            {
+                float widthFraction = p.farewellDepartureTitleWidth * .01f;
+                departureTitle.fontSize = Mathf.Max(18, Mathf.RoundToInt(
+                    Mathf.Min(Screen.width * widthFraction / DepartureTitle.Length, Screen.height * .27f)));
+                departureTitle.alignment = TextAnchor.MiddleLeft;
+                float width = departureTitle.CalcSize(new GUIContent(DepartureTitle)).x;
+                var bounds = new Rect((Screen.width - width) * .5f, Screen.height * .06f,
+                    width, Screen.height * .35f);
+                string text = DepartureTitle.Substring(0, visible);
+                var shadow = bounds;
+                shadow.y += 3 * scale;
+                GUI.color = new Color(0, 0, 0, .75f);
+                GUI.Label(shadow, text, departureTitle);
+                GUI.color = new Color(.97f, .94f, .86f, 1);
+                GUI.Label(bounds, text, departureTitle);
+            }
+            if (director.controller.IsPaused)
+            {
+                departureTitle.alignment = TextAnchor.MiddleCenter;
+                departureTitle.fontSize = Mathf.Max(14, Mathf.RoundToInt(20 * scale));
+                GUI.color = Color.white;
+                GUI.Label(new Rect(0, Screen.height * .85f, Screen.width, 40 * scale), "暂停  /  ESC 继续", departureTitle);
+            }
+            GUI.color = color;
+        }
+
         float ImpactShake(float elapsed)
         {
             float tail = 1 - Mathf.Clamp01(elapsed / p.farewellImpactDecay);
@@ -68,7 +178,14 @@ namespace AstraCabin.Galaxies.Zyl
         void Update(){Tick(Time.deltaTime);}
         public void Tick(float dt)
         {
-            if(!Active||Complete||Phase==Step.Error||director.controller.IsPaused||float.IsNaN(dt)||float.IsInfinity(dt)||dt<0)return;
+            if ((!Active && !DepartureActive) || director.controller.IsPaused ||
+                float.IsNaN(dt) || float.IsInfinity(dt) || dt < 0) return;
+            if (DepartureActive)
+            {
+                TickDeparture(dt);
+                return;
+            }
+            if (!Active || Complete || Phase == Step.Error) return;
             if(Phase<=Step.SignalLost&&(!director.computer.IsOpen||director.computer.CurrentApp!="encounter"||Surface.Paused))return;
             if(Phase>Step.SignalLost&&director.computer.IsOpen)return;
             try
@@ -143,7 +260,18 @@ namespace AstraCabin.Galaxies.Zyl
                         if(PhaseTime>=p.farewellDebrisHold){Stage.BeginPhoto();Enter(Step.Photograph);}break;
                     case Step.Photograph:
                         Stage.SampleFragments(p.farewellDebrisHold+PhaseTime);Stage.SamplePhoto(PhaseTime,p.farewellPhotoDuration);
-                        if(PhaseTime>=p.farewellPhotoDuration){Complete=true;Enter(Step.Finished);director.controller.cinematicWindowLock=false;director.controller.ExitWindowView();director.controller.SnapToWall(0);director.computer.Open();director.computer.OpenApp("navigation");}break;
+                        if (PhaseTime >= p.farewellPhotoDuration)
+                        {
+                            Stage.HidePhoto();
+                            Complete = true;
+                            Enter(Step.Finished);
+                            director.controller.cinematicWindowLock = false;
+                            director.controller.ExitWindowView();
+                            director.controller.SnapToWall(0);
+                            director.computer.Open();
+                            director.computer.OpenApp("navigation");
+                        }
+                        break;
                 }
             }
             catch(Exception e){Fail(e.Message);}
@@ -185,6 +313,8 @@ namespace AstraCabin.Galaxies.Zyl
         void Fail(string message){Error="别离："+message;Phase=Step.Error;director.controller.cinematicWindowLock=false;director.controller.ShowNotice(Error);}
         public void Clear()
         {
+            if (DepartureActive && director && director.controller)
+                director.controller.showUI = previousCabinHud;
             if(timer)timer.ReachedZero.RemoveListener(ReachedZero);timer=null;if(Active&&director&&director.computer)director.computer.CloseEncounterApp(false);if(Stage!=null)Stage.Dispose();Stage=null;Surface=null;dialogue=null;
             if(director){director.controller.cinematicWindowLock=false;}Active=Complete=ZeroTriggered=zeroPending=false;Elapsed=PhaseTime=chestPreRoll=planetStartedAt=planetDuration=0;Error=null;captionKey=null;Phase=Step.Talking;
         }

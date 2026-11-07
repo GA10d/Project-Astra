@@ -381,6 +381,11 @@ namespace AstraCabin
         void RefreshFontAtlas(Font updated) { if(updated==font && worldText) worldText.mainTexture=font.material.mainTexture; }
         void OnGUI()
         {
+            if (farewell && farewell.DepartureActive)
+            {
+                if (!Galaxies.Zyl.ZylScreenCurtain.IsOpaque) farewell.DrawDepartureTitle(font);
+                return;
+            }
             if((farewell&&farewell.Active&&!farewell.Complete&&farewell.Phase!=Galaxies.Zyl.FarewellSetpiece.Step.Error)||(escape&&escape.Active&&!escape.Complete&&escape.Phase!=Galaxies.Zyl.EscapeSetpiece.Step.Error)||Galaxies.Zyl.ZylScreenCurtain.IsOpaque || (fools&&fools.Active&&!fools.Complete&&fools.Phase!=Galaxies.Zyl.FoolsSetpiece.Step.Error))return;
             if(!initialized) return;
             if(controller.ComputerOpen) { DrawEngineWarning(); return; }

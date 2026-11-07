@@ -80,8 +80,8 @@
         {
           "id": "drifter",
           "name": "被编排的流浪者",
-          "x": 0.47,
-          "y": 0.495,
+          "x": 0.473,
+          "y": 0.503,
           "eventId": "zyl_drifter",
           "next": [
             "roar",
@@ -135,7 +135,7 @@
       "name": "倒计时",
       "description": "星域02 · 倒计时。肚子和肚子里的炸弹 → 囚徒／暴徒 → 米霍尔的尝试 → 缺失的构件。",
       "startNodeId": "entry",
-      "nextSectorId": "",
+      "nextSectorId": "sector_2",
       "nodes": [
         {
           "id": "entry",
@@ -165,8 +165,8 @@
         {
           "id": "prisoner",
           "name": "囚徒",
-          "x": 0.43,
-          "y": 0.23,
+          "x": 0.45,
+          "y": 0.241,
           "eventId": "zyl_countdown_prisoner",
           "next": [
             "attempt"
@@ -198,30 +198,69 @@
             "missing_component"
           ],
           "exit": false,
-          "travelButtonText": "确定",
-          "archiveDescription": "米霍尔似乎想到了办法，他想找你聊聊"
+          "travelButtonText": "去看看",
+          "archiveDescription": "米霍尔似乎想到了办法，他想找你聊聊。"
         },
         {
           "id": "missing_component",
-          "name": "缺失的构件",
-          "x": 0.84,
+          "name": "傻瓜",
+          "x": 0.858,
           "y": 0.5,
           "eventId": "zyl_countdown_missing_component",
+          "next": [],
+          "exit": true,
+          "travelButtonText": "确定",
+          "archiveDescription": "你打印出了米霍尔需要的构件，去找他吧。",
+          "itemCosts": [
+            {
+              "itemId": "item_1",
+              "amount": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sector_2",
+      "name": "别离",
+      "description": "",
+      "startNodeId": "entry",
+      "nextSectorId": "",
+      "nodes": [
+        {
+          "id": "entry",
+          "name": "星域入口",
+          "x": 0,
+          "y": 0.5,
+          "eventId": "",
           "next": [
-            "exit"
+            "us"
+          ],
+          "exit": false
+        },
+        {
+          "id": "us",
+          "name": "我们仨",
+          "x": 0.333,
+          "y": 0.5,
+          "eventId": "zyl_farewell_us",
+          "next": [
+            "farewell"
           ],
           "exit": false,
           "travelButtonText": "确定",
-          "archiveDescription": "米霍尔想要给怪兽的肚子挠痒，但是缺少一个飞船组件，他请你帮他制作一个，你可以在3D打印机中查看图纸"
+          "archiveDescription": "你睡醒了，米霍尔昨天说还会进行新的尝试，去看看他在干嘛。"
         },
         {
-          "id": "exit",
-          "name": "星域出口",
-          "x": 1,
-          "y": 0.5,
-          "eventId": "",
+          "id": "farewell",
+          "name": "泰德野里的别离",
+          "x": 0.673,
+          "y": 0.506,
+          "eventId": "zyl_farewell_departure",
           "next": [],
-          "exit": true
+          "exit": true,
+          "travelButtonText": "发起视频通话",
+          "archiveDescription": "你们成功从巨兽肚子中逃出，但是米霍尔独自飞走了。"
         }
       ]
     }
@@ -282,14 +321,14 @@
       "id": "zyl_drifter",
       "type": "setpiece",
       "title": "被编排的流浪者",
-      "description": "舷窗检测到不明物体。查看舷窗，等待传送结束。",
+      "description": "你遇上了一个奇怪的传送门，因为引擎动力丢失，你无法躲避，被传送门带到了预期外的地方……",
       "setpiece": 11,
       "duration": 35,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "遇到了米霍尔",
+          "result": "你遇上了一个奇怪的传送门，因为引擎动力丢失，你无法躲避，被传送门带到了预期外的地方……",
           "costs": [],
           "rewards": []
         }
@@ -333,7 +372,7 @@
       "id": "zyl_guest",
       "type": "setpiece",
       "title": "局促的客人",
-      "description": "舷窗检测到未知身份生物。查看来客，接受米霍尔的通话邀请。",
+      "description": "米霍尔的通话被巨兽打断，你们被吞入黑暗。",
       "setpiece": 12,
       "duration": 1,
       "choices": [
@@ -367,7 +406,7 @@
       "id": "zyl_countdown_bomb",
       "type": "setpiece",
       "title": "肚子和炸弹",
-      "description": "你和米霍尔被巨兽吞到肚子里。",
+      "description": "米霍尔似乎对这场突发的遭遇很沮丧，却又很有信念地想把你带出去，他身上的炸弹是怎么回事？",
       "setpiece": 13,
       "duration": 1,
       "choices": [
@@ -416,16 +455,16 @@
     },
     {
       "id": "zyl_countdown_attempt",
-      "type": "choice",
+      "type": "setpiece",
       "title": "米霍尔的尝试",
-      "description": "米霍尔似乎想到了办法，他想找你聊聊",
-      "setpiece": 0,
-      "duration": 0,
+      "description": "米霍尔计划用一根超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。但是他缺少一个构件，也许你可以用打印机解决这个问题。",
+      "setpiece": 14,
+      "duration": 8,
       "choices": [
         {
           "id": "confirm",
-          "text": "确定",
-          "result": "米霍尔似乎想到了办法，他想找你聊聊",
+          "text": "去试试打印机",
+          "result": "米霍尔计划用一根超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。但是他缺少一个构件，也许你可以用打印机解决这个问题。",
           "costs": [],
           "rewards": []
         }
@@ -433,20 +472,80 @@
     },
     {
       "id": "zyl_countdown_missing_component",
-      "type": "choice",
-      "title": "缺失的构件",
-      "description": "米霍尔想要给怪兽的肚子挠痒，但是缺少一个飞船组件，他请你帮他制作一个，你可以在3D打印机中查看图纸",
-      "setpiece": 0,
-      "duration": 0,
+      "type": "setpiece",
+      "title": "傻瓜",
+      "description": "你和米霍尔又聊了许多，你有点累，或许可以先休息一会。",
+      "setpiece": 15,
+      "duration": 33,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "米霍尔想要给怪兽的肚子挠痒，但是缺少一个飞船组件，他请你帮他制作一个，你可以在3D打印机中查看图纸",
+          "result": "接演出",
           "costs": [],
           "rewards": []
         }
       ]
+    },
+    {
+      "id": "zyl_farewell_us",
+      "type": "setpiece",
+      "title": "我们仨",
+      "description": "你们成功逃出来了。",
+      "setpiece": 16,
+      "duration": 1,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "确定",
+          "result": "你们从巨兽的肚子中出来了，但是米霍尔独自飞走了。",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "zyl_farewell_departure",
+      "type": "setpiece",
+      "title": "泰德野里的别离",
+      "description": "米霍尔死亡了……引擎堵塞物质似乎因为巨兽体内的环境影响而分解，可以继续出发了。",
+      "setpiece": 17,
+      "duration": 1,
+      "choices": [
+        {
+          "id": "confirm",
+          "text": "启航",
+          "result": "米霍尔死亡了……引擎堵塞物质似乎因为巨兽体内的环境影响而分解，可以继续出发了。",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    },
+    {
+      "id": "event_1",
+      "type": "choice",
+      "title": "再见泰德野里",
+      "description": "在这里描述玩家遇到的事件。",
+      "setpiece": 1,
+      "duration": 8,
+      "choices": [
+        {
+          "id": "continue",
+          "text": "记录并离开",
+          "result": "事件已记录。",
+          "costs": [],
+          "rewards": []
+        }
+      ]
+    }
+  ],
+  "items": [
+    {
+      "id": "item_1",
+      "name": "米霍尔的飞船构件",
+      "initial": 0,
+      "capacity": 99,
+      "fabricatorBlueprint": "buffer_gasket"
     }
   ]
 }

@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
-  "repairAlarmDelay": 2,
+  "repairAlarmDelay": 3.1,
   "repairStrikeDuration": 0.48,
   "repairImpactStrength": 0.95,
   "repairImpactDuration": 1.35,
-  "portalApproachDuration": 20,
-  "portalInitialDistance": 45,
+  "portalApproachDuration": 18,
+  "portalInitialDistance": 42,
   "portalNearDistance": 2.8,
   "portalInitialOpening": 0.2,
   "portalFinalOpening": 1.65,
@@ -13,8 +13,8 @@
   "portalOpenEnd": 15,
   "portalWarpStart": 21.5,
   "portalGateEnd": 23,
-  "portalArrival": 28,
-  "portalComplete": 29.5,
+  "portalArrival": 32,
+  "portalComplete": 33,
   "portalTunnelSpeed": 24,
   "portalShake": 0.18,
   "planetDiameter0": 46,
@@ -25,7 +25,7 @@
   "planetSpin2": 0.18,
   "visitorArrivalDuration": 4,
   "visitorInvitationTime": 5.2,
-  "actorBlendDuration": 1,
+  "actorBlendDuration": 0.55,
   "beastScale": 640,
   "initialClearance": 18000,
   "finalClearance": 120,
@@ -33,9 +33,9 @@
   "mouthTriggerDistance": 16500,
   "mouthPlaybackSpeed": 0.5,
   "swallowDistance": 180,
-  "swallowDuration": 6,
-  "swallowAdvance": 80,
-  "concernDistance": 3000,
+  "swallowDuration": 8,
+  "swallowAdvance": 160,
+  "concernDistance": 3400,
   "videoFov": 72,
   "videoFarClip": 40000,
   "starCount": 1400,
@@ -53,65 +53,108 @@
     {
       "text": "我想……我可能要请你离开这里。我没有恶意，但是这件事说起来十分复杂",
       "duration": 4,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_149ycwsgf7",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "虽然时间不够了，但还有一些时间。我需要想想这件事应该从哪说起？",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_qmmmckiuej",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "也许应该从十年前，那时我居住的地方非常糟糕。",
       "duration": 4,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_sfhbsh82no",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "你肯定难以想象那是一个什么样的地方，即使是如今的我也不愿意主动回忆。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_ilx7eq455a",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "但是现在情况有点不同，所以我必须把这件事告诉你。",
       "duration": 4,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_15wojpd89u",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "那个地方几乎很少见到阳光，大家似乎有很多烦恼，每个人的脸上都不太平静。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_klbhr2p5hv",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "但我不知道他们的烦恼是什么，我年纪很小，只知道自己经常生病。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_41g4wuhsb7",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "我的病不只有一种，有时候会肚子疼，有时候会走不了路……",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_beng373wrt",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "所以，大部分时候我都一副无精打采的样子。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_oa19j89pgj",
+      "timerAction": null,
+      "replyTimerActions": []
     }
   ],
-  "stomachWaterHold": 1.5,
+  "stomachWaterHold": 1,
   "stomachTurnDuration": 6,
   "stomachDialogue": [
     {
       "text": "……",
-      "duration": 5,
+      "duration": 3,
       "replies": [
-        "这里是什么地方？",
-        "你的话好像还没说完。"
+        "你的话好像还没说完。",
+        "你感觉怎么样？"
+      ],
+      "timerKey": "timer_mw61emp8_zxsxiem5xi",
+      "timerAction": {
+        "kind": "setStart",
+        "seconds": 5979
+      },
+      "replyTimerActions": [
+        null,
+        null
       ]
     },
     {
       "text": "我们好像被一只大怪兽吞进肚子里了",
       "duration": 5,
       "replies": [
-        "……"
+        "……",
+        "也许我比你清楚大怪兽长什么样……"
+      ],
+      "timerKey": "timer_mw61emp8_npllgzed42",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
       ]
     },
     {
@@ -120,32 +163,507 @@
       "replies": [
         "你怎么了？",
         "你能不能把话说清楚。"
+      ],
+      "timerKey": "timer_mw61emp8_7id2bgwjwd",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
       ]
     },
     {
       "text": "你看到我胸前的倒计时了吗？等到倒计时结束，我就会马上爆炸，威力足以把一整颗行星炸碎！",
       "duration": 5,
       "replies": [
-        "为什么会这样？",
-        "爆炸表演收费吗？"
+        "爆炸表演收费吗？",
+        "今天怪事真多。"
+      ],
+      "timerKey": "timer_mw61emp8_uh2xm70wzu",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
       ]
     },
     {
       "text": "不应该这样……不应该这样……明明我已经拼尽全力了。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_7pcczfersi",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
-      "text": "这个星系不应该有人，我们也不应该被关在这个肚子里。不应该这样！",
+      "text": "我已经检查过了，这个星系不应该有人，我们也不应该被关在这个肚子里。不应该这样！",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw61emp8_eektw4y9ro",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "我一定会挽回这一切的，等一下，等我一下，我马上就能想到办法。",
       "duration": 5,
       "replies": [
         "……"
+      ],
+      "timerKey": "timer_mw61emp8_3ncz4cf0em",
+      "timerAction": null,
+      "replyTimerActions": [
+        null
       ]
     }
-  ]
+  ],
+  "countdownEnabled": 1,
+  "countdownInitialSeconds": 300,
+  "countdownInitiallyVisible": 0,
+  "countdownStartOnTalk": 1,
+  "countdownWarningSeconds": 30,
+  "countdownBrightness": 4,
+  "countdownHalo": 0.12,
+  "countdownWidth": 0.12,
+  "countdownHeight": 0.032,
+  "countdownOffsetX": 0,
+  "countdownOffsetY": 0,
+  "countdownColor": "#FF4D2E",
+  "countdownWarningColor": "#FF160B",
+  "printingDialogue": [
+    {
+      "text": "嘿！我想到办法了",
+      "duration": 4,
+      "replies": [
+        "什么办法。",
+        "我在听。"
+      ],
+      "timerKey": "timer_mw4rlejw_pgx1ith7k9",
+      "timerAction": {
+        "kind": "set",
+        "seconds": 5940
+      },
+      "replyTimerActions": [
+        null,
+        null
+      ]
+    },
+    {
+      "text": "你看这个，我飞船上的超长关节。",
+      "duration": 4,
+      "replies": [],
+      "timerKey": "timer_mw623ddz_0s8q7u6rbh",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "原本是用来将飞船悬挂在不方便停泊的地方，但现在有新的用途了。",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw623ddz_yrqohdvvk1",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "只要我们用这个杆子去捅这个大家伙的肚子，让它觉得不舒服。也许……它就会将我们吐出去！",
+      "duration": 7,
+      "replies": [
+        "也许？",
+        "好阴险。"
+      ],
+      "timerKey": "timer_mw4rs1ln_1y4yq56mf8",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
+      ]
+    },
+    {
+      "text": "我明白……这确实不算太高明的办法。",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw623ddz_l37clzgacc",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "但是让我们试一下吧！不会很痛的，总比被炸成碎片强。",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw623ddz_qyggik2vuy",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "但是，它目前似乎有一些问题，好像少了一个构件，我倒是有图纸，只是不知道该怎么做出来。",
+      "duration": 5,
+      "replies": [
+        "等我一会。",
+        "知道了，我有办法。"
+      ],
+      "timerKey": "timer_mw4rv83v_1atazmsmuq",
+      "timerAction": null,
+      "replyTimerActions": [
+        null,
+        null
+      ]
+    }
+  ],
+  "foolsStopHold": 4.5,
+  "foolsReturnDuration": 4,
+  "foolsWalkSpeed": 0.85,
+  "foolsFrontHold": 2,
+  "foolsOrbitDuration": 7,
+  "foolsPullbackDuration": 5,
+  "foolsFinalHold": 3,
+  "foolsGroundDialogue": [
+    {
+      "text": "……好像没什么效果……还打扰了一群奇怪的东西……",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "还有办法！只要这家伙饿了肯定会张嘴吃东西，那时我们就可以出去。",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_kn5ku26shs",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "但是你看我们的周围，这些乱七八糟的东西正堵着它的肚子，让它不觉得饿。",
+      "duration": 7,
+      "replies": []
+    }
+  ],
+  "foolsWalkDialogue": [
+    {
+      "text": "所以你也别闲着了，我们一起把这些东西扔出去，让它快点消化掉。",
+      "duration": 6,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_bro1g3pnp1",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "它马山就会饿得“ru~ru~”地叫，说不定到时我们还要捂住耳朵呢。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "这些一点也不多，以前我被街区老大强迫干活时，比这幸苦多了。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "那家伙总是用铁拳套抵着我的下巴，问我:“小树枝，你害不害怕”",
+      "duration": 5,
+      "replies": []
+    }
+  ],
+  "foolsCrestDialogue": [
+    {
+      "text": "……？",
+      "duration": 3,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_gyahmnqdde",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "为什么……为什么……",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "为什么这么多！",
+      "duration": 5,
+      "replies": []
+    }
+  ],
+  "foolsSceneFadeDuration": 1.2,
+  "foolsSettlementFadeDuration": 1,
+  "foolsClosingDialogue": [
+    {
+      "text": "为什么你这么冷静？",
+      "duration": 6,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_eh7crjxcx9",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "你不觉得这么死掉很傻吗？",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "你明明什么也没有做，你只是路过这里，今天本该是平常的一天。",
+      "duration": 6,
+      "replies": []
+    },
+    {
+      "text": "却遇到这样的傻瓜炸弹狂人和傻瓜大怪兽，然后像个傻瓜一样被困在肚子里被炸死。",
+      "duration": 6,
+      "replies": []
+    },
+    {
+      "text": "可是你的表情告诉我，这种傻瓜死法你并无所谓，你的生命意义到底是什么？",
+      "duration": 6,
+      "replies": []
+    },
+    {
+      "text": "对不起，我不该这么说，我的人生才是真正没有意义。",
+      "duration": 6,
+      "replies": []
+    },
+    {
+      "text": "我从小就被欺负，他们说”能力就是正义“。",
+      "duration": 6,
+      "replies": []
+    },
+    {
+      "text": "于是当我后来发现我很有盗窃天赋后，我也理直气壮地去盗窃别人。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "我觉得这就是在”兑换我的正义“。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "一直到后来，我去偷窃王国的守卫，那家伙是不折不扣的好人，如果那天是你在场你也会这么想的，为了守护国民，他就在我的眼前被砍了五刀。",
+      "duration": 8,
+      "replies": []
+    },
+    {
+      "text": "那时我才发现他做的事才能被叫做”正义“。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "于是，我也想去做一件“真正正义”的事情，我决定去偷一家科技公司的能源核心。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "那个东西能帮助好多人，那家公司却不给穷人用，这绝对是一件正义的事。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "可是，我失败了，然后就被植入了这颗炸弹",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "所以，我不能让你们因为我被炸死在这里。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "这绝不是我的“正义”！",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "别灰心，一定还有办法！",
+      "duration": 5,
+      "replies": []
+    }
+  ],
+  "escapeFlightDuration": 58,
+  "escapeExitDistance": 12000,
+  "escapeHullLoss": 36,
+  "escapeFadeDuration": 1.2,
+  "escapeGravesDialogue": [
+    {
+      "text": "这就是你们地球死的时候要建造的东西吗？",
+      "duration": 6,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_6e8z4sfd8p",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "哈哈，现在我们可以等死了。",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "……",
+      "duration": 3,
+      "replies": []
+    },
+    {
+      "text": "其实从刚进来的时候我就特别在意这个东西。",
+      "duration": 6,
+      "replies": []
+    },
+    {
+      "text": "看起来很迷人不是吗？",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "……？这个东西好像连着什么？",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "3",
+      "duration": 5,
+      "replies": []
+    },
+    {
+      "text": "怎么回事！？",
+      "duration": 4,
+      "replies": []
+    },
+    {
+      "text": "这个大家伙好像张嘴，我们快趁这个时候出去！",
+      "duration": 6,
+      "replies": []
+    },
+    {
+      "text": "你的飞船动不了吗？没关系，我来带你出去！",
+      "duration": 5,
+      "replies": []
+    }
+  ],
+  "escapeEncouragement": [
+    {
+      "text": "抓紧，我来带路！",
+      "duration": 8,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_dad5fxf4g5",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "跟着我的航线，别担心！",
+      "duration": 8,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_38jx8wedvp",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "前面有障碍，我来撞开！",
+      "duration": 8,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_pioe0l8dye",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "还撑得住，我们继续！",
+      "duration": 8,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_q4ulde42bt",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "就快到出口了，坚持住！",
+      "duration": 8,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_r1lickwgrp",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "看到亮光了，我们能出去！",
+      "duration": 8,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_hzqd9f7ww4",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "最后一段路，抓稳！",
+      "duration": 8,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_od5ytmjzgb",
+      "timerAction": null,
+      "replyTimerActions": []
+    }
+  ],
+  "farewellChestDuration": 4,
+  "farewellSignalHold": 1.3,
+  "farewellPlanetDuration": 8,
+  "farewellDebrisHold": 4,
+  "farewellPhotoDuration": 8,
+  "farewellShake": 0.35,
+  "farewellDialogue": [
+    {
+      "text": "嘿……我……我想已经来不及了……",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw5zq1ws_86iltm7gvt",
+      "timerAction": {
+        "kind": "set",
+        "seconds": 30
+      },
+      "replyTimerActions": []
+    },
+    {
+      "text": "但是我并不难受，我想明白了一件事。",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw61emp8_71mkfgo3dp",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "虽然灾难是我带来的，但是我也算救了你们对吗？",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw61emp8_2b1jbbr5wo",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "这就是我一直想完成的正义，我做到了！",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw61emp8_9gkhlp0li1",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "所以不要为我难过，总之谢谢你……还有这只大家伙……",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw61emp8_14x2btsj0g",
+      "timerAction": null,
+      "replyTimerActions": []
+    },
+    {
+      "text": "谢谢你们的出现，不然我就该很傻地等死了。再见！",
+      "duration": 5,
+      "replies": [],
+      "timerKey": "timer_mw61emp8_q7ijumpe3t",
+      "timerAction": null,
+      "replyTimerActions": []
+    }
+  ],
+  "farewellDepartureHold": 2,
+  "farewellDepartureCameraTime": 6,
+  "farewellDepartureCameraBack": 6,
+  "farewellDepartureCameraRise": 8.8,
+  "farewellDepartureCameraFov": 50,
+  "farewellDepartureShipScreenY": 24,
+  "farewellDepartureFlightTime": 20,
+  "farewellDepartureTitleDelay": 12,
+  "farewellDepartureTitleInterval": 0.1,
+  "farewellDepartureTitleWidth": 84,
+  "farewellChestLeadTime": 0.15,
+  "farewellSurfaceWaveAmplitude": 4,
+  "farewellInnerWaveHz": 2,
+  "farewellHaloWaveHz": 0.55,
+  "farewellHaloIntensity": 1.2,
+  "farewellFractureStart": 0.64,
+  "farewellFinalFlashDuration": 0.7,
+  "farewellFinalFlashIntensity": 1,
+  "farewellShakeSustain": 0.42,
+  "farewellImpactDecay": 1.4
 }

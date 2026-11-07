@@ -80,8 +80,8 @@
         {
           "id": "drifter",
           "name": "被编排的流浪者",
-          "x": 0.47,
-          "y": 0.495,
+          "x": 0.473,
+          "y": 0.503,
           "eventId": "zyl_drifter",
           "next": [
             "roar",
@@ -165,8 +165,8 @@
         {
           "id": "prisoner",
           "name": "囚徒",
-          "x": 0.43,
-          "y": 0.23,
+          "x": 0.45,
+          "y": 0.241,
           "eventId": "zyl_countdown_prisoner",
           "next": [
             "attempt"
@@ -207,10 +207,8 @@
           "x": 0.858,
           "y": 0.5,
           "eventId": "zyl_countdown_missing_component",
-          "next": [
-            "exit"
-          ],
-          "exit": false,
+          "next": [],
+          "exit": true,
           "travelButtonText": "确定",
           "archiveDescription": "你打印出了米霍尔需要的构件，去找他吧。",
           "itemCosts": [
@@ -219,15 +217,6 @@
               "amount": 1
             }
           ]
-        },
-        {
-          "id": "exit",
-          "name": "星域出口",
-          "x": 1,
-          "y": 0.5,
-          "eventId": "",
-          "next": [],
-          "exit": true
         }
       ]
     },
@@ -332,14 +321,14 @@
       "id": "zyl_drifter",
       "type": "setpiece",
       "title": "被编排的流浪者",
-      "description": "舷窗检测到不明物体。查看舷窗，等待传送结束。",
+      "description": "你遇上了一个奇怪的传送门，因为引擎动力丢失，你无法躲避，被传送门带到了预期外的地方……",
       "setpiece": 11,
       "duration": 35,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "遇到了米霍尔",
+          "result": "你遇上了一个奇怪的传送门，因为引擎动力丢失，你无法躲避，被传送门带到了预期外的地方……",
           "costs": [],
           "rewards": []
         }
@@ -383,7 +372,7 @@
       "id": "zyl_guest",
       "type": "setpiece",
       "title": "局促的客人",
-      "description": "舷窗检测到未知身份生物。查看来客，接受米霍尔的通话邀请。",
+      "description": "米霍尔的通话被巨兽打断，你们被吞入黑暗。",
       "setpiece": 12,
       "duration": 1,
       "choices": [
@@ -417,7 +406,7 @@
       "id": "zyl_countdown_bomb",
       "type": "setpiece",
       "title": "肚子和炸弹",
-      "description": "你和米霍尔被巨兽吞到肚子里。",
+      "description": "米霍尔似乎对这场突发的遭遇很沮丧，却又很有信念地想把你带出去，他身上的炸弹是怎么回事？",
       "setpiece": 13,
       "duration": 1,
       "choices": [
@@ -502,14 +491,14 @@
       "id": "zyl_farewell_us",
       "type": "setpiece",
       "title": "我们仨",
-      "description": "你睡醒了，米霍尔昨天说还会进行新的尝试，去看看他在干嘛。",
+      "description": "你们成功逃出来了。",
       "setpiece": 16,
       "duration": 1,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "演出事件",
+          "result": "你们从巨兽的肚子中出来了，但是米霍尔独自飞走了。",
           "costs": [],
           "rewards": []
         }
@@ -517,11 +506,11 @@
     },
     {
       "id": "zyl_farewell_departure",
-      "type": "choice",
+      "type": "setpiece",
       "title": "泰德野里的别离",
       "description": "米霍尔死亡了……引擎堵塞物质似乎因为巨兽体内的环境影响而分解，可以继续出发了。",
-      "setpiece": 0,
-      "duration": 0,
+      "setpiece": 17,
+      "duration": 1,
       "choices": [
         {
           "id": "confirm",

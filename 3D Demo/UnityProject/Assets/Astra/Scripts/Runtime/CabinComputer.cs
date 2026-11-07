@@ -608,6 +608,9 @@ namespace AstraCabin
             }
         }
 
+        bool FarewellRecoveryAlert => activeApp == "navigation" && HasPendingEventAlert &&
+            eventAlertBody == Galaxies.Zyl.FarewellSetpiece.EngineRestoredMessage;
+
         void OnGUI()
         {
             if(Galaxies.Zyl.ZylScreenCurtain.IsOpaque)return;
@@ -615,7 +618,7 @@ namespace AstraCabin
             EnsureStyles();
             int oldDepth = GUI.depth;
             GUI.depth = -100;
-            HandleKeyboard();
+            if (!FarewellRecoveryAlert) HandleKeyboard();
             if (!IsOpen) { GUI.depth = oldDepth; return; }
             Matrix4x4 oldMatrix = GUI.matrix;
             float scale = Mathf.Min(Screen.width / 1600f, Screen.height / 900f);
@@ -629,6 +632,9 @@ namespace AstraCabin
             GUI.Label(new Rect(18, 0, 600, 34), "ASTRA / OS 3.1      •      CIVIL TERMINAL 04", lightLabel);
             GUI.Label(new Rect(916, 0, 424, 34), activeApp == "combat" ? (Combat&&Combat.EscapeStory!=null?"TOW LINK   |   [ ESC ] 暂停 / 继续":"LOCAL MODE   |   [ ESC ] 战斗菜单") : "LOCAL MODE   |   [ ESC ] 保存并离开", lightLabel);
             for (int lineIndex = 37; lineIndex < 736; lineIndex += 4) Fill(new Rect(0, lineIndex, DesktopWidth, 1), new Color(0, 0, 0, 0.045f));
+            bool recoveryAlert = FarewellRecoveryAlert;
+            bool wasEnabled = GUI.enabled;
+            if (recoveryAlert) GUI.enabled = false;
             DrawDesktop();
             if (!string.IsNullOrEmpty(activeApp))
             {
@@ -644,7 +650,8 @@ namespace AstraCabin
                 windowRect.y = Mathf.Clamp(windowRect.y, 40, 734 - windowRect.height);
             }
             DrawTaskbar();
-            if (HasPendingEventAlert)
+            GUI.enabled = wasEnabled;
+            if (HasPendingEventAlert && !recoveryAlert)
             {
                 GUI.ModalWindow(7405, new Rect(370, 242, 680, 222), DrawEventAlert, "", GUIStyle.none);
                 GUI.BringWindowToFront(7405);
@@ -658,7 +665,7 @@ namespace AstraCabin
         void DrawEventAlert(int id)
         {
             Bevel(new Rect(0, 0, 680, 222), false, chromeColor);
-            Fill(new Rect(5, 5, 670, 38), accentColor);
+            Fill(new Rect(5, 5, 670, 38), FarewellRecoveryAlert ? new Color(.10f, .29f, .24f) : accentColor);
             GUI.Label(new Rect(18, 7, 630, 32), "舰载监控 / " + eventAlertTitle, lightLabel);
             GUI.Label(new Rect(24, 64, 630, 92), eventAlertBody, body);
             var director=GetComponent<SetpieceDirector>();
@@ -795,6 +802,16 @@ namespace AstraCabin
             GUIStyle statusStyle = new GUIStyle(small);
             if (statusError) statusStyle.normal.textColor = new Color(0.53f, 0.09f, 0.055f);
             GUI.Label(new Rect(15, height - 32, width - 33, 24), status, statusStyle);
+            if (FarewellRecoveryAlert)
+            {
+                Fill(new Rect(4, 35, width - 8, height - 39), new Color(.01f, .02f, .02f, .55f));
+                GUI.BeginGroup(new Rect((width - 680) * .5f, (height - 222) * .5f, 680, 222));
+                GUI.enabled = true;
+                DrawEventAlert(7405);
+                GUI.enabled = wasEnabled;
+                GUI.EndGroup();
+                return;
+            }
             if (!string.IsNullOrEmpty(confirmationId)) DrawDeleteConfirmation(width, height);
             if (!maximized) GUI.DragWindow(new Rect(4, 4, width - 106, 31));
         }

@@ -81,7 +81,10 @@ namespace AstraCabin.Navigation
                 case "observed":
                     if (Pending == null || Pending.id != command.id || Pending.type=="performance" || Observed || !Registry.Find(Pending.type).NeedsObservation)
                     { error = "演出结算状态不匹配"; return false; }
-                    Observed = true; Journal.Add("演出完成 · " + Pending.title); return true;
+                    Observed = true;
+                    if (Pending.type == "setpiece" && Pending.setpiece == SetpieceDirector.FarewellMode)
+                        EngineBlocked = false;
+                    Journal.Add("演出完成 · " + Pending.title); return true;
                 case "performance":
                     if(Pending==null || Pending.type!="performance" || Pending.id!=command.id || string.IsNullOrWhiteSpace(command.outcome) || command.outcome.Length>256)
                     { error="会议结算状态不匹配";return false; }

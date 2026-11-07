@@ -23,7 +23,8 @@ namespace AstraCabin
         public string ActiveGalaxyId { get; private set; } = "test";
         public bool IsGalaxyOverview { get; private set; } = true;
         public bool IsGalaxyReserved { get; private set; }
-        public bool CanSwitchGalaxy { get { return Session == null || Session.Engine.Pending == null; } }
+        public bool CanSwitchGalaxy => (!Director || !Director.farewell || !Director.farewell.DepartureActive)
+            && (Session == null || Session.Engine.Pending == null);
         public static readonly string[] GalaxyIds = { "test", "zyl", "gzw" };
         public bool PresentationPending { get { return Session != null && Session.Engine.Pending != null && Registry.Find(Session.Engine.Pending.type).NeedsObservation; } }
         CabinComputer computer;
@@ -193,7 +194,16 @@ namespace AstraCabin
             if(e.type=="performance")return; // Meeting commits its end and reward in one durable command.
             if (Registry.Find(e.type).IsComplete(this, e))
             {
-                if (Session.Commit("observed", e.id)) { Message = "演出已完成，返回导航模式选择处置方案。"; controller.ShowNotice(Message); }
+                if (Session.Commit("observed", e.id))
+                {
+                    Message = "演出已完成，返回导航模式选择处置方案。";
+                    if (IsZylFarewell(e))
+                    {
+                        computer.SetEventAlert("动力恢复", Galaxies.Zyl.FarewellSetpiece.EngineRestoredMessage);
+                        Director.PlayCue("success", .5f);
+                    }
+                    else controller.ShowNotice(Message);
+                }
                 else { Message = Session.Error; OwnsPresentation = false; }
             }
         }
@@ -207,8 +217,12 @@ namespace AstraCabin
             OwnsPresentation=false;computer.Meeting.Stop();computer.FinishMeeting();
             detailScroll=Vector2.zero;Message="会议已结束，事件完成。选择下一个信标继续航行。";return true;
         }
+        bool IsZylFarewell(EventDefinition e) => ActiveGalaxyId == "zyl" &&
+            e != null && e.type == "setpiece" && e.setpiece == SetpieceDirector.FarewellMode;
+
         public bool Choose(string id)
         {
+            if (IsZylFarewell(Session?.Engine.Pending)) return ChooseFarewell(id);
             if(ActiveGalaxyId=="zyl"&&Session!=null&&Session.Engine.Pending!=null&&Session.Engine.Pending.type=="setpiece"&&Session.Engine.Pending.setpiece==SetpieceDirector.FoolsMode)
             {
                 var departure=GetComponent<Galaxies.Zyl.FoolsDeparture>()??gameObject.AddComponent<Galaxies.Zyl.FoolsDeparture>();
@@ -218,6 +232,27 @@ namespace AstraCabin
             if (Session == null || !Session.Commit("choose", id)) { Message = Session == null ? "尚无有效配置" : Session.Error; return false; }
             StopPresentation(); detailScroll = Vector2.zero; Message = "处置已记录，资源已结算。选择下一个信标继续航行。"; return true;
         }
+        bool ChooseFarewell(string id)
+        {
+            string error = Session.Engine.ChoiceError(id);
+            if (error != null) { Message = error; return false; }
+            try { Director.farewell.PrepareDeparture(); }
+            catch (Exception e) { Message = "启航镜头无法准备：" + e.Message; return false; }
+            if (!Session.Commit("choose", id)) { Message = Session.Error; return false; }
+            OwnsPresentation = true;
+            detailScroll = Vector2.zero;
+            Message = "处置已记录，太空舱启航。";
+            Director.farewell.BeginDeparture();
+            return true;
+        }
+
+        internal void FinishFarewellDeparture()
+        {
+            StopPresentation();
+            controller.SnapToWall(1);
+            controller.ShowNotice("");
+        }
+
         internal bool CommitFoolsDeparture(NavigationSession expected,string eventId,string choice)
         {
             if(Session!=expected||Session.Engine.Pending==null||Session.Engine.Pending.id!=eventId){Message="航程或事件已改变，未提交结算。";return false;}

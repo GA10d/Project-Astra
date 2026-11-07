@@ -241,7 +241,9 @@ namespace AstraCabin
         void OnGUI()
         {
             if(Galaxies.Zyl.ZylScreenCurtain.IsOpaque)return;
-            if(Director&&Director.farewell&&Director.farewell.Active&&!Director.farewell.Complete&&Director.farewell.Phase!=Galaxies.Zyl.FarewellSetpiece.Step.Error)return;
+            if (Director && Director.farewell &&
+                (Director.farewell.DepartureActive || Director.farewell.Active && !Director.farewell.Complete &&
+                 Director.farewell.Phase != Galaxies.Zyl.FarewellSetpiece.Step.Error)) return;
             if(Director&&Director.escape&&Director.escape.Active&&!Director.escape.Complete&&Director.escape.Phase!=Galaxies.Zyl.EscapeSetpiece.Step.Error)return;
             if(Director&&Director.fools&&Director.fools.Active&&!Director.fools.Complete&&Director.fools.Phase!=Galaxies.Zyl.FoolsSetpiece.Step.Error)return;
             if (!loaded || !OwnsPresentation || computer.IsOpen || controller.IsPaused || Session == null) return;

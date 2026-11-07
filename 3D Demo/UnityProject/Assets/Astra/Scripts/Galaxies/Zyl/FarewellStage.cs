@@ -516,6 +516,8 @@ namespace AstraCabin.Galaxies.Zyl
             }
         }
 
+        public void HidePhoto() { Photo.gameObject.SetActive(false); }
+
         public void BeginPhoto()
         {
             photoStart = cabin.transform.position + cabin.transform.forward * 3.4f + cabin.transform.right * 3.05f;
@@ -532,7 +534,183 @@ namespace AstraCabin.Galaxies.Zyl
             Photo.rotation = photoRotation * Quaternion.Euler(Mathf.Sin(progress * 6) * 10,
                 Mathf.Sin(progress * 4) * 15, Mathf.Lerp(-14, 22, progress));
         }
-        public void Dispose(){if(Root){Root.gameObject.SetActive(false);UnityEngine.Object.Destroy(Root.gameObject);}if(Video){Video.Release();UnityEngine.Object.Destroy(Video);}foreach(var r in resources)if(r)UnityEngine.Object.Destroy(r);resources.Clear();}
+        static readonly Quaternion DepartureWindowView = Quaternion.Euler(0, 90, 0);
+
+        Transform departureRoot, departureShip;
+        Camera departureCamera;
+        LineRenderer[] exhaust;
+        Vector3 departureStart, departureDirection, departureBack;
+        float departureCabinFov, departureDuration;
+        bool departureRendering, cabinCameraWasEnabled;
+
+        public void PrepareDeparture(CabinController controller, LoopingStarfield existingStars, float duration)
+        {
+            departureDuration = duration;
+            if (departureCamera) return;
+            var rig = Ships.AstraShipRig.Active;
+            var source = rig && rig.hull ? rig.hull.gameObject : GameObject.Find("Astra Cabin | Blender source");
+            if (!source) throw new InvalidOperationException("别离启航缺少太空舱外观。");
+
+            departureStart = controller.centerPosition;
+            // Aim just below the two central remnants on the way to the detonation field.
+            var destination = planetPosition - Vector3.up * (10 * exteriorScale);
+            departureDirection = (destination - departureStart).normalized;
+            departureBack = -Vector3.ProjectOnPlane(departureDirection, Vector3.up).normalized;
+            departureCabinFov = controller.fieldOfView;
+            departureRoot = new GameObject("Farewell departure shot").transform;
+            departureRoot.SetParent(Root, false);
+            departureRoot.gameObject.SetActive(false);
+            departureShip = new GameObject("CABIN 04 | departing hull").transform;
+            departureShip.SetParent(departureRoot, false);
+            foreach (var renderer in source.GetComponentsInChildren<MeshRenderer>())
+            {
+                if (!renderer.enabled || !renderer.TryGetComponent<MeshFilter>(out var filter) || !filter.sharedMesh) continue;
+                var part = new GameObject(renderer.name);
+                part.layer = 26;
+                part.transform.SetParent(departureShip, false);
+                part.transform.localPosition = renderer.transform.position - departureStart;
+                part.transform.localRotation = renderer.transform.rotation;
+                part.transform.localScale = renderer.transform.lossyScale;
+                part.AddComponent<MeshFilter>().sharedMesh = filter.sharedMesh;
+                part.AddComponent<MeshRenderer>().sharedMaterials = renderer.sharedMaterials;
+            }
+            if (departureShip.childCount == 0) throw new InvalidOperationException("别离启航缺少太空舱网格。");
+
+            var cameraObject = new GameObject("Farewell window to fixed rear camera");
+            cameraObject.transform.SetParent(departureRoot, false);
+            departureCamera = cameraObject.AddComponent<Camera>();
+            departureCamera.enabled = false;
+            departureCamera.cullingMask = 1 << 26;
+            departureCamera.clearFlags = CameraClearFlags.SolidColor;
+            departureCamera.backgroundColor = new Color(.012f, .016f, .025f);
+            departureCamera.nearClipPlane = cabin.nearClipPlane;
+            departureCamera.farClipPlane = 340;
+            if (cabin.TryGetComponent<CabinPresentation>(out var look))
+            {
+                var presentation = cameraObject.AddComponent<CabinPresentation>();
+                presentation.grade = look.grade;
+                presentation.sceneLook = look.sceneLook;
+                presentation.pixelScale = look.pixelScale;
+            }
+
+            var stars = new GameObject("Farewell distant stars");
+            stars.layer = 26;
+            stars.transform.SetParent(departureRoot, false);
+            stars.transform.rotation = Quaternion.LookRotation(departureDirection);
+            var field = stars.AddComponent<LoopingStarfield>();
+            field.starShader = existingStars ? existingStars.starShader : null;
+            field.animate = false;
+            field.starCount = 1500;
+            field.volumeCenter = new Vector3(0, 0, 155);
+            field.size = new Vector3(250, 160, 220);
+            field.pointSize = .19f;
+            AddDepartureLight("Starlight", new Vector3(42, -22, 25), new Color(.67f, .78f, 1), 1.25f);
+            AddDepartureLight("Warm hull rim", new Vector3(-18, 153, 0), new Color(1, .69f, .43f), .95f);
+
+            exhaust = new LineRenderer[2];
+            var engineMetal = Mat(new Color(.13f, .16f, .17f));
+            engineMetal.SetFloat("_Metallic", .35f);
+            var exhaustCore = Mat(new Color(.12f, .4f, .48f));
+            exhaustCore.EnableKeyword("_EMISSION");
+            exhaustCore.SetColor("_EmissionColor", new Color(.13f, .53f, .69f));
+            for (int i = 0; i < exhaust.Length; i++)
+            {
+                float sideOffset = i == 0 ? -.90f : .90f;
+                var housing = Primitive("Aft engine housing", PrimitiveType.Cylinder, departureShip,
+                    new Vector3(-2.02f, -.52f, sideOffset), new Vector3(.54f, .34f, .54f), engineMetal);
+                housing.transform.localRotation = Quaternion.Euler(0, 0, 90);
+                var nozzle = Primitive("Lit exhaust throat", PrimitiveType.Cylinder, departureShip,
+                    new Vector3(-2.38f, -.52f, sideOffset), new Vector3(.30f, .035f, .30f), exhaustCore);
+                nozzle.transform.localRotation = housing.transform.localRotation;
+                var trail = new GameObject("Restored engine exhaust");
+                trail.layer = 26;
+                trail.transform.SetParent(departureShip, false);
+                trail.transform.localPosition = new Vector3(-2.42f, -.52f, sideOffset);
+                var line = exhaust[i] = trail.AddComponent<LineRenderer>();
+                line.sharedMaterial = ribbonMaterial;
+                line.useWorldSpace = false;
+                line.positionCount = 2;
+                line.startWidth = .25f;
+                line.endWidth = .035f;
+                line.endColor = Color.clear;
+            }
+            SampleDeparture(0);
+        }
+
+        void AddDepartureLight(string name, Vector3 angles, Color color, float intensity)
+        {
+            var lamp = new GameObject(name);
+            lamp.transform.SetParent(departureRoot, false);
+            lamp.transform.rotation = Quaternion.Euler(angles);
+            var light = lamp.AddComponent<Light>();
+            light.type = LightType.Directional;
+            light.cullingMask = 1 << 26;
+            light.color = color;
+            light.intensity = intensity;
+        }
+
+        public void BeginDeparture()
+        {
+            Photo.gameObject.SetActive(false);
+            departureRoot.gameObject.SetActive(true);
+            cabinCameraWasEnabled = cabin.enabled;
+            cabin.enabled = false;
+            departureCamera.enabled = true;
+            departureRendering = true;
+        }
+
+        public void SampleDeparture(float time)
+        {
+            float travelTime = Mathf.Max(0, time - settings.farewellDepartureHold);
+            float progress = Mathf.Clamp01(travelTime / (departureDuration - settings.farewellDepartureHold));
+            float cameraTime = travelTime / settings.farewellDepartureCameraTime;
+            float rise = Mathf.SmoothStep(0, 1, cameraTime);
+            departureShip.SetPositionAndRotation(
+                departureStart + departureDirection * (96 * exteriorScale * Mathf.Pow(progress, 1.8f)),
+                Quaternion.Slerp(Quaternion.identity, Quaternion.FromToRotation(Vector3.right, departureDirection), rise));
+            SampleDepartureCamera(cameraTime, rise);
+
+            float thrust = Mathf.SmoothStep(.15f, 1, travelTime / 1.5f);
+            foreach (var line in exhaust)
+            {
+                line.startColor = new Color(.57f, .84f, 1, thrust * .6f);
+                line.SetPosition(1, Vector3.left * (1.1f + 2.2f * thrust));
+            }
+        }
+
+        void SampleDepartureCamera(float cameraTime, float rise)
+        {
+            // Lift first around the cabin roof, then let the backward movement catch up.
+            // Both offsets reach their final values before the camera starts its stationary follow.
+            float retreat = rise * Mathf.Lerp(.45f, 1, rise);
+            Vector3 position = departureStart + Vector3.up * (settings.farewellDepartureCameraRise * rise)
+                + departureBack * (settings.farewellDepartureCameraBack * retreat);
+            float tracking = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(.26f, .78f, cameraTime));
+            float fieldOfView = Mathf.Lerp(departureCabinFov, settings.farewellDepartureCameraFov, tracking);
+            Quaternion rotation = DepartureWindowView;
+            if (tracking > 0)
+            {
+                var aim = Quaternion.LookRotation(departureShip.position - position);
+                float finalShipY = settings.farewellDepartureShipScreenY * .01f;
+                float shipY = Mathf.SmoothStep(.40f, finalShipY, Mathf.InverseLerp(.62f, 1, cameraTime));
+                float pitch = Mathf.Atan((1 - 2 * shipY) *
+                    Mathf.Tan(fieldOfView * .5f * Mathf.Deg2Rad)) * Mathf.Rad2Deg;
+                rotation = Quaternion.Slerp(rotation, aim * Quaternion.Euler(-pitch, 0, 0), tracking);
+            }
+            departureCamera.fieldOfView = fieldOfView;
+            departureCamera.transform.SetPositionAndRotation(position, rotation);
+        }
+
+        public void EndDeparture()
+        {
+            if (!departureRendering) return;
+            departureRendering = false;
+            departureCamera.enabled = false;
+            departureRoot.gameObject.SetActive(false);
+            if (cabin) cabin.enabled = cabinCameraWasEnabled;
+        }
+
+        public void Dispose(){EndDeparture();if(Root){Root.gameObject.SetActive(false);UnityEngine.Object.Destroy(Root.gameObject);}if(Video){Video.Release();UnityEngine.Object.Destroy(Video);}foreach(var r in resources)if(r)UnityEngine.Object.Destroy(r);resources.Clear();}
     }
 }
 

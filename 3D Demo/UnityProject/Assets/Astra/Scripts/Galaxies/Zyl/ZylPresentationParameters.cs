@@ -4,6 +4,16 @@ using UnityEngine;
 namespace AstraCabin.Galaxies.Zyl {
  [Serializable] public sealed class ZylPresentationParameters {
   public int schemaVersion=1;
+  public float farewellDepartureHold = 0.65f;
+  public float farewellDepartureCameraTime = 4.7f;
+  public float farewellDepartureCameraBack = 6f;
+  public float farewellDepartureCameraRise = 8.8f;
+  public float farewellDepartureCameraFov = 43f;
+  public float farewellDepartureShipScreenY = 24f;
+  public float farewellDepartureFlightTime = 11.8f;
+  public float farewellDepartureTitleDelay = 4.5f;
+  public float farewellDepartureTitleInterval = 0.48f;
+  public float farewellDepartureTitleWidth = 84f;
   public float farewellChestLeadTime = .45f;
   public float farewellSurfaceWaveAmplitude = 1.63f;
   public float farewellInnerWaveHz = 1.3f;
@@ -113,6 +123,16 @@ namespace AstraCabin.Galaxies.Zyl {
    Check("escapeHullLoss",escapeHullLoss,5f,70f);
    Check("escapeFadeDuration",escapeFadeDuration,0.2f,5f);
    ValidateCinematicDialogue(escapeGravesDialogue);ValidateCinematicDialogue(escapeEncouragement);
+   Check("farewellDepartureHold",farewellDepartureHold,0f,4f);
+   Check("farewellDepartureCameraTime",farewellDepartureCameraTime,1.5f,12f);
+   Check("farewellDepartureCameraBack",farewellDepartureCameraBack,0f,16f);
+   Check("farewellDepartureCameraRise",farewellDepartureCameraRise,2f,15f);
+   Check("farewellDepartureCameraFov",farewellDepartureCameraFov,30f,65f);
+   Check("farewellDepartureShipScreenY",farewellDepartureShipScreenY,14f,42f);
+   Check("farewellDepartureFlightTime",farewellDepartureFlightTime,5f,30f);
+   Check("farewellDepartureTitleDelay",farewellDepartureTitleDelay,0f,20f);
+   Check("farewellDepartureTitleInterval",farewellDepartureTitleInterval,0.08f,1.5f);
+   Check("farewellDepartureTitleWidth",farewellDepartureTitleWidth,40f,90f);
    Check("farewellChestLeadTime",farewellChestLeadTime,0f,3f);
    Check("farewellChestDuration",farewellChestDuration,0.5f,10f);
    Check("farewellSignalHold",farewellSignalHold,0.5f,8f);
