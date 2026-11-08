@@ -851,7 +851,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 8675137549621547428, guid: d5d233dac907c9f40a71e8d1ab59085c, type: 3}
+  m_Mesh: {fileID: 4300000, guid: f63d0284a7f7c0043a72817a157b9230, type: 2}
 --- !u!64 &576604774
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -1393,6 +1393,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: 3354f3795d14cc641b5ffd661bb4ceba, type: 2}
+    - target: {fileID: -3031089408410224202, guid: d5d233dac907c9f40a71e8d1ab59085c, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300000, guid: f63d0284a7f7c0043a72817a157b9230, type: 2}
     - target: {fileID: -2291618945911763887, guid: d5d233dac907c9f40a71e8d1ab59085c, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -1505,6 +1509,10 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: c8fedff49c943aa4d8fcd43868829570, type: 2}
+    - target: {fileID: 4460026663072756787, guid: d5d233dac907c9f40a71e8d1ab59085c, type: 3}
+      propertyPath: m_Mesh
+      value: 
+      objectReference: {fileID: 4300000, guid: 09913de38d07fcc4f82993bfc1188782, type: 2}
     - target: {fileID: 5129381758983448128, guid: d5d233dac907c9f40a71e8d1ab59085c, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
@@ -2754,7 +2762,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: -6216874651389929155, guid: d5d233dac907c9f40a71e8d1ab59085c, type: 3}
+  m_Mesh: {fileID: 4300000, guid: 09913de38d07fcc4f82993bfc1188782, type: 2}
 --- !u!64 &1164225409
 MeshCollider:
   m_ObjectHideFlags: 0

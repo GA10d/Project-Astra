@@ -99,8 +99,7 @@ namespace AstraCabin
             if(s.Progress>.90f){float alpha=Mathf.InverseLerp(.90f,1,s.Progress);Fill(new Rect(fw*(1-alpha*.18f),0,fw*.2f,fh),new Color(.7f,.9f,.83f,alpha*.2f));Label(new Rect(fw-190,fh/2-15,180,30),"出口信号 · 已锁定",17,green);}
             if(s.Paused){Fill(new Rect(0,0,fw,fh),new Color(0,0,0,.75f));Label(new Rect(0,fh/2-20,fw,40),"牵引航线已暂停 / P 或 ESC 继续",22,ink,TextAnchor.MiddleCenter);}
             GUI.EndGroup();Border(field,dim);Fill(rail,new Color(.035f,.08f,.067f));Border(rail,dim);
-            Label(new Rect(rail.x+12,rail.y+12,145,23),"MIHUOER / 牵引船",13,amber);
-            Meter(new Rect(rail.x+12,rail.y+52,143,10),s.Hull/100,s.Hull<70?amber:green,"船体 "+Mathf.CeilToInt(s.Hull)+" / 100");
+            Meter(new Rect(rail.x+12,rail.y+38,143,10),s.Hull/100,s.Hull<70?amber:green,"米霍尔船体"+Mathf.CeilToInt(s.Hull)+"/100");
             Label(new Rect(rail.x+12,rail.y+112,145,23),"距出口",13,dim);
             Label(new Rect(rail.x+12,rail.y+139,145,34),Mathf.CeilToInt(s.Distance).ToString("N0")+" m",24,green);
             Label(new Rect(rail.x+12,rail.y+197,145,23),"米霍尔 · 通讯中",13,amber);

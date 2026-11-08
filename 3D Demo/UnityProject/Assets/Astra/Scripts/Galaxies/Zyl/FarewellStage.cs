@@ -210,58 +210,10 @@ namespace AstraCabin.Galaxies.Zyl
 
         public void AnchorChestBurst()
         {
-            Vector3 surface = FindCountdownSurface();
+            Vector3 surface = MihuoerCountdownSkin.FindCountdownSurface(Actor, Chest, settings);
             // Move from the posed skin into the torso. The chest bone carries the inset as the actor moves.
             Vector3 inside = Vector3.MoveTowards(surface, Chest.position, .038f * Actor.lossyScale.x);
             chestLocalOrigin = Chest.InverseTransformPoint(inside);
-        }
-
-        Vector3 FindCountdownSurface()
-        {
-            // Use the countdown shader's rest-space coordinates to locate the skin over the source.
-            Vector2 displayCenter = new Vector2(-settings.countdownOffsetX, .795f + settings.countdownOffsetY);
-            SkinnedMeshRenderer bestSkin = null;
-            int bestIndex = 0;
-            float bestDistance = float.PositiveInfinity;
-            var rest = new List<Vector4>();
-            foreach (var skin in Actor.GetComponentsInChildren<SkinnedMeshRenderer>())
-            {
-                if (!skin.sharedMesh) continue;
-                rest.Clear();
-                skin.sharedMesh.GetUVs(2, rest);
-                for (int i = 0; i < rest.Count; i++)
-                {
-                    Vector4 point = rest[i];
-                    if (point.z <= .015f || point.y < .69f || point.y > .90f || Mathf.Abs(point.x) > .17f)
-                        continue;
-                    float distance = (new Vector2(point.x, point.y) - displayCenter).sqrMagnitude;
-                    if (distance >= bestDistance) continue;
-                    bestSkin = skin;
-                    bestIndex = i;
-                    bestDistance = distance;
-                }
-            }
-            if (!bestSkin) return Chest.position;
-
-            var mesh = bestSkin.sharedMesh;
-            var weights = mesh.boneWeights;
-            if (bestIndex >= weights.Length) return Chest.position;
-            var vertex = mesh.vertices[bestIndex];
-            var bind = mesh.bindposes;
-            var bones = bestSkin.bones;
-            BoneWeight weight = weights[bestIndex];
-
-            // Bone matrices already include the FBX hierarchy's scale. The sum is in world space.
-            Vector3 WeightedPoint(int index, float amount)
-            {
-                if (amount == 0) return Vector3.zero;
-                return bones[index].TransformPoint(bind[index].MultiplyPoint3x4(vertex)) * amount;
-            }
-
-            return WeightedPoint(weight.boneIndex0, weight.weight0)
-                + WeightedPoint(weight.boneIndex1, weight.weight1)
-                + WeightedPoint(weight.boneIndex2, weight.weight2)
-                + WeightedPoint(weight.boneIndex3, weight.weight3);
         }
 
         public void SampleChestPreview(float elapsed)

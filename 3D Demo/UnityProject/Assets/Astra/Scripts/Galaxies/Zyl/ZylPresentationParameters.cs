@@ -12,7 +12,6 @@ namespace AstraCabin.Galaxies.Zyl {
   public float farewellDepartureShipScreenY = 24f;
   public float farewellDepartureFlightTime = 11.8f;
   public float farewellDepartureTitleDelay = 4.5f;
-  public float farewellDepartureTitleInterval = 0.48f;
   public float farewellDepartureTitleWidth = 84f;
   public float farewellChestLeadTime = .45f;
   public float farewellSurfaceWaveAmplitude = 1.63f;
@@ -27,7 +26,7 @@ namespace AstraCabin.Galaxies.Zyl {
   public float farewellChestDuration=2.8f,farewellSignalHold=1.3f,farewellPlanetDuration=8f,farewellDebrisHold=4f,farewellPhotoDuration=8f,farewellShake=0.35f;
   public MihuoerDialogueLine[] farewellDialogue=new[]{new MihuoerDialogueLine{text="【占位：请填写别离视频通话的台词，可添加玩家回复和倒计时操作。倒计时归零将立即打断。】",duration=600f,replies=new string[0]}};
 
-  public float escapeFlightDuration=58f,escapeExitDistance=12000f,escapeHullLoss=36f,escapeFadeDuration=1.2f;
+  public float escapeFlightDuration=42f,escapeExitDistance=12000f,escapeHullLoss=36f,escapeFadeDuration=1.2f;
   public float escapeSproutShakeDelay=1.15f;
   public MihuoerDialogueLine[] escapeGravesDialogue=new[]{new MihuoerDialogueLine{text="【占位：请在HTML填写三座墓碑前米霍尔的台词。】",duration=6f,replies=new string[0]}};
   public MihuoerDialogueLine[] escapeEncouragement=new[]{new MihuoerDialogueLine{text="抓紧，我来带路！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="跟着我的航线，别担心！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="前面有障碍，我来撞开！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="还撑得住，我们继续！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="就快到出口了，坚持住！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="看到亮光了，我们能出去！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="最后一段路，抓稳！",duration=8f,replies=new string[0]}};
@@ -133,7 +132,6 @@ namespace AstraCabin.Galaxies.Zyl {
    Check("farewellDepartureShipScreenY",farewellDepartureShipScreenY,14f,42f);
    Check("farewellDepartureFlightTime",farewellDepartureFlightTime,5f,30f);
    Check("farewellDepartureTitleDelay",farewellDepartureTitleDelay,0f,20f);
-   Check("farewellDepartureTitleInterval",farewellDepartureTitleInterval,0.08f,1.5f);
    Check("farewellDepartureTitleWidth",farewellDepartureTitleWidth,40f,90f);
    Check("farewellChestLeadTime",farewellChestLeadTime,0f,3f);
    Check("farewellChestDuration",farewellChestDuration,0.5f,10f);

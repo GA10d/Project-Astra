@@ -77,8 +77,9 @@ namespace AstraCabin
         {
             if(!canvas)return;
             assembly.SetActive(visible);
-            // The top lip of the deployed screen meets the printer's upper opening.
-            transform.SetPositionAndRotation(origin+facing*new Vector3(0,.09f+(1-Mathf.SmoothStep(0,1,blend))*.66f,-.13f),facing);
+            // The roller is centered on the opening, with its top lip at the brass trim.
+            float stowed = 1f - Mathf.SmoothStep(0f, 1f, blend);
+            transform.SetPositionAndRotation(origin + facing * new Vector3(.08f, .15f + stowed * .66f, -.145f + stowed * .29f), facing);
             canvas.GetComponent<GraphicRaycaster>().enabled=interactable&&blend>.98f;
             close.interactable=interactable;
             for(int i=0;i<3;i++)

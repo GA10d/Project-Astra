@@ -59,7 +59,7 @@ namespace AstraCabin
         readonly List<GameObject> patches=new List<GameObject>();
         GameObject repairRoot,heldHammer;
         Font font; GUIStyle heading,body,small;
-        Material steel,handle,amber,dark,red,white,worldText;
+        Material steel,handle,amber,dark,red,white,worldText,promptPaper,promptRed;
         bool initialized,alarmStarted,repairing;
         readonly bool[] repaired=new bool[3];
         float shakeRemaining,shakeDuration,shakeStrength;
@@ -104,7 +104,9 @@ namespace AstraCabin
             handle=Mat("Hammer grip",new Color(.42f,.11f,.045f),false,.1f);
             amber=Mat("Amber warning",new Color(1f,.43f,.04f),true);
             red=Mat("Emergency red",new Color(.85f,.055f,.02f),true);
-            dark=Mat("Terminal popup",new Color(.025f,.055f,.047f),true);
+            dark=Mat("Dark hardware",new Color(.025f,.055f,.047f),true);
+            promptPaper=Mat("Terminal prompt paper",new Color(.69f,.70f,.65f),true);
+            promptRed=Mat("Terminal prompt red",new Color(.43f,.13f,.10f),true);
             white=Mat("Warning trim",new Color(.68f,.77f,.64f),true);
         }
         void Update()
@@ -334,16 +336,15 @@ namespace AstraCabin
             if(AlertRoot) { AlertRoot.SetActive(false); Destroy(AlertRoot); }
             AlertRoot=new GameObject("Terminal alert | "+title);
             AlertRoot.transform.position=new Vector3(0,1.58f,1.165f);
-            Box("Popup panel",AlertRoot.transform,Vector3.zero,new Vector3(1.37f,.61f,.012f),dark);
-            Box("Red title bar",AlertRoot.transform,new Vector3(0,.23f,-.008f),new Vector3(1.34f,.115f,.012f),red);
+            Box("Popup panel",AlertRoot.transform,Vector3.zero,new Vector3(1.37f,.61f,.012f),promptPaper);
+            Box("Red title bar",AlertRoot.transform,new Vector3(0,.23f,-.008f),new Vector3(1.34f,.115f,.012f),promptRed);
             Text(title,AlertRoot.transform,new Vector3(-.61f,.27f,-.022f),Quaternion.identity,.065f,new Color(1,.91f,.75f));
             if(ActiveMode == BlockedEngineMode && RepairedCount == 3)
             {
-                Text("三处裂痕已封闭\n主电源恢复",AlertRoot.transform,new Vector3(-.59f,.08f,-.021f),Quaternion.identity,.042f,Color.white);
-                Text("引擎被未知物质堵塞",AlertRoot.transform,new Vector3(-.59f,-.025f,-.021f),Quaternion.identity,.042f,new Color(1,.08f,.04f));
+                Text("三处裂痕已封闭\n主电源恢复",AlertRoot.transform,new Vector3(-.59f,.08f,-.021f),Quaternion.identity,.042f,new Color(.08f,.13f,.11f));
+                Text("引擎被未知物质堵塞",AlertRoot.transform,new Vector3(-.59f,-.025f,-.021f),Quaternion.identity,.042f,new Color(.43f,.13f,.10f));
             }
-            else Text(detail,AlertRoot.transform,new Vector3(-.59f,.08f,-.021f),Quaternion.identity,.042f,new Color(.70f,.93f,.77f));
-            Text("ASTRA / PRIORITY MESSAGE",AlertRoot.transform,new Vector3(-.59f,-.23f,-.021f),Quaternion.identity,.021f,new Color(.8f,.72f,.44f));
+            else Text(detail,AlertRoot.transform,new Vector3(-.59f,.08f,-.021f),Quaternion.identity,.042f,new Color(.08f,.13f,.11f));
             AlertRoot.SetActive(systems.ScreenHasPower);
         }
         Material Mat(string name,Color color,bool unlit,float metallic=0)
@@ -388,7 +389,7 @@ namespace AstraCabin
             }
             if((farewell&&farewell.Active&&!farewell.Complete&&farewell.Phase!=Galaxies.Zyl.FarewellSetpiece.Step.Error)||(escape&&escape.Active&&!escape.Complete&&escape.Phase!=Galaxies.Zyl.EscapeSetpiece.Step.Error)||Galaxies.Zyl.ZylScreenCurtain.IsOpaque || (fools&&fools.Active&&!fools.Complete&&fools.Phase!=Galaxies.Zyl.FoolsSetpiece.Step.Error))return;
             if(!initialized) return;
-            if(controller.ComputerOpen) { DrawEngineWarning(); return; }
+            if(controller.ComputerOpen) return;
             if(small==null)
             {
                 small=new GUIStyle(GUI.skin.label){font=font,fontSize=15,alignment=TextAnchor.MiddleCenter};
@@ -415,16 +416,16 @@ namespace AstraCabin
         }
         void DrawEngineWarning()
         {
-            if(!EngineBlocked) return;
-            var matrix=GUI.matrix;var color=GUI.color;int depth=GUI.depth;
+            if(!EngineBlocked || (ActiveMode == BlockedEngineMode && RepairedCount < 3)) return;
+            var matrix=GUI.matrix;var color=GUI.color;
             float scale=Mathf.Min(Screen.width/1600f,Screen.height/900f);
-            GUI.matrix=Matrix4x4.Scale(new Vector3(scale,scale,1));GUI.depth=-200;
+            GUI.matrix=Matrix4x4.Scale(new Vector3(scale,scale,1));
             float y=CrisisActive?239:205;
             GUI.color=new Color(.035f,.015f,.01f,.94f);GUI.DrawTexture(new Rect(28,y,385,64),Texture2D.whiteTexture);GUI.color=color;
             var style=new GUIStyle(GUI.skin.label){font=font,fontSize=19,wordWrap=true,alignment=TextAnchor.MiddleLeft,richText=false};
             style.normal.textColor=new Color(1,.36f,.12f);
             GUI.Label(new Rect(43,y+8,355,48),"引擎堵塞，飞船失去动力",style);
-            GUI.matrix=matrix;GUI.color=color;GUI.depth=depth;
+            GUI.matrix=matrix;GUI.color=color;
         }
         void OnDestroy()
         {

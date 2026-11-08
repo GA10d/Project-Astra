@@ -543,7 +543,7 @@ namespace AstraCabin
             Fill(new Rect(rectangle.xMax - 2, rectangle.y, 2, rectangle.height), sunken ? light : dark);
         }
 
-        bool RetroButton(Rect rectangle, string text, bool enabled = true, bool selected = false)
+        internal bool RetroButton(Rect rectangle, string text, bool enabled = true, bool selected = false)
         {
             bool oldEnabled = GUI.enabled;
             GUI.enabled = enabled && oldEnabled;
@@ -662,16 +662,21 @@ namespace AstraCabin
             GUI.depth = oldDepth;
         }
 
+        internal void DrawPromptFrame(Rect box, string caption, string detail)
+        {
+            Bevel(box, false, chromeColor);
+            Fill(new Rect(box.x + 5, box.y + 5, box.width - 10, 38), accentColor);
+            GUI.Label(new Rect(box.x + 18, box.y + 7, box.width - 36, 32), caption, lightLabel);
+            GUI.Label(new Rect(box.x + 24, box.y + 60, box.width - 48, box.height - 116), detail, body);
+        }
+
         void DrawEventAlert(int id)
         {
-            Bevel(new Rect(0, 0, 680, 222), false, chromeColor);
-            Fill(new Rect(5, 5, 670, 38), FarewellRecoveryAlert ? new Color(.10f, .29f, .24f) : accentColor);
-            GUI.Label(new Rect(18, 7, 630, 32), "舰载监控 / " + eventAlertTitle, lightLabel);
-            GUI.Label(new Rect(24, 64, 630, 92), eventAlertBody, body);
+            DrawPromptFrame(new Rect(0, 0, 680, 222), "舰载监控 / " + eventAlertTitle, eventAlertBody);
             var director=GetComponent<SetpieceDirector>();
             bool encounter=director && director.ActiveMode==SetpieceDirector.EncounterMode && director.encounter && director.encounter.WaitingForView;
             bool portal=director && director.ActiveMode==SetpieceDirector.PortalMode && director.portal && !director.portal.Started;
-            if (((portal || encounter) ? RetroButton(new Rect(490, 169, 160, 34), "◉  查看") : GUI.Button(new Rect(490, 169, 160, 34), "确认 / ACK", button))) {
+            if (RetroButton(new Rect(490, 169, 160, 34), portal || encounter ? "◉  查看" : "◉  确认")) {
                 acknowledgedAlert = eventAlertTitle + eventAlertBody;
                 if(portal) director.portal.View();
                 if(encounter)director.encounter.View();
@@ -953,11 +958,9 @@ namespace AstraCabin
         {
             Fill(new Rect(4, 36, width - 8, height - 40), new Color(0.03f, 0.07f, 0.055f, 0.73f));
             Rect box = new Rect(width * 0.5f - 260, height * 0.5f - 105, 520, 210);
-            Bevel(box);
-            Fill(new Rect(box.x + 4, box.y + 4, box.width - 8, 32), accentColor);
-            GUI.Label(new Rect(box.x + 16, box.y + 4, box.width - 30, 32), "确认永久删除 / PERMANENT DELETE", title);
             DocumentRecord document = GetDocument(confirmationId);
-            GUI.Label(new Rect(box.x + 20, box.y + 55, 480, 65), "永久删除 “" + (document == null ? "" : document.name) + "”？\n此操作不可撤销。", body);
+            DrawPromptFrame(box, "确认永久删除 / PERMANENT DELETE",
+                "永久删除 “" + (document == null ? "" : document.name) + "”？\n此操作不可撤销。");
             if (RetroButton(new Rect(box.x + 179, box.y + 153, 143, 35), "取消")) confirmationId = "";
             if (RetroButton(new Rect(box.x + 336, box.y + 153, 162, 35), "确认永久删除")) { DeletePermanently(confirmationId); confirmationId = ""; }
         }

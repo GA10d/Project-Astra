@@ -12,6 +12,9 @@ namespace AstraCabin.Galaxies.Zyl
         SetpieceDirector director;
         ZylPresentationParameters parameters;
         MihuoerDialoguePlayer dialogue;
+        Camera chestCamera;
+        Transform chest;
+        Vector3 chestTarget;
         float elapsed,targetYaw;
         Vector2 scroll;
         Font font;
@@ -48,6 +51,51 @@ namespace AstraCabin.Galaxies.Zyl
             }
             if(Phase==Step.Dialogue){dialogue.Tick(Time.deltaTime,false);exterior.MihuoerActor.Speaking=!dialogue.Ended&&!dialogue.WaitingForReply;if(dialogue.Ended)Finish();}
         }
+        void LateUpdate()
+        {
+            var line = Phase == Step.Dialogue ? dialogue?.Current : null;
+            bool closeup = Active && line != null && (line.timerKey == "timer_mw61emp8_uh2xm70wzu" ||
+                (line.text.Contains("胸前") && line.text.Contains("倒计时")));
+            if (!closeup || director.computer.IsOpen || ZylScreenCurtain.IsOpaque)
+            {
+                if (chestCamera) chestCamera.enabled = false;
+                return;
+            }
+
+            var actor = Exterior.MihuoerActor.Actor;
+            if (!chest)
+            {
+                foreach (var bone in actor.GetComponentsInChildren<Transform>())
+                    if (bone.name == "chest") { chest = bone; break; }
+                if (!chest) return;
+                chestTarget = chest.InverseTransformPoint(MihuoerCountdownSkin.FindCountdownSurface(actor, chest, parameters));
+            }
+            if (!chestCamera)
+            {
+                var source = director.controller.viewCamera;
+                chestCamera = new GameObject("Zyl13 | chest countdown closeup").AddComponent<Camera>();
+                chestCamera.CopyFrom(source);
+                chestCamera.targetTexture = null;
+                chestCamera.rect = new Rect(0, 0, 1, 1);
+                chestCamera.depth = source.depth + 10;
+                chestCamera.cullingMask = 1 << ZylStomachEnvironment.EnvironmentLayer;
+                chestCamera.clearFlags = CameraClearFlags.SolidColor;
+                chestCamera.fieldOfView = 35;
+                chestCamera.nearClipPlane = .035f;
+            }
+            chestCamera.enabled = true;
+            Vector3 target = chest.TransformPoint(chestTarget);
+            Vector3 eye = target + actor.forward * .69f + actor.right * .055f + actor.up * .035f;
+            chestCamera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye, actor.up));
+        }
+
+        void ReleaseCloseup()
+        {
+            if (chestCamera) { chestCamera.enabled = false; Destroy(chestCamera.gameObject); }
+            chestCamera = null;
+            chest = null;
+        }
+
         void ApplyTimer(int line,string phase,CountdownAction action){var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(action,(nav.Session?.Engine.Pending?.id??"stomach13")+"/stomach/"+(string.IsNullOrEmpty(parameters.stomachDialogue[line].timerKey)?line.ToString():parameters.stomachDialogue[line].timerKey)+"/"+phase);}
         public bool ChooseReply(int index)
         {
@@ -56,6 +104,7 @@ namespace AstraCabin.Galaxies.Zyl
         }
         void Finish()
         {
+            ReleaseCloseup();
             Complete=true;Phase=Step.Finished;if(Exterior&&Exterior.MihuoerActor)Exterior.MihuoerActor.Speaking=false;
             director.controller.cinematicWindowLock=false;director.controller.ExitWindowView();director.controller.SnapToWall(0);
             director.computer.Open();director.computer.OpenApp("navigation");
@@ -87,7 +136,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
             finally{GUI.matrix=matrix;GUI.color=color;GUI.enabled=enabled;}
         }
-        public void Clear(){if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor)Exterior.MihuoerActor.Speaking=false;Active=Complete=false;dialogue=null;Error=null;elapsed=0;scroll=Vector2.zero;}
-        void OnDestroy(){if(font)Destroy(font);}
+        public void Clear(){ReleaseCloseup();if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor)Exterior.MihuoerActor.Speaking=false;Active=Complete=false;dialogue=null;Error=null;elapsed=0;scroll=Vector2.zero;}
+        void OnDestroy(){ReleaseCloseup();if(font)Destroy(font);}
     }
 }

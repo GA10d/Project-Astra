@@ -157,10 +157,10 @@ namespace AstraCabin
             if(blend>0 && player.viewCamera)
             {
                 var cam=player.viewCamera; float t=Mathf.SmoothStep(0,1,blend);
-                Vector3 target=origin+facing*new Vector3(0,.09f,-.91f);
+                Vector3 target=origin+facing*new Vector3(.08f,.125f,-1.02f);
                 cam.transform.position=Vector3.Lerp(cam.transform.position,target,t);
                 cam.transform.rotation=Quaternion.Slerp(cam.transform.rotation,facing,t);
-                cam.fieldOfView=Mathf.Lerp(cam.fieldOfView,48,t);
+                cam.fieldOfView=Mathf.Lerp(cam.fieldOfView,53,t);
             }
         }
         void StartPrinting()
@@ -168,7 +168,7 @@ namespace AstraCabin
             drawing=false; Printing=true; printClock=0; PrintProgress=0; systems.SetPrinter(true); Close();
             if(part) { Destroy(part.GetComponent<MeshFilter>().sharedMesh); Destroy(part); } if(material) Destroy(material); if(beamMaterial)Destroy(beamMaterial);
             part=new GameObject("Fabricator | printed "+Blueprints[selected]);
-            part.transform.SetPositionAndRotation(origin+facing*new Vector3(0,-.27f,0),facing);
+            part.transform.SetPositionAndRotation(origin+facing*new Vector3(0,-.2625f,.028f),facing);
             part.transform.SetParent(head.parent,true);
             var mesh=new Mesh(); var vertices=new Vector3[(Samples+1)*4]; var triangles=new int[Samples*24]; int index=0;
             for(int i=0;i<=Samples;i++)

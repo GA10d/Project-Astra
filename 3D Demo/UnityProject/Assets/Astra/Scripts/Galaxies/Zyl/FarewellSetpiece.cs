@@ -53,8 +53,7 @@ namespace AstraCabin.Galaxies.Zyl
             get
             {
                 if (Phase != Step.Departing || PhaseTime < p.farewellDepartureTitleDelay) return 0;
-                float typingTime = PhaseTime - p.farewellDepartureTitleDelay;
-                return Mathf.Min(DepartureTitle.Length, 1 + Mathf.FloorToInt(typingTime / p.farewellDepartureTitleInterval));
+                return DepartureTitle.Length;
             }
         }
         GUIStyle departureTitle;
@@ -75,7 +74,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
             float flightEnd = p.farewellDepartureHold + p.farewellDepartureFlightTime;
             float cameraEnd = p.farewellDepartureHold + p.farewellDepartureCameraTime;
-            float titleEnd = p.farewellDepartureTitleDelay + (DepartureTitle.Length - 1) * p.farewellDepartureTitleInterval;
+            float titleEnd = p.farewellDepartureTitleDelay;
             // Keep the complete title on screen and let the camera settle before the closing fade.
             departureDuration = Mathf.Max(flightEnd, Mathf.Max(cameraEnd + .6f, titleEnd + 1.2f) + DepartureFade);
             Stage.PrepareDeparture(controller, director.stars, departureDuration);
@@ -131,7 +130,7 @@ namespace AstraCabin.Galaxies.Zyl
                 float width = departureTitle.CalcSize(new GUIContent(DepartureTitle)).x;
                 var bounds = new Rect((Screen.width - width) * .5f, Screen.height * .06f,
                     width, Screen.height * .35f);
-                string text = DepartureTitle.Substring(0, visible);
+                string text = DepartureTitle;
                 var shadow = bounds;
                 shadow.y += 3 * scale;
                 GUI.color = new Color(0, 0, 0, .75f);

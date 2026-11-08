@@ -539,7 +539,7 @@
       "replyTimerActions": []
     }
   ],
-  "escapeFlightDuration": 58,
+  "escapeFlightDuration": 42,
   "escapeExitDistance": 12000,
   "escapeHullLoss": 36,
   "escapeFadeDuration": 1.2,

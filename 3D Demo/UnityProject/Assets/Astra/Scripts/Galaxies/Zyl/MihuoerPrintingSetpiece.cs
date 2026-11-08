@@ -12,6 +12,8 @@ namespace AstraCabin.Galaxies.Zyl
         SetpieceDirector director;
         ZylPresentationParameters parameters;
         MihuoerDialoguePlayer dialogue;
+        MihuoerPole pole;
+        float poleTime;
         Vector2 scroll;
         Font font;
         GUIStyle text,button;
@@ -39,9 +41,23 @@ namespace AstraCabin.Galaxies.Zyl
                 dialogue=new MihuoerDialoguePlayer(parameters.printingDialogue,(i,a)=>ApplyTimer(i,"line",a),(i,j,a)=>ApplyTimer(i,"reply",a));Phase=Step.Dialogue;scroll=Vector2.zero;
             }
             if(director.computer.IsOpen)return;
+            if (pole != null)
+            {
+                poleTime += Time.deltaTime;
+                pole.Sample(Mathf.Lerp(.06f, MihuoerPole.PreviewLength, Mathf.SmoothStep(0, 1, Mathf.Clamp01(poleTime / 1.05f))));
+            }
             if(Phase==Step.Dialogue){dialogue.Tick(Time.deltaTime,false);exterior.MihuoerActor.Speaking=!dialogue.Ended&&!dialogue.WaitingForReply;if(dialogue.Ended)Finish();}
         }
-        void ApplyTimer(int line,string phase,CountdownAction action){var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(action,(nav.Session?.Engine.Pending?.id??"printing14")+"/printing/"+(string.IsNullOrEmpty(parameters.printingDialogue[line].timerKey)?line.ToString():parameters.printingDialogue[line].timerKey)+"/"+phase);}
+        void ApplyTimer(int line,string phase,CountdownAction action)
+        {
+            var entry = parameters.printingDialogue[line];
+            if (phase == "line" && pole == null && (entry.timerKey == "timer_mw4rs1ln_1y4yq56mf8" || entry.text.Contains("杆子")))
+            {
+                pole = new MihuoerPole(Exterior.MihuoerActor.Craft);
+                pole.Sample(.06f);
+                poleTime = 0;
+            }
+var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(action,(nav.Session?.Engine.Pending?.id??"printing14")+"/printing/"+(string.IsNullOrEmpty(parameters.printingDialogue[line].timerKey)?line.ToString():parameters.printingDialogue[line].timerKey)+"/"+phase);}
         public bool ChooseReply(int index)
         {
             if(!Active||Phase!=Step.Dialogue||director.controller.IsPaused||director.computer.IsOpen||dialogue==null||!dialogue.Choose(index))return false;
@@ -80,7 +96,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
             finally{GUI.matrix=matrix;GUI.color=color;GUI.enabled=enabled;}
         }
-        public void Clear(){if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor)Exterior.MihuoerActor.Speaking=false;Active=Complete=false;dialogue=null;Error=null;scroll=Vector2.zero;}
-        void OnDestroy(){if(font)Destroy(font);}
+        public void Clear(){pole?.Dispose();pole=null;if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor)Exterior.MihuoerActor.Speaking=false;Active=Complete=false;dialogue=null;Error=null;scroll=Vector2.zero;}
+        void OnDestroy(){pole?.Dispose();pole=null;if(font)Destroy(font);}
     }
 }

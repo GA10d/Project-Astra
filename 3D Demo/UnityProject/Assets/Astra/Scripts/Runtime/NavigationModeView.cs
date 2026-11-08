@@ -40,7 +40,7 @@ namespace AstraCabin
             Color originalColor = GUI.color; bool originalEnabled = GUI.enabled;
             GUI.color = new Color(originalColor.r, originalColor.g, originalColor.b, originalColor.a * GalaxyContentAlpha);
             GUI.enabled = originalEnabled && !IsGalaxyTransitioning;
-            Label(new Rect(18, 12, Mathf.Max(150, w - 582), 30), IsGalaxyOverview ? "NAV / 星系总览" : "NAV / " + ActiveGalaxyId, 23);
+            Label(new Rect(18, 12, Mathf.Max(150, w - 582), 30), IsGalaxyOverview ? "NAV / 星系总览" : "NAV / " + ActiveGalaxyId + (Session == null ? "" : "   /   " + Session.Engine.Sector.name), 23);
             float bx = w - 546;
             if (Button(new Rect(bx, 12, 122, 30), "星系总览", !IsGalaxyOverview && confirmation == null)) RequestGalaxyOverview();
             if (Button(new Rect(bx + 130, 12, 60, 30), "日志", !IsGalaxyOverview && Session != null && confirmation == null)) {showJournal=!showJournal;showInventory=false;}
@@ -63,15 +63,14 @@ namespace AstraCabin
                     Block(new Rect(x, 53, rw - 8, 47), new Color(.10f, .16f, .12f));
                     Label(new Rect(x + 10, 60, rw - 20, 31), r.name + "   " + engine.Balances[r.id] + " / " + r.capacity, 17);
                 }
-                Label(new Rect(18, 111, w - 36, 28), Campaign.name + "  /  " + engine.Sector.name + "     ·     每跳消耗 " + engine.Amounts(Campaign.travelCosts, "-"), 15, amber);
                 bool oldEnabled = GUI.enabled; GUI.enabled = oldEnabled && !Session.Blocked && confirmation == null;
-                if(showInventory) DrawInventory(new Rect(18,148,w-36,h-211));
-                else if (showJournal) DrawJournal(new Rect(18, 148, w - 36, h - 211));
+                if(showInventory) DrawInventory(new Rect(18,112,w-36,h-175));
+                else if (showJournal) DrawJournal(new Rect(18, 112, w - 36, h - 175));
                 else
                 {
                     float mapWidth = (w - 54) * .66f;
-                    DrawMap(new Rect(18, 148, mapWidth, h - 211));
-                    DrawDetail(new Rect(36 + mapWidth, 148, w - mapWidth - 54, h - 211));
+                    DrawMap(new Rect(18, 112, mapWidth, h - 175));
+                    DrawDetail(new Rect(36 + mapWidth, 112, w - mapWidth - 54, h - 175));
                 }
                 GUI.enabled = oldEnabled;
                 Label(new Rect(18, h - 54, w - 36, 47), Session.Blocked ? Session.Error : Message, 14, Session.Blocked ? amber : muted);
@@ -134,7 +133,7 @@ namespace AstraCabin
             }
             else if (e.Pending != null)
             {
-                var ev = e.Pending; Label(new Rect(0, y, contentWidth, 26), "事件待处置 / " + (ev.type == "performance" ? "视频会议" : ev.type == "setpiece" ? "演出" : "抉择"), 13, amber); y += 31;
+                var ev = e.Pending;
                 Label(new Rect(0, y, contentWidth, 45), ev.title, 23); y += 47;
                 navText.fontSize = 15; float dh = navText.CalcHeight(new GUIContent(ev.description), contentWidth);
                 Label(new Rect(0, y, contentWidth, dh + 8), ev.description); y += dh + 23;
@@ -146,8 +145,8 @@ namespace AstraCabin
                 }
                 if (Registry.Find(ev.type).NeedsObservation)
                 {
-                    string state = e.Observed ? "演出已完成 / 可结算" : OwnsPresentation ? (SetpieceDirector.RequiresRepair(ev.setpiece) ? "等待修复全部三处裂痕" : "演出进行中 / " + Mathf.FloorToInt(Director.ModeTime) + " 秒") : "待观看 / 可继续未完成演出";
-                    if((ev.setpiece != SetpieceDirector.PortalMode && ev.setpiece != SetpieceDirector.EncounterMode && ev.setpiece != SetpieceDirector.StomachTalkMode && ev.setpiece != SetpieceDirector.PrintingRequestMode && ev.setpiece != SetpieceDirector.FoolsMode && ev.setpiece != SetpieceDirector.EscapeMode && ev.setpiece != SetpieceDirector.FarewellMode) || !e.Observed) { Label(new Rect(0, y, contentWidth, 32), state, 15, amber); y += 36; }
+                    string state = OwnsPresentation ? (SetpieceDirector.RequiresRepair(ev.setpiece) ? "等待修复全部三处裂痕" : "演出进行中 / " + Mathf.FloorToInt(Director.ModeTime) + " 秒") : "待观看 / 可继续未完成演出";
+                    if (!e.Observed) { Label(new Rect(0, y, contentWidth, 32), state, 15, amber); y += 36; }
                     // Mode 10 has no optional observation-return control; retain only unfinished-session recovery.
                     if ((ev.setpiece != SetpieceDirector.BlockedEngineMode && ev.setpiece != SetpieceDirector.PortalMode && ev.setpiece != SetpieceDirector.EncounterMode && ev.setpiece != SetpieceDirector.StomachTalkMode && ev.setpiece != SetpieceDirector.PrintingRequestMode && ev.setpiece != SetpieceDirector.FoolsMode && ev.setpiece != SetpieceDirector.EscapeMode && ev.setpiece != SetpieceDirector.FarewellMode) || (!e.Observed && !OwnsPresentation) || (!e.Observed && ev.setpiece==SetpieceDirector.StomachTalkMode && Director.stomachTalk.Phase==Galaxies.Zyl.StomachTalkSetpiece.Step.Error) || (!e.Observed && ev.setpiece==SetpieceDirector.PrintingRequestMode && Director.printingRequest.Phase==Galaxies.Zyl.MihuoerPrintingSetpiece.Step.Error) || (!e.Observed && ev.setpiece==SetpieceDirector.FoolsMode && Director.fools.Phase==Galaxies.Zyl.FoolsSetpiece.Step.Error) || (!e.Observed && ev.setpiece==SetpieceDirector.EscapeMode && Director.escape.Phase==Galaxies.Zyl.EscapeSetpiece.Step.Error) || (!e.Observed && ev.setpiece==SetpieceDirector.FarewellMode && Director.farewell.Phase==Galaxies.Zyl.FarewellSetpiece.Step.Error))
                     {
@@ -170,7 +169,6 @@ namespace AstraCabin
                     navText.fontSize = 13; float ch = navText.CalcHeight(new GUIContent(cost), contentWidth);
                     Label(new Rect(0, y, contentWidth, ch + 3), cost, 13, muted); y += ch + 18;
                 }
-                Label(new Rect(0, y + 8, contentWidth, 48), "超过容量的收益会舍弃；日志记录实际到账数量。", 12, muted);
             }
             else
             {
@@ -178,8 +176,10 @@ namespace AstraCabin
                 Label(new Rect(0, 0, contentWidth, 28), node.exit ? "星域出口" : "信标档案", 13, amber);
                 Label(new Rect(0, 37, contentWidth, 70), node.name, 24);
                 string info = node.id == e.Node.id ? "当前位置。沿亮起的航线选择下一处信标。" : e.Visited.Contains(e.Key(node)) ? "此信标已访问，无法返回。" : e.Node.next.Contains(node.id) ? "航路已确认，可以跃迁。" : "尚未接入当前航线。请先抵达与它相连的信标。";
-                bool hasArchive = !string.IsNullOrWhiteSpace(node.archiveDescription);
-                string archive = hasArchive ? node.archiveDescription : info;
+                var enteredEvent = e.Visited.Contains(e.Key(node)) && !string.IsNullOrEmpty(node.eventId)
+                    ? Campaign.events.FirstOrDefault(v => v.id == node.eventId) : null;
+                bool hasArchive = enteredEvent == null && !string.IsNullOrWhiteSpace(node.archiveDescription);
+                string archive = enteredEvent != null ? enteredEvent.description : hasArchive ? node.archiveDescription : info;
                 if((node.requiredItems?.Length??0)>0) archive+="\n需持有："+e.ItemText(node.requiredItems);
                 if((node.itemCosts?.Length??0)>0) archive+="\n进入时交付："+e.ItemText(node.itemCosts);
                 navText.fontSize = 15; navText.richText = hasArchive;
@@ -228,10 +228,11 @@ namespace AstraCabin
             Block(new Rect(0, 0, w, h), new Color(0, 0, 0, .88f));
             float x = (w - 690) / 2, y = Mathf.Max(15, (h - 330) / 2);
             bool import = confirmation == "import";
-            Label(new Rect(x, y, 690, 40), import ? "导入配置并开始新航程" : "重新开始航程", 25, amber);
-            Label(new Rect(x, y + 62, 690, 180), import ? "从策划工具导出 campaign.json，替换以下文件：\n" + ImportPath + "\n\n导入成功后使用新地图并重置航程。旧配置和航程会保留备份；校验失败时保留当前航程。" : "当前航程将重置到第一个星域。旧航行存档会保留备份，电脑里的个人文档不受影响。", 17);
-            if (Button(new Rect(x + 355, y + 266, 155, 40), "取消")) confirmation = null;
-            if (Button(new Rect(x + 528, y + 266, 162, 40), import ? "校验并导入" : "开始新航程"))
+            computer.DrawPromptFrame(new Rect(x, y, 690, 330), import ? "导入配置并开始新航程" : "重新开始航程",
+                import ? "从策划工具导出 campaign.json，替换以下文件：\n" + ImportPath + "\n\n导入成功后使用新地图并重置航程。旧配置和航程会保留备份；校验失败时保留当前航程。" :
+                "当前航程将重置到第一个星域。旧航行存档会保留备份，电脑里的个人文档不受影响。");
+            if (computer.RetroButton(new Rect(x + 328, y + 274, 155, 36), "取消")) confirmation = null;
+            if (computer.RetroButton(new Rect(x + 501, y + 274, 162, 36), import ? "校验并导入" : "开始新航程"))
             {
                 if (import) { try { ImportCampaign(NavigationStorage.ReadLimited(ImportPath)); } catch (Exception e) { Message = "无法读取导入文件：" + e.Message; } }
                 else Restart();
@@ -248,7 +249,7 @@ namespace AstraCabin
             if(Director&&Director.fools&&Director.fools.Active&&!Director.fools.Complete&&Director.fools.Phase!=Galaxies.Zyl.FoolsSetpiece.Step.Error)return;
             if (!loaded || !OwnsPresentation || computer.IsOpen || controller.IsPaused || Session == null) return;
             if(Session.Engine.Pending!=null && Session.Engine.Pending.type=="performance")return;
-            if (navText == null) return;
+            if (navText == null || ActiveGalaxyId == "zyl") return;
             var old = GUI.matrix; float scale = Mathf.Min(Screen.width / 1360f, Screen.height / 780f);
             GUI.matrix = Matrix4x4.TRS(new Vector3((Screen.width - 1360 * scale) / 2, (Screen.height - 780 * scale) / 2, 0), Quaternion.identity, Vector3.one * scale);
             Block(new Rect(325, 695, 710, 60), new Color(.035f, .065f, .053f, .94f));

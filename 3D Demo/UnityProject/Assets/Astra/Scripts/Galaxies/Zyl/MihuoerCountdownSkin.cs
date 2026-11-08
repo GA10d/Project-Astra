@@ -55,6 +55,54 @@ namespace AstraCabin.Galaxies.Zyl
             Color color;ColorUtility.TryParseHtmlString(seconds<=parameters.countdownWarningSeconds?parameters.countdownWarningColor:parameters.countdownColor,out color);
             foreach(var material in materials){material.SetFloat("_CountdownWidth",parameters.countdownWidth);material.SetFloat("_CountdownHeight",parameters.countdownHeight);material.SetFloat("_CountdownHalo",parameters.countdownHalo);material.SetVector("_CountdownOffset",new Vector4(parameters.countdownOffsetX,parameters.countdownOffsetY,0,0));material.SetFloat("_CountdownVisible",visible?1:0);material.SetVector("_CountdownHours",new Vector4(hours/10,hours%10,0,0));material.SetVector("_CountdownDigits",new Vector4(minutes/10,minutes%10,remainder/10,remainder%10));material.SetColor("_CountdownColor",color);material.SetFloat("_CountdownBrightness",parameters.countdownBrightness);}
         }
+        internal static Vector3 FindCountdownSurface(Transform actor, Transform chest, ZylPresentationParameters settings)
+        {
+            // Use the countdown shader's rest-space coordinates to locate the skin over the source.
+            Vector2 displayCenter = new Vector2(-settings.countdownOffsetX, .795f + settings.countdownOffsetY);
+            SkinnedMeshRenderer bestSkin = null;
+            int bestIndex = 0;
+            float bestDistance = float.PositiveInfinity;
+            var rest = new List<Vector4>();
+            foreach (var skin in actor.GetComponentsInChildren<SkinnedMeshRenderer>())
+            {
+                if (!skin.sharedMesh) continue;
+                rest.Clear();
+                skin.sharedMesh.GetUVs(2, rest);
+                for (int i = 0; i < rest.Count; i++)
+                {
+                    Vector4 point = rest[i];
+                    if (point.z <= .015f || point.y < .69f || point.y > .90f || Mathf.Abs(point.x) > .17f)
+                        continue;
+                    float distance = (new Vector2(point.x, point.y) - displayCenter).sqrMagnitude;
+                    if (distance >= bestDistance) continue;
+                    bestSkin = skin;
+                    bestIndex = i;
+                    bestDistance = distance;
+                }
+            }
+            if (!bestSkin) return chest.position;
+
+            var mesh = bestSkin.sharedMesh;
+            var weights = mesh.boneWeights;
+            if (bestIndex >= weights.Length) return chest.position;
+            var vertex = mesh.vertices[bestIndex];
+            var bind = mesh.bindposes;
+            var bones = bestSkin.bones;
+            BoneWeight weight = weights[bestIndex];
+
+            // Bone matrices already include the FBX hierarchy's scale. The sum is in world space.
+            Vector3 WeightedPoint(int index, float amount)
+            {
+                if (amount == 0) return Vector3.zero;
+                return bones[index].TransformPoint(bind[index].MultiplyPoint3x4(vertex)) * amount;
+            }
+
+            return WeightedPoint(weight.boneIndex0, weight.weight0)
+                + WeightedPoint(weight.boneIndex1, weight.weight1)
+                + WeightedPoint(weight.boneIndex2, weight.weight2)
+                + WeightedPoint(weight.boneIndex3, weight.weight3);
+        }
+
         void OnDestroy(){foreach(var pair in original)if(pair.Key)pair.Key.sharedMaterials=pair.Value;foreach(var pair in originalMeshes)if(pair.Key)pair.Key.sharedMesh=pair.Value;foreach(var mesh in generatedMeshes)if(mesh){if(Application.isPlaying)Destroy(mesh);else DestroyImmediate(mesh);}foreach(var material in materials)if(material){if(Application.isPlaying)Destroy(material);else DestroyImmediate(material);}}
     }
 }
