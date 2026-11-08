@@ -50,7 +50,7 @@ namespace AstraCabin.Galaxies.Zyl
                 if(nav&&nav.Countdown)nav.Countdown.Apply(action,(nav.Session?.Engine.Pending?.id??"fools15")+"/fools/"+key+"/"+(string.IsNullOrEmpty(line.timerKey)?i.ToString():line.timerKey));
             });
         }
-        bool Talking {get{return dialogue!=null&&dialogue.Current!=null;}}
+        MihuoerPose DialoguePose => MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Idle);
         public void Tick(float dt)
         {
             if(!Active||Complete||Phase==Step.Error)return;
@@ -66,7 +66,7 @@ namespace AstraCabin.Galaxies.Zyl
                 {
                     if(!exterior.Ready||exterior.Busy||ZylScreenCurtain.BlocksInput)return;
                     if(!exterior.MihuoerActor||!exterior.MihuoerShipAnchor){Fail("都是傻瓜：胃内飞船缺失。");return;}
-                    exterior.MihuoerActor.SetSeatedOnCraft(true);exterior.MihuoerActor.Speaking=false;
+                    exterior.MihuoerActor.SetSeatedOnCraft(true);
                     Stage=new FoolsStage(exterior.MihuoerActor.Craft,exterior.MihuoerShipAnchor.transform.parent,exterior.AuthoredToRuntime,director.controller.viewCamera);
                     oldUI=director.controller.showUI;capturedUI=true;director.controller.showUI=false;Stage.Camera.enabled=true;Enter(Step.Playing);
                 }
@@ -86,7 +86,7 @@ namespace AstraCabin.Galaxies.Zyl
                         }
                         break;
                     case Step.GroundDialogue:
-                        dialogue.Tick(dt,false);Walker.Sample(0,false,Talking,Elapsed);GroundShot();
+                        dialogue.Tick(dt,false);Walker.Sample(0,false,DialoguePose,dt);GroundShot();
                         if(dialogue.Ended){Dialogue(parameters.foolsWalkDialogue,"walk");Enter(Step.Walking);}
                         break;
                     case Step.Walking:
@@ -95,16 +95,16 @@ namespace AstraCabin.Galaxies.Zyl
                         if(WalkDistance>=Slope.Length)
                         {
                             dialogue.Tick(0,true);WalkInterrupted=dialogue.Interrupted;
-                            Dialogue(parameters.foolsCrestDialogue,"crest");Walker.Sample(Slope.Length,false,Talking,Elapsed);Enter(Step.CrestDialogue);HeadShot(0);
+                            Dialogue(parameters.foolsCrestDialogue,"crest");Walker.Sample(Slope.Length,false,DialoguePose,dt);Enter(Step.CrestDialogue);HeadShot(0);
                         }
-                        else {dialogue.Tick(dt,false);Walker.Sample(WalkDistance,true,Talking,Elapsed);BackShot();}
+                        else {dialogue.Tick(dt,false);Walker.Sample(WalkDistance,true,MihuoerPose.Idle,dt);BackShot();}
                         break;
                     case Step.CrestDialogue:
-                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,Talking,Elapsed);HeadShot(0);
+                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,DialoguePose,dt);HeadShot(0);
                         if(phaseTime>=parameters.foolsFrontHold)Enter(Step.Orbit);
                         break;
                     case Step.Orbit:
-                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,Talking,Elapsed);
+                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,DialoguePose,dt);
                         OrbitPullShot(Mathf.Clamp01(phaseTime/parameters.foolsOrbitDuration),PullProgress(phaseTime-parameters.foolsOrbitDuration*.5f));
                         if(phaseTime>=parameters.foolsOrbitDuration)
                         {
@@ -113,12 +113,12 @@ namespace AstraCabin.Galaxies.Zyl
                         }
                         break;
                     case Step.Pullback:
-                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,Talking,Elapsed);
+                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,DialoguePose,dt);
                         OrbitPullShot(1,PullProgress(parameters.foolsOrbitDuration*.5f+phaseTime));
                         if(parameters.foolsOrbitDuration*.5f+phaseTime>=parameters.foolsPullbackDuration)Enter(Step.FinalHold);
                         break;
                     case Step.FinalHold:
-                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,Talking,Elapsed);PullShot(1);
+                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,DialoguePose,dt);PullShot(1);
                         if(phaseTime>=parameters.foolsFinalHold&&dialogue.Ended){dialogue=null;TransitionAlpha=.001f;Curtain.ResetPaintConfirmation();Enter(Step.SceneFadeOut);}
                         break;
                     case Step.SceneFadeOut:
@@ -130,16 +130,16 @@ namespace AstraCabin.Galaxies.Zyl
                         closingGround=Slope.Ground(exterior.AuthoredToRuntime.MultiplyPoint3x4(ClosingActorAuth));
                         closingCamera=exterior.AuthoredToRuntime.MultiplyPoint3x4(ClosingCameraAuth);
                         closingFacing=closingCamera-closingGround;
-                        Walker.SampleStandingAt(closingGround,closingFacing,false,Elapsed);ClosingShot();ClosingCutFrame=Time.frameCount;
+                        Walker.SampleStandingAt(closingGround,closingFacing,MihuoerPose.Idle,dt);ClosingShot();ClosingCutFrame=Time.frameCount;
                         Dialogue(parameters.foolsClosingDialogue,"closing");Enter(Step.SceneFadeIn);
                         break;
                     case Step.SceneFadeIn:
-                        Walker.SampleStandingAt(closingGround,closingFacing,false,Elapsed);ClosingShot();
+                        Walker.SampleStandingAt(closingGround,closingFacing,MihuoerPose.Idle,dt);ClosingShot();
                         TransitionAlpha=1-Mathf.SmoothStep(0,1,Mathf.Clamp01(phaseTime/parameters.foolsSceneFadeDuration));
                         if(phaseTime>=parameters.foolsSceneFadeDuration){TransitionAlpha=0;Enter(Step.ClosingDialogue);}
                         break;
                     case Step.ClosingDialogue:
-                        dialogue.Tick(dt,false);Walker.SampleStandingAt(closingGround,closingFacing,Talking,Elapsed);ClosingShot();if(dialogue.Ended)Finish();
+                        dialogue.Tick(dt,false);Walker.SampleStandingAt(closingGround,closingFacing,DialoguePose,dt);ClosingShot();if(dialogue.Ended)Finish();
                         break;
                 }
                 Stage.UpdateBreathing(Elapsed);
@@ -173,12 +173,12 @@ namespace AstraCabin.Galaxies.Zyl
         void ClosingShot(){CameraPose(closingCamera,Walker.Root.position+Slope.Up*.85f,44,false);}
         void Finish()
         {
-            Complete=true;Phase=Step.Finished;RestoreView();Exterior.MihuoerActor.Speaking=false;director.controller.ExitWindowView();director.controller.SnapToWall(0);
+            Complete=true;Phase=Step.Finished;RestoreView();director.controller.ExitWindowView();director.controller.SnapToWall(0);
             director.computer.Open();director.computer.OpenApp("navigation");
         }
         void OnGUI()
         {
-            if(!Active||Complete||!Talking||Phase==Step.SceneFadeOut||Phase==Step.SceneBlackHold||Phase==Step.SceneFadeIn||director.controller.IsPaused||director.computer.IsOpen||ZylScreenCurtain.IsOpaque)return;
+            if(!Active||Complete||dialogue?.Current==null||Phase==Step.SceneFadeOut||Phase==Step.SceneBlackHold||Phase==Step.SceneFadeIn||director.controller.IsPaused||director.computer.IsOpen||ZylScreenCurtain.IsOpaque)return;
             if(subtitle==null){font=Font.CreateDynamicFontFromOSFont(new[]{"Microsoft YaHei UI","Microsoft YaHei","Arial"},23);subtitle=new GUIStyle(GUI.skin.label){font=font,fontSize=23,wordWrap=true,richText=false};subtitle.normal.textColor=Color.white;}
             var matrix=GUI.matrix;var color=GUI.color;int depth=GUI.depth;
             try

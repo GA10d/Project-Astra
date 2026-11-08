@@ -16,7 +16,9 @@ namespace AstraCabin.Galaxies.Zyl
         Mesh energySphere, ribbonMesh;
         Transform[] chestRibbons, planetRibbons;
         readonly Transform[] remnants = new Transform[2];
-        Animation animation;
+        MihuoerMotion motion;
+        const float CallFov=47f, WaveFov=51f;
+        float waveFraming;
         MihuoerCountdownSkin countdownSkin;
         Vector3 planetPosition, photoStart;
         Quaternion photoRotation;
@@ -58,11 +60,11 @@ namespace AstraCabin.Galaxies.Zyl
             }
             var model=Resources.Load<GameObject>(StomachMihuoerActor.StandingResource);if(!model)throw new InvalidOperationException("别离缺少米霍尔站立模型");Actor=UnityEngine.Object.Instantiate(model,callRoot,false).transform;Actor.localPosition=Vector3.zero;Actor.localRotation=Quaternion.Euler(0,180,0);Actor.localScale=Vector3.one*1.5f;
             var surface=Resources.Load<Material>("Galaxies/Zyl/Encounter/MihuoerSurface");foreach(var r in Actor.GetComponentsInChildren<Renderer>())r.sharedMaterial=surface;foreach(var t in Actor.GetComponentsInChildren<Transform>(true)){t.gameObject.layer=26;if(t.name=="chest")Chest=t;}
-            if(!Chest)Chest=Actor;animation=Actor.GetComponentInChildren<Animation>();var talk=Resources.Load<GameObject>("Galaxies/Zyl/Standing/StandingTalk01");var talkAnim=talk?talk.GetComponentInChildren<Animation>():null;if(talkAnim&&talkAnim.GetClip("StandingTalk01"))animation.AddClip(talkAnim.GetClip("StandingTalk01"),"FarewellTalk");
-            Camera=new GameObject("Farewell call camera").AddComponent<Camera>();Camera.transform.SetParent(callRoot,false);Camera.transform.localPosition=new Vector3(0,1.1f,-2.35f);Camera.transform.LookAt(callRoot.position+Vector3.up*.83f);Camera.cullingMask=1<<26;Camera.nearClipPlane=.03f;Camera.farClipPlane=120;Camera.fieldOfView=47;Camera.clearFlags=CameraClearFlags.SolidColor;Camera.backgroundColor=new Color(.08f,.065f,.06f);Camera.enabled=false;
+            if(!Chest)Chest=Actor;motion=new MihuoerMotion(Actor.GetComponentInChildren<Animation>());
+            Camera=new GameObject("Farewell call camera").AddComponent<Camera>();Camera.transform.SetParent(callRoot,false);Camera.transform.localPosition=new Vector3(0,1.1f,-2.35f);Camera.transform.LookAt(callRoot.position+Vector3.up*.83f);Camera.cullingMask=1<<26;Camera.nearClipPlane=.03f;Camera.farClipPlane=120;Camera.fieldOfView=CallFov;Camera.clearFlags=CameraClearFlags.SolidColor;Camera.backgroundColor=new Color(.08f,.065f,.06f);Camera.enabled=false;
             Video=new RenderTexture(1280,720,24){name="Farewell live video"};Video.Create();Camera.targetTexture=Video;
             var key=new GameObject("Farewell sunset fill").AddComponent<Light>();key.transform.SetParent(callRoot,false);key.transform.localPosition=new Vector3(-2,4,-3);key.type=LightType.Point;key.range=45;key.intensity=1.05f;key.color=new Color(1,.82f,.65f);key.cullingMask=1<<26;
-            SampleActor(0, false);
+            SampleActor(0, MihuoerPose.Slumped);
             CapturePortrait();
             energySphere = CreateEnergySphere();
             ribbonMesh = CreateRibbon();
@@ -196,9 +198,11 @@ namespace AstraCabin.Galaxies.Zyl
             Camera.Render();var previous=RenderTexture.active;RenderTexture.active=Video;var tex=new Texture2D(1280,720,TextureFormat.RGBA32,false);tex.ReadPixels(new Rect(0,0,1280,720),0,0);tex.Apply();RenderTexture.active=previous;
             Portrait=new Texture2D(320,400,TextureFormat.RGBA32,false);for(int y=0;y<400;y++)for(int x=0;x<320;x++){bool border=x<13||x>=307||y<13||y>=387;var c=tex.GetPixelBilinear(.32f+x/320f*.36f,.03f+y/400f*.93f);float gray=c.grayscale;Portrait.SetPixel(x,y,border?new Color(.88f,.88f,.84f):new Color(gray,gray,gray,1));}Portrait.Apply();resources.Add(Portrait);UnityEngine.Object.Destroy(tex);
         }
-        public void SampleActor(float time,bool talking)
+        internal void SampleActor(float dt,MihuoerPose pose)
         {
-            if(!animation)return;string clip=talking&&animation.GetClip("FarewellTalk")?"FarewellTalk":StomachMihuoerActor.StandingClip;var state=animation[clip];if(state==null)return;animation.enabled=false;animation.Play(clip);state.speed=0;state.time=Mathf.Repeat(time,state.length);animation.Sample();
+            motion.Sample(pose,dt);
+            waveFraming=Mathf.MoveTowards(waveFraming,pose==MihuoerPose.StandWave?1f:0f,dt/.62f);
+            Camera.fieldOfView=Mathf.SmoothStep(CallFov,WaveFov,waveFraming);
         }
         public void Render()
         {
@@ -234,6 +238,7 @@ namespace AstraCabin.Galaxies.Zyl
         {
             Camera.transform.localPosition = new Vector3(0, 1.1f, -2.35f)
                 + new Vector3(Mathf.Sin(t * 37), Mathf.Sin(t * 29), 0) * (.048f * shake);
+            Camera.fieldOfView=Mathf.SmoothStep(CallFov,WaveFov,waveFraming*(1f-Mathf.Clamp01(t/.62f)));
             float progress = Mathf.Lerp(PreviewProgress(previewElapsed), 1, t / settings.farewellChestDuration);
             DrawChestEnergy(previewElapsed + t, progress);
         }

@@ -17,7 +17,7 @@ namespace AstraCabin.Galaxies.Zyl
         public static readonly Vector3 ActorAuth=new Vector3(3.2732f,0,6.9407f),CameraAuth=new Vector3(-2.0167f,0,9.4961f);
         public static readonly Vector3[] GraveAuth={new Vector3(5.7751f,0,6.5558f),new Vector3(4.2910f,0,4.7240f),new Vector3(2.6227f,0,2.7001f)};
         SetpieceDirector director;ZylPresentationParameters p;MihuoerDialoguePlayer dialogue,encouragement;
-        float phaseTime,elapsed;bool leaving,oldUI,captured;Vector3 actorGround,actorFacing;Font font;GUIStyle subtitle;
+        float phaseTime;bool leaving,oldUI,captured;Vector3 actorGround,actorFacing;Font font;GUIStyle subtitle;
         // Fitted from the marked ground point in the grave reference view.
         static readonly Vector3 SproutAuth = new Vector3(2.27f, 0f, 6.52f);
         EscapeSprout sprout;
@@ -50,6 +50,7 @@ namespace AstraCabin.Galaxies.Zyl
                 if(nav.Countdown)nav.Countdown.Apply(action,(nav.Session?.Engine.Pending?.id??"escape16")+"/escape/"+key+"/"+(string.IsNullOrEmpty(line.timerKey)?i.ToString():line.timerKey));
             });
         }
+        MihuoerPose GravesPose => MihuoerActing.Standing(dialogue,MihuoerPose.ChinThink,MihuoerPose.Idle);
         void BuildShot()
         {
             var exterior=Exterior;var frame=exterior.AuthoredToRuntime;
@@ -76,7 +77,7 @@ namespace AstraCabin.Galaxies.Zyl
             var light=new GameObject("Graves soft fill").AddComponent<Light>();light.transform.SetParent(root.transform);light.transform.position=cameraPosition+Ground.Up*2;light.type=LightType.Point;light.range=18;light.intensity=1.1f;light.color=new Color(1,.77f,.58f);light.cullingMask=1<<25;
             oldUI=director.controller.showUI;captured=true;director.controller.showUI=false;
             dialogue=Dialogue(p.escapeGravesDialogue,"graves");
-            Walker.SampleStandingAt(actorGround,actorFacing,dialogue.Current!=null,0);
+            Walker.SampleStandingAt(actorGround,actorFacing,GravesPose,0);
             sprout = new EscapeSprout(GravesRoot, Walker, sproutSoil, actorGround, actorFacing, Ground.Up, resources);
             shotPosition = Camera.transform.position;
             shotRotation = Camera.transform.rotation;
@@ -116,7 +117,7 @@ namespace AstraCabin.Galaxies.Zyl
             if(Phase==Step.GravesDialogue&&director.computer.IsOpen)return;
             try
             {
-                phaseTime+=dt;elapsed+=dt;
+                phaseTime+=dt;
                 switch(Phase)
                 {
                     case Step.WaitingForEnvironment:
@@ -126,7 +127,7 @@ namespace AstraCabin.Galaxies.Zyl
                     case Step.GravesDialogue:
                         dialogue.Tick(dt,false);
                         float age = phaseTime - sproutCue;
-                        sprout.Sample(age, dialogue.Current != null, elapsed);
+                        sprout.Sample(age, GravesPose, dt);
                         shakeTime = age - EscapeSprout.LiftEnd - p.escapeSproutShakeDelay;
                         ShakeGravesCamera(1f);
                         if (dialogue.Ended && (float.IsPositiveInfinity(sproutCue) || shakeTime >= .85f))
@@ -202,7 +203,7 @@ namespace AstraCabin.Galaxies.Zyl
         public void Clear()
         {
             if(director&&Combat)Combat.EndEscapeStory();ReleaseShot();RestoreUI();if(director)director.controller.cinematicWindowLock=false;
-            Active=Complete=leaving=false;TransitionAlpha=phaseTime=elapsed=0;Error=null;Flight=null;dialogue=encouragement=null;Phase=Step.WaitingForEnvironment;
+            Active=Complete=leaving=false;TransitionAlpha=phaseTime=0;Error=null;Flight=null;dialogue=encouragement=null;Phase=Step.WaitingForEnvironment;
         }
         void OnDisable(){Clear();}void OnDestroy(){Clear();if(font)Destroy(font);}
     }

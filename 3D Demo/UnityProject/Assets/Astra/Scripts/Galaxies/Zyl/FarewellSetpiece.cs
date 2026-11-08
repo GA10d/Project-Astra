@@ -205,7 +205,7 @@ namespace AstraCabin.Galaxies.Zyl
                             break;
                         }
                         dialogue.Tick(dt, false);
-                        Stage.SampleActor(Elapsed, dialogue.Current != null);
+                        Stage.SampleActor(dt,MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Idle));
                         SyncCaption();
                         UpdateChestPreview();
                         break;

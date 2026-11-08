@@ -36,7 +36,7 @@ namespace AstraCabin.Galaxies.Zyl
             {
                 if(!exterior.Ready||exterior.Busy||ZylScreenCurtain.BlocksInput||!director.controller.IsAtWindow)return;
                 if(!exterior.MihuoerShipAnchor||!exterior.MihuoerActor){Fail("胃内缺少米霍尔飞船或角色。");return;}
-                try{exterior.SetCabinYaw(exterior.CabinYawTowardCraft());exterior.MihuoerActor.SetSeatedOnCraft(true);}
+                try{exterior.SetCabinYaw(exterior.CabinYawTowardCraft());exterior.MihuoerActor.SetSeatedOnCraft(true,true);}
                 catch(Exception e){Fail(e.Message);return;}
                 dialogue=new MihuoerDialoguePlayer(parameters.printingDialogue,(i,a)=>ApplyTimer(i,"line",a),(i,j,a)=>ApplyTimer(i,"reply",a));Phase=Step.Dialogue;scroll=Vector2.zero;
             }
@@ -46,7 +46,7 @@ namespace AstraCabin.Galaxies.Zyl
                 poleTime += Time.deltaTime;
                 pole.Sample(Mathf.Lerp(.06f, MihuoerPole.PreviewLength, Mathf.SmoothStep(0, 1, Mathf.Clamp01(poleTime / 1.05f))));
             }
-            if(Phase==Step.Dialogue){dialogue.Tick(Time.deltaTime,false);exterior.MihuoerActor.Speaking=!dialogue.Ended&&!dialogue.WaitingForReply;if(dialogue.Ended)Finish();}
+            if(Phase==Step.Dialogue){dialogue.Tick(Time.deltaTime,false);exterior.MihuoerActor.Pose=MihuoerActing.Seated(dialogue);if(dialogue.Ended)Finish();}
         }
         void ApplyTimer(int line,string phase,CountdownAction action)
         {
@@ -65,7 +65,7 @@ var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(a
         }
         void Finish()
         {
-            Complete=true;Phase=Step.Finished;if(Exterior&&Exterior.MihuoerActor)Exterior.MihuoerActor.Speaking=false;
+            Complete=true;Phase=Step.Finished;if(Exterior&&Exterior.MihuoerActor&&Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.ChairListen;
             director.controller.cinematicWindowLock=false;director.controller.ExitWindowView();director.controller.SnapToWall(0);
             director.computer.Open();director.computer.OpenApp("navigation");
         }
@@ -96,7 +96,7 @@ var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(a
             }
             finally{GUI.matrix=matrix;GUI.color=color;GUI.enabled=enabled;}
         }
-        public void Clear(){pole?.Dispose();pole=null;if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor)Exterior.MihuoerActor.Speaking=false;Active=Complete=false;dialogue=null;Error=null;scroll=Vector2.zero;}
+        public void Clear(){pole?.Dispose();pole=null;if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor&&Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.ChairListen;Active=Complete=false;dialogue=null;Error=null;scroll=Vector2.zero;}
         void OnDestroy(){pole?.Dispose();pole=null;if(font)Destroy(font);}
     }
 }

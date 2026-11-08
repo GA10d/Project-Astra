@@ -49,13 +49,21 @@ namespace AstraCabin.Galaxies.Zyl
                 float t=Mathf.Clamp01(elapsed/parameters.stomachTurnDuration);exterior.SetCabinYaw(Mathf.LerpAngle(0,targetYaw,Mathf.SmoothStep(0,1,t)));
                 if(t>=1){var nav=director.computer.Navigation;nav.Countdown.BeginStomachTalk(nav.Session?.Engine.Pending?.id??"stomach13");dialogue=new MihuoerDialoguePlayer(parameters.stomachDialogue,(i,a)=>ApplyTimer(i,"line",a),(i,j,a)=>ApplyTimer(i,"reply",a));Phase=Step.Dialogue;elapsed=0;scroll=Vector2.zero;}
             }
-            if(Phase==Step.Dialogue){dialogue.Tick(Time.deltaTime,false);exterior.MihuoerActor.Speaking=!dialogue.Ended&&!dialogue.WaitingForReply;if(dialogue.Ended)Finish();}
+            if(Phase==Step.Dialogue)
+            {
+                dialogue.Tick(Time.deltaTime,false);
+                exterior.MihuoerActor.Pose=IsChestLine(dialogue.Current)?MihuoerPose.Idle:
+                    MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Slumped);
+                if(dialogue.Ended)Finish();
+            }
         }
+
+        static bool IsChestLine(MihuoerDialogueLine line) => line != null &&
+            (line.timerKey == "timer_mw61emp8_uh2xm70wzu" || (line.text.Contains("胸前") && line.text.Contains("倒计时")));
+
         void LateUpdate()
         {
-            var line = Phase == Step.Dialogue ? dialogue?.Current : null;
-            bool closeup = Active && line != null && (line.timerKey == "timer_mw61emp8_uh2xm70wzu" ||
-                (line.text.Contains("胸前") && line.text.Contains("倒计时")));
+            bool closeup = Active && Phase == Step.Dialogue && IsChestLine(dialogue?.Current);
             if (!closeup || director.computer.IsOpen || ZylScreenCurtain.IsOpaque)
             {
                 if (chestCamera) chestCamera.enabled = false;
@@ -105,7 +113,7 @@ namespace AstraCabin.Galaxies.Zyl
         void Finish()
         {
             ReleaseCloseup();
-            Complete=true;Phase=Step.Finished;if(Exterior&&Exterior.MihuoerActor)Exterior.MihuoerActor.Speaking=false;
+            Complete=true;Phase=Step.Finished;if(Exterior&&Exterior.MihuoerActor&&!Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.Slumped;
             director.controller.cinematicWindowLock=false;director.controller.ExitWindowView();director.controller.SnapToWall(0);
             director.computer.Open();director.computer.OpenApp("navigation");
         }
@@ -136,7 +144,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
             finally{GUI.matrix=matrix;GUI.color=color;GUI.enabled=enabled;}
         }
-        public void Clear(){ReleaseCloseup();if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor)Exterior.MihuoerActor.Speaking=false;Active=Complete=false;dialogue=null;Error=null;elapsed=0;scroll=Vector2.zero;}
+        public void Clear(){ReleaseCloseup();if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor&&!Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.Slumped;Active=Complete=false;dialogue=null;Error=null;elapsed=0;scroll=Vector2.zero;}
         void OnDestroy(){ReleaseCloseup();if(font)Destroy(font);}
     }
 }

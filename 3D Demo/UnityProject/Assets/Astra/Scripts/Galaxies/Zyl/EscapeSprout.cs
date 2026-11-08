@@ -94,14 +94,15 @@ namespace AstraCabin.Galaxies.Zyl
             PoseProp(plantedGrip, 0f);
         }
 
-        public void Sample(float age, bool speaking, float time)
+        internal void Sample(float age, MihuoerPose pose, float dt)
         {
             float reach = Ease(age / .90f);
             float lift = Ease((age - GripTime) / (LiftEnd - GripTime));
             float crouch = reach * (1f - lift);
             var standingDirection = Vector3.ProjectOnPlane(facing, up).normalized;
             var turning = Vector3.Slerp(standingDirection, reachDirection, .40f * crouch);
-            walker.SampleStandingAt(actorGround, turning, speaking, time, reachDirection * (.14f * crouch), .29f * crouch);
+            var basePose = age >= 0f && age < LiftEnd + .35f ? MihuoerPose.Idle : pose;
+            walker.SampleStandingAt(actorGround, turning, basePose, dt, reachDirection * (.14f * crouch), .29f * crouch);
             if (age < 0f) return;
 
             Vector3 bendAxis = Vector3.Cross(up, reachDirection);

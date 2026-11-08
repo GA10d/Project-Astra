@@ -49,7 +49,7 @@
           ],
           "exit": false,
           "travelButtonText": "跃迁至此位置",
-          "archiveDescription": "这是一个新的星系，你会遇到什么？"
+          "archiveDescription": "你被放逐到离地球很远的地方，命运会给你什么？"
         },
         {
           "id": "last_supper",
@@ -61,8 +61,8 @@
             "drifter"
           ],
           "exit": false,
-          "travelButtonText": "向上帝祈祷",
-          "archiveDescription": "<color=#FFAA00>引擎无法使用</color>，你正在太空中漂流，你的内心开始绝望，你想向耶稣祈祷，它可能会带给你希望"
+          "travelButtonText": "学着向上帝祈祷",
+          "archiveDescription": "<color=#FFAA00>引擎无法使用</color>，太空舱在太空中漂流了一段时间。你趴在舷窗上凝视无尽虚空，突然想起家乡里绝望的人们会向上帝祈祷。"
         },
         {
           "id": "buddha",
@@ -74,14 +74,14 @@
             "drifter"
           ],
           "exit": false,
-          "travelButtonText": "求佛祖保佑",
-          "archiveDescription": "<color=#FFAA00>引擎无法使用</color>，你正在太空中漂流，四周一片死寂，但你好像听到了佛陀释迦摩尼的梵声"
+          "travelButtonText": "等待佛祖指引",
+          "archiveDescription": "<color=#FFAA00>引擎无法使用</color>，太空舱静默地漂流着。你闭着眼睛彷佛能感受到掠过的群星，却又好像听到了佛陀释迦摩尼的梵声。"
         },
         {
           "id": "drifter",
           "name": "被编排的流浪者",
-          "x": 0.473,
-          "y": 0.503,
+          "x": 0.486,
+          "y": 0.518,
           "eventId": "zyl_drifter",
           "next": [
             "roar",
@@ -89,11 +89,11 @@
           ],
           "exit": false,
           "travelButtonText": "确定",
-          "archiveDescription": "你在深空中，你不知道会到达哪里……"
+          "archiveDescription": "也许你到了像哲学家一样去思考生死边界的问题，你尝试去回忆在襁褓里的记忆，试图找一找自己的出生是否带着使命。可是真的要找吗？如果真的有，你又如何完成呢？幸好，你听到飞船响起警报。"
         },
         {
           "id": "roar",
-          "name": "深空里的嚎叫",
+          "name": "绿色巨星",
           "x": 0.65,
           "y": 0.2,
           "eventId": "zyl_roar",
@@ -101,21 +101,21 @@
             "guest"
           ],
           "exit": false,
-          "travelButtonText": "确定",
-          "archiveDescription": "你被传送到了计划外的星系，这里似乎和你以前见过的星系不太一样，深空中一声嚎叫吸引了你的注意力，你决定找一找声音的来源"
+          "travelButtonText": "观察这颗行星",
+          "archiveDescription": "<color=#FFAA00>太空舱被传送到了计划外的星系</color>，你还没有发现什么特别的事情，一颗行星就在附近，但你无法靠近。"
         },
         {
           "id": "light",
-          "name": "远处的亮光",
-          "x": 0.65,
-          "y": 0.8,
+          "name": "频率错位",
+          "x": 0.647,
+          "y": 0.802,
           "eventId": "zyl_light",
           "next": [
             "guest"
           ],
           "exit": false,
-          "travelButtonText": "确定",
-          "archiveDescription": "你被传送到了计划外的星系，你注意到远处有一颗流星，你要看得再清楚一些"
+          "travelButtonText": "确定响声",
+          "archiveDescription": "<color=#FFAA00>太空舱被传送到了计划外的星系</color>，但依然只能漂流，死寂了不知多久，你听到了一些轻微的响声。"
         },
         {
           "id": "guest",
@@ -126,7 +126,7 @@
           "next": [],
           "exit": true,
           "travelButtonText": "去舷窗看看",
-          "archiveDescription": "你什么也没有发现，你只能等待，也许是希望，也许是死亡，但是，好像有东西再在靠近"
+          "archiveDescription": "突如其来的传送门没有给毫无生机的太空漂流带来转机，看来没有援助可以帮到你。这里确实有几颗星球，可是生命存在的迹象呢？如果非要聊以自慰的话，你会想象某个角落里有一些原始人正以肉眼可见的速度发展科技，在你离开这片星系前，慷慨地拯救你。又或者……似乎立刻就有什么正在靠近你？"
         }
       ]
     },
@@ -151,8 +151,8 @@
         {
           "id": "node_1",
           "name": "肚子和炸弹",
-          "x": 0.2,
-          "y": 0.5,
+          "x": 0.207,
+          "y": 0.506,
           "eventId": "zyl_countdown_bomb",
           "next": [
             "prisoner",
@@ -160,20 +160,20 @@
           ],
           "exit": false,
           "travelButtonText": "确定",
-          "archiveDescription": "你和米霍尔被巨兽吞到肚子里。"
+          "archiveDescription": "和之前漫长的漂流相比，你竟然隐隐觉得被巨兽吞没是一种救赎，你真的太渴望一个清晰的目的地。"
         },
         {
           "id": "prisoner",
           "name": "囚徒",
-          "x": 0.45,
-          "y": 0.241,
+          "x": 0.431,
+          "y": 0.274,
           "eventId": "zyl_countdown_prisoner",
           "next": [
             "attempt"
           ],
           "exit": false,
           "travelButtonText": "确定",
-          "archiveDescription": "你不确定米霍尔身上的炸弹是真的假的，你决定到周围看一看"
+          "archiveDescription": "你不确定米霍尔身上的炸弹是真的假的，你决定到周围看一看。"
         },
         {
           "id": "violent",
@@ -186,7 +186,7 @@
           ],
           "exit": false,
           "travelButtonText": "确定",
-          "archiveDescription": "你觉得米霍尔是一个骗子，是它害你来到这里，你决定去揍他一顿"
+          "archiveDescription": "你觉得米霍尔是一个骗子，你决定去揍他一顿。"
         },
         {
           "id": "attempt",
@@ -199,7 +199,7 @@
           ],
           "exit": false,
           "travelButtonText": "去看看",
-          "archiveDescription": "米霍尔似乎想到了办法，他想找你聊聊。"
+          "archiveDescription": "你正在思考脚下这座小岛一样的地形是如何形成的，又或者是否能从四周正在起伏的胃壁判断巨兽的行为。米霍尔似乎想到了办法，他想找你聊一聊。"
         },
         {
           "id": "missing_component",
@@ -270,14 +270,14 @@
       "id": "zyl_engine_failure",
       "type": "setpiece",
       "title": "命运的入口",
-      "description": "引擎无法使用，你正在太空中漂流。",
+      "description": "撞击和警报来得突然，在慌乱中，你手忙脚乱地修好了破损的舱体。但是系统提示引擎被未知物质堵塞，飞船已经失去动力。现在，你正在太空中漂流……",
       "setpiece": 10,
       "duration": 8,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "引擎无法使用，你正在太空中漂流。",
+          "result": "撞击和警报来得突然，在慌乱中，你手忙脚乱地修好了破损的舱体。但是系统提示引擎被未知物质堵塞，飞船已经失去动力。现在，你正在太空中漂流……",
           "costs": [],
           "rewards": []
         }
@@ -321,14 +321,14 @@
       "id": "zyl_drifter",
       "type": "setpiece",
       "title": "被编排的流浪者",
-      "description": "你遇上了一个奇怪的传送门，因为引擎动力丢失，你无法躲避，被传送门带到了预期外的地方……",
+      "description": "在漂流中遇上了一个奇怪的传送门，因为引擎动力丢失，无法躲避，太空舱被传送门带到了预期外的地方……或许是转机。",
       "setpiece": 11,
       "duration": 35,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "你遇上了一个奇怪的传送门，因为引擎动力丢失，你无法躲避，被传送门带到了预期外的地方……",
+          "result": "在漂流中遇上了一个奇怪的传送门，因为引擎动力丢失，无法躲避，太空舱被传送门带到了预期外的地方……或许是转机。",
           "costs": [],
           "rewards": []
         }
@@ -337,15 +337,15 @@
     {
       "id": "zyl_roar",
       "type": "choice",
-      "title": "深空里的嚎叫",
-      "description": "你什么也没有找到...",
+      "title": "绿色巨星",
+      "description": "这是一颗巨大的星球，已经超出了舷窗的视野。能看到的球体表面几乎都是绿色的，并不能立刻确定那些绿色究竟是什么，如果是按照母星的经验，也许是无边无际的森林。",
       "setpiece": 0,
       "duration": 0,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "你什么也没有找到...",
+          "result": "这是一颗巨大的星球，已经超出了舷窗的视野。能看到的球体表面几乎都是绿色的，并不能立刻确定那些绿色究竟是什么，如果是按照母星的经验，也许是无边无际的森林。",
           "costs": [],
           "rewards": []
         }
@@ -354,15 +354,15 @@
     {
       "id": "zyl_light",
       "type": "choice",
-      "title": "远处的亮光",
-      "description": "流星一闪而过，似乎与你无关...",
+      "title": "频率错位",
+      "description": "是舱内的感应器和指针，它们以极不寻常的频率跳动着，这种情况你从未见过，你凑近其中一个表盘，却突然觉得心底没来由地发慌，你打了个寒碜……",
       "setpiece": 0,
       "duration": 0,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "流星一闪而过，似乎与你无关...",
+          "result": "是舱内的感应器和指针，它们以极不寻常的频率跳动着，这种情况你从未见过，你凑近其中一个表盘，却突然觉得心底没来由地发慌，你打了个寒碜……",
           "costs": [],
           "rewards": []
         }
@@ -372,14 +372,14 @@
       "id": "zyl_guest",
       "type": "setpiece",
       "title": "局促的客人",
-      "description": "米霍尔的通话被巨兽打断，你们被吞入黑暗。",
+      "description": "奇怪的引擎故障……奇怪的传送门……奇怪的外星人……奇怪的巨兽……",
       "setpiece": 12,
       "duration": 1,
       "choices": [
         {
           "id": "confirm",
-          "text": "确定",
-          "result": "米霍尔的通话被巨兽打断。你们被吞入黑暗。",
+          "text": "奇怪",
+          "result": "奇怪的引擎故障……奇怪的传送门……奇怪的外星人……奇怪的巨兽……",
           "costs": [],
           "rewards": []
         }
@@ -406,14 +406,14 @@
       "id": "zyl_countdown_bomb",
       "type": "setpiece",
       "title": "肚子和炸弹",
-      "description": "米霍尔似乎对这场突发的遭遇很沮丧，却又很有信念地想把你带出去，他身上的炸弹是怎么回事？",
+      "description": "米霍尔是个奇怪的家伙。他的手和脚都足够大，却让人觉得很灵活，干枯的四肢却像镣铐一样戴满了首饰。他口中那个糟糕的地方在哪里，又犯下什么罪过要背负这么可怕的危机？",
       "setpiece": 13,
       "duration": 1,
       "choices": [
         {
           "id": "confirm",
           "text": "确定",
-          "result": "你和米霍尔被巨兽吞到肚子里。",
+          "result": "米霍尔是个奇怪的家伙。他的手和脚都足够大，却让人觉得很灵活，干枯的四肢却像镣铐一样戴满了首饰。他口中那个糟糕的地方在哪里，又犯下什么罪过要背负这么可怕的危机？",
           "costs": [],
           "rewards": []
         }
@@ -423,7 +423,7 @@
       "id": "zyl_countdown_prisoner",
       "type": "choice",
       "title": "囚徒",
-      "description": "你回来了，什么也没有，死人骨头都没有。",
+      "description": "你回来了，这里足够大，你们就像被困在小岛上。到处都是残破的植物碎块，除此之外，什么也没有。米霍尔正抬着头看着缓缓起伏的巨兽胃壁，或许正在苦思冥想出去的办法，证据是他脑后的触须时不时会翘一下。",
       "setpiece": 0,
       "duration": 0,
       "choices": [
@@ -440,7 +440,7 @@
       "id": "zyl_countdown_violent",
       "type": "choice",
       "title": "暴徒",
-      "description": "你回来了，他看起来有点可怜，你不忍心下手。",
+      "description": "你回来了，他看起来有点可怜，或者说……他的身上真的很痒。他总是用粗大的手指在全身抓来抓去，这有点滑稽，你没忍心动手。",
       "setpiece": 0,
       "duration": 0,
       "choices": [
@@ -457,14 +457,14 @@
       "id": "zyl_countdown_attempt",
       "type": "setpiece",
       "title": "米霍尔的尝试",
-      "description": "米霍尔计划用一根超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。但是他缺少一个构件，也许你可以用打印机解决这个问题。",
+      "description": "米霍尔计划用飞船上超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。也许你理解这种方式？但是他缺少一个构件，你可以试着用打印机解决这个问题。",
       "setpiece": 14,
       "duration": 8,
       "choices": [
         {
           "id": "confirm",
           "text": "去试试打印机",
-          "result": "米霍尔计划用一根超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。但是他缺少一个构件，也许你可以用打印机解决这个问题。",
+          "result": "米霍尔计划用飞船上超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。也许你理解这种方式？但是他缺少一个构件，你可以试着用打印机解决这个问题。",
           "costs": [],
           "rewards": []
         }
@@ -474,7 +474,7 @@
       "id": "zyl_countdown_missing_component",
       "type": "setpiece",
       "title": "傻瓜",
-      "description": "你和米霍尔又聊了许多，你有点累，或许可以先休息一会。",
+      "description": "也许是被米霍尔从前的故事吸引，你和米霍尔又聊了许多，你有点累，或许可以先休息一会。",
       "setpiece": 15,
       "duration": 33,
       "choices": [
@@ -508,7 +508,7 @@
       "id": "zyl_farewell_departure",
       "type": "setpiece",
       "title": "泰德野里的别离",
-      "description": "米霍尔死亡了……引擎堵塞物质似乎因为巨兽体内的环境影响而分解，可以继续出发了。",
+      "description": "你终于想起了襁褓里的自己，你看到了你躺在摇篮里伸起小手够不着眼前的玩具，。可你的生命足够沉重，你看到重点遥遥无期……",
       "setpiece": 17,
       "duration": 1,
       "choices": [

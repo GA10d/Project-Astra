@@ -6,8 +6,8 @@ namespace AstraCabin.Galaxies.Zyl
     public sealed class FoolsWalker : IDisposable
     {
         readonly StomachMihuoerActor owner;
-        readonly Animation animation;
-        readonly Transform[] thigh=new Transform[2],shin=new Transform[2],foot=new Transform[2],arms=new Transform[2];
+        readonly MihuoerMotion motion;
+        readonly Transform[] thigh=new Transform[2],shin=new Transform[2],foot=new Transform[2];
         readonly Quaternion[] footRest=new Quaternion[2];
         readonly float[] side=new float[2];
         readonly FoolsSlope slope;
@@ -15,59 +15,79 @@ namespace AstraCabin.Galaxies.Zyl
         public Transform Head {get;private set;}
         public float FootError {get;private set;}
         float rootOffset;
+        bool uphill;
         public FoolsWalker(StomachMihuoerActor actor,FoolsSlope path)
         {
             owner=actor;slope=path;Root=actor.BeginCinematic();
             try
             {
-                animation=Root.GetComponentInChildren<Animation>();
-                foreach(var name in new[]{"StandingIdle","StandingTalk01"})
-                {
-                    var prefab=Resources.Load<GameObject>("Galaxies/Zyl/Standing/"+name);var source=prefab?prefab.GetComponentInChildren<Animation>():null;
-                    if(!source||!source.GetClip(name))throw new InvalidOperationException("上坡演出缺少站立片段："+name);if(!animation.GetClip(name))animation.AddClip(source.GetClip(name),name);
-                }
+                motion=actor.StandingMotion;
+                motion.Reset();
                 var bones=Root.GetComponentInChildren<SkinnedMeshRenderer>().bones;
                 Head=bones.First(t=>t.name=="head");
-                for(int i=0;i<2;i++){string prefix=i==0?"L_":"R_";thigh[i]=bones.First(t=>t.name==prefix+"thigh");shin[i]=bones.First(t=>t.name==prefix+"shin");foot[i]=bones.First(t=>t.name==prefix+"foot");arms[i]=bones.First(t=>t.name==prefix+"upperarm");}
-                SampleBase(false,0);rootOffset=Vector3.Dot(Root.position-foot[0].position,slope.Up)+.07f;
+                for(int i=0;i<2;i++){string prefix=i==0?"L_":"R_";thigh[i]=bones.First(t=>t.name==prefix+"thigh");shin[i]=bones.First(t=>t.name==prefix+"shin");foot[i]=bones.First(t=>t.name==prefix+"foot");}
+                motion.Sample(MihuoerPose.Idle,0);rootOffset=Vector3.Dot(Root.position-foot[0].position,slope.Up)+.07f;
                 for(int i=0;i<2;i++){side[i]=Vector3.Dot(foot[i].position-Root.position,Root.right);footRest[i]=Quaternion.Inverse(Root.rotation)*foot[i].rotation;}
-                Sample(0,false,false,0);
+                Sample(0,false,MihuoerPose.Idle,0);
             }
             catch{owner.EndCinematic();throw;}
         }
-        void SampleBase(bool speaking,float time)
+        internal void Sample(float distance,bool walking,MihuoerPose pose,float dt)
         {
-            string name=speaking?"StandingTalk01":"StandingIdle";animation.enabled=false;animation.Play(name);var state=animation[name];state.speed=0;state.time=Mathf.Repeat(time,Mathf.Max(.1f,state.length));animation.Sample();
-        }
-        public void Sample(float distance,bool walking,bool speaking,float time)
-        {
-            distance=Mathf.Clamp(distance,0,slope.Length);var direction=slope.Direction(distance);Root.rotation=Quaternion.LookRotation(direction,slope.Up);
-            Root.position=slope.Position(distance)+slope.Up*(rootOffset-(walking?.055f:0)+(walking?.012f*Mathf.Sin(distance/1.05f*Mathf.PI*4):0));SampleBase(speaking,time);
+            const float stride=.78f;
+            distance=Mathf.Clamp(distance,0,slope.Length);
+            var direction=slope.Direction(distance);
+            var ground=slope.Position(distance);
+            Root.SetPositionAndRotation(ground+slope.Up*rootOffset,Quaternion.LookRotation(direction,slope.Up));
+
+            float cycle=distance/stride;
+            float gait=0,incline=0;
+            if(walking)
+            {
+                var gradeSpan=slope.Position(distance+.7f)-slope.Position(distance-.7f);
+                float grade=Vector3.Dot(gradeSpan,slope.Up)/Mathf.Max(.01f,gradeSpan.magnitude);
+                uphill=grade>(uphill?.22f:.25f);
+                incline=Mathf.InverseLerp(.19f,.30f,grade);
+                float easeIn=Mathf.InverseLerp(0,.65f,distance);
+                float easeOut=Mathf.InverseLerp(0,.70f,slope.Length-distance);
+                gait=Mathf.SmoothStep(0,1,Mathf.Min(easeIn,easeOut));
+            }
+
+            motion.Sample(walking?(uphill?MihuoerPose.WalkUphill:MihuoerPose.WalkFlat):pose,dt,
+                walking?Mathf.Repeat(cycle-.24f,1f):-1f);
+            Root.position-=slope.Up*(.035f*gait);
             FootError=0;
             for(int i=0;i<2;i++)
             {
-                const float stride=1.05f;float phase=distance/stride+i*.5f;float step=Mathf.Floor(phase),u=phase-step;
-                float station=(step-i*.5f)*stride+stride*.3f;
-                float swing=walking?Mathf.SmoothStep(0,1,Mathf.InverseLerp(.60f,1,u)):0;
-                float targetDistance=walking?station+swing*stride:distance;
-                var target=slope.Position(Mathf.Clamp(targetDistance,0,slope.Length))+Root.right*side[i];target=slope.Ground(target)+slope.Up*(.07f+(walking?Mathf.Sin(swing*Mathf.PI)*.16f:0));
-                Solve(thigh[i],shin[i],foot[i],target,direction);
-                foot[i].rotation=Root.rotation*footRest[i];FootError=Mathf.Max(FootError,Vector3.Distance(foot[i].position,target));
-                if(walking)arms[i].rotation=Quaternion.AngleAxis(Mathf.Sin(phase*Mathf.PI*2)*13,Root.right)*arms[i].rotation;
+                float phase=cycle+i*.5f;
+                float step=Mathf.Floor(phase);
+                float swing=Mathf.SmoothStep(0,1,Mathf.InverseLerp(.60f,1,phase-step));
+                float station=(step-i*.5f+.3f+swing)*stride;
+                var target=slope.Position(Mathf.Lerp(distance,station,gait))+Root.right*side[i];
+                float swingHeight=Mathf.Sin(swing*Mathf.PI)*gait;
+                target=slope.Ground(target)+slope.Up*(.07f+swingHeight*Mathf.Lerp(.13f,.17f,incline));
+                PlantFoot(i,target,direction,swingHeight);
             }
-            owner.Speaking=speaking;
         }
-        public void SampleStandingAt(Vector3 ground,Vector3 facing,bool speaking,float time,Vector3 weightShift=default,float lowering=0f)
+        internal void SampleStandingAt(Vector3 ground,Vector3 facing,MihuoerPose pose,float dt,Vector3 weightShift=default,float lowering=0f)
         {
             Root.rotation=Quaternion.LookRotation(Vector3.ProjectOnPlane(facing,slope.Up).normalized,slope.Up);
-            Root.position=ground+weightShift+slope.Up*(rootOffset-lowering);SampleBase(speaking,time);FootError=0;
+            Root.position=ground+weightShift+slope.Up*(rootOffset-lowering);
+            motion.Sample(pose,dt);
+            FootError=0;
             for(int i=0;i<2;i++)
             {
                 var target=slope.Ground(ground+Root.right*side[i])+slope.Up*.07f;
-                Solve(thigh[i],shin[i],foot[i],target,Root.forward);foot[i].rotation=Root.rotation*footRest[i];
-                FootError=Mathf.Max(FootError,Vector3.Distance(foot[i].position,target));
+                PlantFoot(i,target,Root.forward,0);
             }
-            owner.Speaking=speaking;
+        }
+        void PlantFoot(int index,Vector3 target,Vector3 direction,float swing)
+        {
+            var ankle=foot[index];
+            var liftedRotation=ankle.rotation;
+            Solve(thigh[index],shin[index],ankle,target,direction);
+            ankle.rotation=Quaternion.Slerp(Root.rotation*footRest[index],liftedRotation,swing*.65f);
+            FootError=Mathf.Max(FootError,Vector3.Distance(ankle.position,target));
         }
         internal static void Solve(Transform hip,Transform knee,Transform ankle,Vector3 target,Vector3 bend)
         {
