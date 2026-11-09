@@ -44,7 +44,7 @@
     items.forEach(i=>{
       if(!idOK(i.id)||itemIds.has(i.id)||!textOK(i.name,32)||!bounded(i.capacity,1,1000000)||!bounded(i.initial,0,i.capacity))error('物品定义无效：'+i.id);
       itemIds.add(i.id);
-      if(i.fabricatorBlueprint){if(!['seal_ring','connection_flange','buffer_gasket'].includes(i.fabricatorBlueprint)||blueprints.has(i.fabricatorBlueprint))error('打印图纸无效或重复绑定');blueprints.add(i.fabricatorBlueprint);}
+      if(i.fabricatorBlueprint){if(!['seal_ring','connection_flange','buffer_gasket','mihuoer_tee'].includes(i.fabricatorBlueprint)||blueprints.has(i.fabricatorBlueprint))error('打印图纸无效或重复绑定');blueprints.add(i.fabricatorBlueprint);}
     });
     function itemAmounts(values,where){
       if(values==null)return;

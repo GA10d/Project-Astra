@@ -8,9 +8,12 @@ namespace AstraCabin
     {
         public bool Focused { get; private set; }
         public bool Printing { get; private set; }
-        public int[] Completed = new int[3];
-        public int[] Inventory = new int[3];
-        public static readonly string[] BlueprintIds={"seal_ring","connection_flange","buffer_gasket"};
+        public const string MihuoerTeeBlueprint="mihuoer_tee";
+        internal const int MihuoerTeeIndex=3;
+        public static readonly string[] BlueprintIds={"seal_ring","connection_flange","buffer_gasket",MihuoerTeeBlueprint};
+        internal static readonly string[] BlueprintNames={"密封环","连接法兰","缓冲垫片","三通接头"};
+        public int[] Completed = new int[BlueprintIds.Length];
+        public int[] Inventory = new int[BlueprintIds.Length];
         string receiptId, receiptVoyage, receiptPayload;
         int[] receiptCounts;
         public float PrintProgress { get; private set; }
@@ -34,19 +37,23 @@ namespace AstraCabin
                 var data=JsonUtility.FromJson<Store>(System.IO.File.ReadAllText(SavePath));
                 if(data==null||data.version!=1)return;
                 receiptId=data.receiptId;receiptVoyage=data.receiptVoyage;receiptPayload=data.receiptPayload;receiptCounts=data.receiptCounts;
-                for(int i=0;i<3;i++){Completed[i]=data.completed!=null&&i<data.completed.Length?Mathf.Max(0,data.completed[i]):0;Inventory[i]=data.inventory!=null&&i<data.inventory.Length?Mathf.Max(0,data.inventory[i]):0;}
-                if(data.printing){selected=Mathf.Clamp(data.blueprint,0,2);StartPrinting();printClock=Mathf.Clamp(data.clock,0,18);PrintProgress=printClock/18;Save();}
+                if(receiptCounts!=null)Array.Resize(ref receiptCounts,BlueprintIds.Length);
+                for(int i=0;i<BlueprintIds.Length;i++){Completed[i]=data.completed!=null&&i<data.completed.Length?Mathf.Max(0,data.completed[i]):0;Inventory[i]=data.inventory!=null&&i<data.inventory.Length?Mathf.Max(0,data.inventory[i]):0;}
+                if(data.printing){selected=Mathf.Clamp(data.blueprint,0,BlueprintIds.Length-1);StartPrinting();printClock=Mathf.Clamp(data.clock,0,18);PrintProgress=printClock/18;Save();}
             }catch(Exception e){Debug.LogWarning("Fabricator load: "+e.Message);}
         }
         void OnApplicationPause(bool paused){if(paused)Save();}
         void OnApplicationQuit(){Save();}
-        public string[] Blueprints = { "密封环", "连接法兰", "缓冲垫片" };
-        CabinController player; CabinSystems systems;
+        public string[] Blueprints => BlueprintNames;
+        CabinController player; CabinSystems systems; NavigationMode navigation;
         Transform head; Vector3 headRest, origin; Quaternion facing;
+        Renderer[] headRenderers;
+        bool headOccluded;
         float blend, angle, progress, errorTime, printClock;
+        bool headParked;
         Vector2 offset; Vector2[] contour;
-        int selected; bool drawing, failed; string message = "选择图纸，开始轮廓校准";
-        GameObject part; Material material, beamMaterial; LineRenderer beam; CabinFabricatorScreen screen;
+        int selected, partBlueprint; bool drawing, failed; string message = "选择图纸，开始轮廓校准";
+        GameObject part; Mesh generatedMesh; Renderer partRenderer; Material material, beamMaterial; LineRenderer beam; CabinFabricatorScreen screen;
         const int Samples = 240;
         public static CabinFabricator Attach(CabinSystems systems)
         {
@@ -56,17 +63,21 @@ namespace AstraCabin
         }
         void Start()
         {
-            player = GetComponent<CabinController>(); systems = GetComponent<CabinSystems>(); head = systems.printerHead;
+            player = GetComponent<CabinController>(); systems = GetComponent<CabinSystems>(); navigation=GetComponent<NavigationMode>(); head = systems.printerHead;
             if (!player || !head) { enabled = false; return; }
             foreach(var item in FindObjectsOfType<CabinInteractable>())
                 if(item.name=="ACT_PrintButton" && item.gameObject.scene==gameObject.scene) { Button=item; break; }
             headRest = head.localPosition;
+            headRenderers = head.GetComponentsInChildren<Renderer>(true);
             origin = head.position;
             facing = Quaternion.Euler(0,270,0);
             // Printer-local space: +X right, +Y up, +Z away from the observer.
             origin += facing * new Vector3(0,-.16f,0);
             MakeContour(); Load();
-            screen=new GameObject("Fabricator | physical descending terminal").AddComponent<CabinFabricatorScreen>();
+            // The board descends just inside the frame, in front of the printer head.
+            Vector3 boardCenter = origin + facing * new Vector3(.08f,.155f,-.084f);
+            screen=new GameObject("Fabricator | retractable interaction board").AddComponent<CabinFabricatorScreen>();
+            screen.transform.SetPositionAndRotation(boardCenter,facing);
             screen.Initialize(this,player.viewCamera,head.parent);
         }
         public CabinInteractable Button { get; private set; }
@@ -84,11 +95,17 @@ namespace AstraCabin
         public void Open()
         {
             if (!enabled || !player || player.IsPaused || player.ComputerOpen || player.IsTurning || player.cinematicWindowLock) return;
+            if(!Printing&&!BlueprintAvailable(selected)){selected=0;MakeContour();}
             Focused = true; player.SetHoverForTest(null); message = Printing ? "正在自动打印，可返回舱室等待" : "选择图纸，开始轮廓校准";
         }
         public void Close() { Focused = false; drawing = false; }
         void MakeContour()
         {
+            if(selected==MihuoerTeeIndex)
+            {
+                contour=MihuoerTeeOutline();
+                return;
+            }
             contour = new Vector2[Samples+1];
             for (int i=0;i<=Samples;i++)
             {
@@ -97,8 +114,48 @@ namespace AstraCabin
                 contour[i] = new Vector2(r*Mathf.Sin(t), r*(1-Mathf.Cos(t)));
             }
         }
+        static Vector2[] MihuoerTeeOutline()
+        {
+            // Round the tee's front silhouette enough for the existing Q/E steering radius.
+            Vector2[] corners={
+                new Vector2(205,0),new Vector2(205,112),new Vector2(66,112),new Vector2(66,304),
+                new Vector2(-66,304),new Vector2(-66,112),new Vector2(-205,112),new Vector2(-205,0)
+            };
+            const float radius=37f;
+            var path=new System.Collections.Generic.List<Vector2>{Vector2.zero};
+            for(int i=0;i<corners.Length;i++)
+            {
+                Vector2 corner=corners[i];
+                Vector2 incoming=(corner-corners[(i+corners.Length-1)%corners.Length]).normalized;
+                Vector2 outgoing=(corners[(i+1)%corners.Length]-corner).normalized;
+                Vector2 center=corner+radius*(outgoing-incoming);
+                Vector2 start=-radius*outgoing;
+                float sweep=90f*Mathf.Sign(incoming.x*outgoing.y-incoming.y*outgoing.x);
+                for(int j=0;j<=12;j++)path.Add(center+Rotate(start,sweep*j/12f));
+            }
+            path.Add(Vector2.zero);
+            var distances=new float[path.Count];
+            for(int i=1;i<path.Count;i++)distances[i]=distances[i-1]+Vector2.Distance(path[i-1],path[i]);
+            var result=new Vector2[Samples+1];
+            int segment=1;
+            for(int i=0;i<=Samples;i++)
+            {
+                float at=distances[path.Count-1]*i/Samples;
+                while(segment<path.Count-1&&distances[segment]<at)segment++;
+                Vector2 point=Vector2.Lerp(path[segment-1],path[segment],Mathf.InverseLerp(distances[segment-1],distances[segment],at));
+                result[i]=new Vector2(point.x,-point.y);
+            }
+            return result;
+        }
+
+        internal bool BlueprintAvailable(int index) => index!=MihuoerTeeIndex ||
+            (navigation&&navigation.MihuoerTeeUnlocked);
+        internal int DisplayStock(int index) => index==MihuoerTeeIndex && navigation
+            ? navigation.MihuoerTeeStock : Inventory[index];
+
         public void BeginDrawing()
         {
+            if(!BlueprintAvailable(selected))return;
             if (Printing || !systems.MainPowerOn) { message="主电源关闭，无法启动"; return; }
             MakeContour(); angle=0; offset=Vector2.zero; progress=0; errorTime=0; drawing=true; failed=false;
             message="按住 Q / E 旋转图纸，让轮廓持续穿过固定绘制点";
@@ -111,11 +168,13 @@ namespace AstraCabin
             if (player.IsPaused) return;
             if(Printing){saveClock+=Time.deltaTime;if(saveClock>2){saveClock=0;Save();}}
             blend = Mathf.MoveTowards(blend, Focused ? 1 : 0, Time.deltaTime/ .85f);
+            if(drawing&&!BlueprintAvailable(selected))drawing=false;
             if (drawing && Focused)
             {
                 float dt=Time.deltaTime;
                 float rotation=((Input.GetKey(KeyCode.E)?1:0)-(Input.GetKey(KeyCode.Q)?1:0))*75*dt;
-                angle+=rotation; offset=Rotate(offset,rotation) + Vector2.left*(26*dt);
+                float tracingSpeed=selected==MihuoerTeeIndex?36f:26f;
+                angle+=rotation; offset=Rotate(offset,rotation) + Vector2.left*(tracingSpeed*dt);
                 int start=Mathf.FloorToInt(progress); float best=float.MaxValue, next=progress;
                 for(int i=start;i<Mathf.Min(Samples,start+10);i++)
                 {
@@ -146,33 +205,70 @@ namespace AstraCabin
         void LateUpdate()
         {
             if(!player) return;
-            if(Printing && systems.MainPowerOn && !player.IsPaused)
+            bool poweredPrint=Printing&&systems.MainPowerOn;
+            if(!player.IsPaused&&(poweredPrint||blend>0||headParked))
             {
-                float t=printClock;
-                head.position=origin+facing*new Vector3(Mathf.Sin(t*5)*.12f,.16f,Mathf.Cos(t*5)*.12f);
-                if(beam){beam.SetPosition(0,head.position+Vector3.down*.11f);beam.SetPosition(1,new Vector3(head.position.x,origin.y-.27f+PrintProgress*.12f,head.position.z));}
+                float lateral=poweredPrint?Mathf.Sin(printClock*5)*.12f:0f;
+                float depth=poweredPrint?Mathf.Cos(printClock*5)*.12f:0f;
+                // Clear the full nozzle before the board reaches its height.
+                depth=Mathf.Lerp(depth,.14f,Mathf.SmoothStep(0,1,blend/.24f));
+                head.position=origin+facing*new Vector3(lateral,.16f,depth);
+                headParked=blend>0;
+                if(poweredPrint&&beam){beam.SetPosition(0,head.position+Vector3.down*.11f);beam.SetPosition(1,new Vector3(head.position.x,origin.y-.27f+PrintProgress*.12f,head.position.z));}
             }
-            const float deployedAt = .52f;
-            float deployment = Mathf.InverseLerp(0,deployedAt,blend);
-            float cameraFocus = Mathf.InverseLerp(deployedAt,1,blend);
-            if(screen)screen.Refresh(origin,facing,deployment,!Galaxies.Zyl.ZylScreenCurtain.IsOpaque,Focused&&cameraFocus>.98f&&!player.IsPaused);
-            if(beam)beam.enabled=Printing&&systems.MainPowerOn;
-            if(cameraFocus>0 && player.viewCamera)
+            float deployment=Mathf.InverseLerp(0,.68f,blend);
+            float cameraFocus=Mathf.InverseLerp(.18f,1,blend);
+            bool panelVisible=deployment>0&&!Galaxies.Zyl.ZylScreenCurtain.IsOpaque;
+            if(screen)screen.Refresh(deployment,panelVisible,Focused&&cameraFocus>.98f&&!player.IsPaused);
+            SetHeadOccluded(panelVisible&&deployment>=.60f);
+            if(partRenderer)partRenderer.enabled=!panelVisible;
+            if(beam)beam.enabled=Printing&&systems.MainPowerOn&&!panelVisible;
+            if(cameraFocus>0 && screen && player.viewCamera)
             {
-                var cam=player.viewCamera; float t=Mathf.SmoothStep(0,1,cameraFocus);
-                Vector3 target=origin+facing*new Vector3(.08f,.125f,CabinFabricatorScreen.MountDepth-.875f);
-                cam.transform.position=Vector3.Lerp(cam.transform.position,target,t);
+                var cam=player.viewCamera;
+                float t=Mathf.SmoothStep(0,1,cameraFocus);
+                const float distance=.89f;
+                Vector3 cameraPosition=screen.DeployedCenter-facing*Vector3.forward*distance;
+                float fitHalfHeight=Mathf.Max(CabinFabricatorScreen.BoardHeight,CabinFabricatorScreen.BoardWidth/cam.aspect)*.56f;
+                float focusFov=2*Mathf.Atan(fitHalfHeight/distance)*Mathf.Rad2Deg;
+                cam.transform.position=Vector3.Lerp(cam.transform.position,cameraPosition,t);
                 cam.transform.rotation=Quaternion.Slerp(cam.transform.rotation,facing,t);
-                cam.fieldOfView=Mathf.Lerp(cam.fieldOfView,53,t);
+                cam.fieldOfView=Mathf.Lerp(cam.fieldOfView,Mathf.Max(45,focusFov),t);
             }
         }
+        void SetHeadOccluded(bool occluded)
+        {
+            if(headOccluded==occluded)return;
+            headOccluded=occluded;
+            foreach(var renderer in headRenderers)
+                if(renderer)renderer.forceRenderingOff=occluded;
+        }
+
         void StartPrinting()
         {
             drawing=false; Printing=true; printClock=0; PrintProgress=0; systems.SetPrinter(true); Close();
-            if(part) { Destroy(part.GetComponent<MeshFilter>().sharedMesh); Destroy(part); } if(material) Destroy(material); if(beamMaterial)Destroy(beamMaterial);
+            ReleasePart(); if(material) Destroy(material); if(beamMaterial)Destroy(beamMaterial);
+            partBlueprint=selected;
             part=new GameObject("Fabricator | printed "+Blueprints[selected]);
             part.transform.SetPositionAndRotation(origin+facing*new Vector3(0,-.2625f,.028f),facing);
             part.transform.SetParent(head.parent,true);
+            Mesh mesh;
+            if(selected==MihuoerTeeIndex)
+            {
+                var model=Resources.Load<GameObject>("Galaxies/Zyl/MihuoerTee");
+                mesh=model.GetComponentInChildren<MeshFilter>().sharedMesh;
+            }
+            else mesh=generatedMesh=BuildLegacyPart();
+            part.AddComponent<MeshFilter>().sharedMesh=mesh;
+            material=new Material(Resources.Load<Shader>("FabricatorLayer")); partRenderer=part.AddComponent<MeshRenderer>();partRenderer.sharedMaterial=material;
+            material.SetFloat("_Progress",0);
+            var beamObject=new GameObject("Active deposition beam");beamObject.transform.SetParent(part.transform,false);
+            beam=beamObject.AddComponent<LineRenderer>();beam.positionCount=2;beam.startWidth=.004f;beam.endWidth=.002f;beam.useWorldSpace=true;
+            beamMaterial=new Material(Shader.Find("Standard"));beamMaterial.color=new Color(.7f,.85f,.65f);beamMaterial.EnableKeyword("_EMISSION");beamMaterial.SetColor("_EmissionColor",new Color(.3f,1,.65f)*3);beam.sharedMaterial=beamMaterial;
+            player.ShowNotice("轮廓闭合 / 自动打印已开始"); Save();
+        }
+        Mesh BuildLegacyPart()
+        {
             var mesh=new Mesh(); var vertices=new Vector3[(Samples+1)*4]; var triangles=new int[Samples*24]; int index=0;
             for(int i=0;i<=Samples;i++)
             {
@@ -185,13 +281,7 @@ namespace AstraCabin
                 triangles[index++]=a;triangles[index++]=c;triangles[index++]=b;triangles[index++]=b;triangles[index++]=c;triangles[index++]=d;
             }
             mesh.vertices=vertices;mesh.triangles=triangles;mesh.RecalculateNormals();mesh.RecalculateBounds();
-            part.AddComponent<MeshFilter>().sharedMesh=mesh;
-            material=new Material(Resources.Load<Shader>("FabricatorLayer")); part.AddComponent<MeshRenderer>().sharedMaterial=material;
-            material.SetFloat("_Progress",0);
-            var beamObject=new GameObject("Active deposition beam");beamObject.transform.SetParent(part.transform,false);
-            beam=beamObject.AddComponent<LineRenderer>();beam.positionCount=2;beam.startWidth=.004f;beam.endWidth=.002f;beam.useWorldSpace=true;
-            beamMaterial=new Material(Shader.Find("Standard"));beamMaterial.color=new Color(.7f,.85f,.65f);beamMaterial.EnableKeyword("_EMISSION");beamMaterial.SetColor("_EmissionColor",new Color(.3f,1,.65f)*3);beam.sharedMaterial=beamMaterial;
-            player.ShowNotice("轮廓闭合 / 自动打印已开始"); Save();
+            return mesh;
         }
         static Vector2 Rotate(Vector2 p,float degrees) {float a=degrees*Mathf.Deg2Rad;return new Vector2(p.x*Mathf.Cos(a)-p.y*Mathf.Sin(a),p.x*Mathf.Sin(a)+p.y*Mathf.Cos(a));}
         internal bool Drawing { get { return drawing; } }
@@ -204,7 +294,7 @@ namespace AstraCabin
         internal Vector2[] Points { get { return contour; } }
         public void SelectBlueprint(int index)
         {
-            if(!Focused||Printing||drawing||index<0||index>=Blueprints.Length)return;
+            if(!Focused||Printing||drawing||index<0||index>=Blueprints.Length||!BlueprintAvailable(index))return;
             selected=index;MakeContour();failed=false;
         }
         public void ClaimParts()
@@ -228,11 +318,11 @@ namespace AstraCabin
                 if(!Save()){message="领取凭据保存失败，请重试";return;}
                 if(!nav.ReceivePrintedItems(receiptVoyage,receiptId,receiptPayload)){message=nav.Message;return;}
                 var oldId=receiptId;var oldVoyage=receiptVoyage;var oldPayload=receiptPayload;var oldCounts=receiptCounts;
-                for(int i=0;i<3;i++){Inventory[i]+=receiptCounts[i];Completed[i]-=receiptCounts[i];}
+                for(int i=0;i<BlueprintIds.Length;i++){Inventory[i]+=receiptCounts[i];Completed[i]-=receiptCounts[i];}
                 receiptId=receiptVoyage=receiptPayload=null;receiptCounts=null;
                 if(!Save())
                 {
-                    for(int i=0;i<3;i++){Inventory[i]-=oldCounts[i];Completed[i]+=oldCounts[i];}
+                    for(int i=0;i<BlueprintIds.Length;i++){Inventory[i]-=oldCounts[i];Completed[i]+=oldCounts[i];}
                     receiptId=oldId;receiptVoyage=oldVoyage;receiptPayload=oldPayload;receiptCounts=oldCounts;
                     message="航程已收货，领取记录保存失败；请重试完成同步";return;
                 }
@@ -242,27 +332,34 @@ namespace AstraCabin
             else
             {
                 var amounts=(int[])Completed.Clone();
-                for(int i=0;i<3;i++){Inventory[i]+=amounts[i];Completed[i]=0;}
-                if(!Save()){for(int i=0;i<3;i++){Inventory[i]-=amounts[i];Completed[i]+=amounts[i];}message="库存保存失败，请重试";return;}
+                amounts[MihuoerTeeIndex]=0;
+                for(int i=0;i<BlueprintIds.Length;i++){Inventory[i]+=amounts[i];Completed[i]-=amounts[i];}
+                if(!Save()){for(int i=0;i<BlueprintIds.Length;i++){Inventory[i]-=amounts[i];Completed[i]+=amounts[i];}message="库存保存失败，请重试";return;}
                 message="已存入部件库存";
             }
-            if(!Printing&&part&&Completed[selected]==0){Destroy(part.GetComponent<MeshFilter>().sharedMesh);Destroy(part);}
+            if(!Printing&&part&&Completed[partBlueprint]==0)ReleasePart();
         }
         public void DiscardPendingClaim()
         {
             if(!Focused||string.IsNullOrEmpty(receiptId))return;
             var oldId=receiptId;var oldVoyage=receiptVoyage;var oldPayload=receiptPayload;var oldCounts=receiptCounts;
-            for(int i=0;i<3;i++)Completed[i]-=oldCounts[i];
+            for(int i=0;i<BlueprintIds.Length;i++)Completed[i]-=oldCounts[i];
             receiptId=receiptVoyage=receiptPayload=null;receiptCounts=null;
             if(!Save())
             {
-                for(int i=0;i<3;i++)Completed[i]+=oldCounts[i];
+                for(int i=0;i<BlueprintIds.Length;i++)Completed[i]+=oldCounts[i];
                 receiptId=oldId;receiptVoyage=oldVoyage;receiptPayload=oldPayload;receiptCounts=oldCounts;
                 message="重置未保存，请重试";return;
             }
             message="旧领取批次已丢弃；请重新打印。旧航程已到账的物品不变。";
         }
         internal bool HasPendingClaim {get{return !string.IsNullOrEmpty(receiptId);}}
-        void OnDestroy(){if(screen)Destroy(screen.gameObject);if(part){var f=part.GetComponent<MeshFilter>();if(f)Destroy(f.sharedMesh);Destroy(part);}if(material)Destroy(material);if(beamMaterial)Destroy(beamMaterial);}
+        void ReleasePart()
+        {
+            if(part)Destroy(part);
+            if(generatedMesh)Destroy(generatedMesh);
+            part=null;generatedMesh=null;partRenderer=null;beam=null;
+        }
+        void OnDestroy(){SetHeadOccluded(false);if(screen)Destroy(screen.gameObject);ReleasePart();if(material)Destroy(material);if(beamMaterial)Destroy(beamMaterial);}
     }
 }

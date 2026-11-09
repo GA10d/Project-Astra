@@ -262,7 +262,7 @@
       field(group,'物品名称',i.name,value=>i.name=value);
       field(group,'初始数量',i.initial,value=>i.initial=value,{number:true,min:0});
       field(group,'容量',i.capacity,value=>i.capacity=value,{number:true,min:1,max:1000000});
-      field(group,'打印机图纸',i.fabricatorBlueprint||'',value=>i.fabricatorBlueprint=value,{select:[['','无'],['seal_ring','密封环'],['connection_flange','连接法兰'],['buffer_gasket','缓冲垫片']]});
+      field(group,'打印机图纸',i.fabricatorBlueprint||'',value=>i.fabricatorBlueprint=value,{select:[['','无'],['seal_ring','密封环'],['connection_flange','连接法兰'],['buffer_gasket','缓冲垫片'],['mihuoer_tee','三通接头']]});
       button(group,'删除物品',()=>mutate(()=>{
         const owners=[...campaign.sectors.flatMap(s=>s.nodes),...campaign.events.flatMap(e=>e.choices)];
         if(owners.some(o=>['requiredItems','itemCosts','itemRewards'].some(k=>(o[k]||[]).some(a=>a.itemId===i.id))))throw Error('请先移除对此物品的条件、消耗和奖励引用');

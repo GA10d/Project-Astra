@@ -210,7 +210,7 @@
           "next": [],
           "exit": true,
           "travelButtonText": "确定",
-          "archiveDescription": "你打印出了米霍尔需要的构件，去找他吧。",
+          "archiveDescription": "领取打印好的三通接头后，带着它去找米霍尔。",
           "itemCosts": [
             {
               "itemId": "item_1",
@@ -457,14 +457,14 @@
       "id": "zyl_countdown_attempt",
       "type": "setpiece",
       "title": "米霍尔的尝试",
-      "description": "米霍尔计划用飞船上超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。也许你理解这种方式？但是他缺少一个构件，你可以试着用打印机解决这个问题。",
+      "description": "米霍尔计划用飞船上超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。也许你理解这种方式？但是他缺少一个三通接头。演出完成后，可以在打印机里找到图纸。",
       "setpiece": 14,
       "duration": 8,
       "choices": [
         {
           "id": "confirm",
           "text": "去试试打印机",
-          "result": "米霍尔计划用飞船上超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。也许你理解这种方式？但是他缺少一个构件，你可以试着用打印机解决这个问题。",
+          "result": "米霍尔计划用飞船上超长的杆子去捅巨兽的胃壁，也许巨兽感到难受会将我们吐出去。也许你理解这种方式？三通接头图纸已经传到打印机。打印并领取一件，再去找米霍尔。",
           "costs": [],
           "rewards": []
         }
@@ -542,10 +542,10 @@
   "items": [
     {
       "id": "item_1",
-      "name": "米霍尔的飞船构件",
+      "name": "三通接头",
       "initial": 0,
       "capacity": 99,
-      "fabricatorBlueprint": "buffer_gasket"
+      "fabricatorBlueprint": "mihuoer_tee"
     }
   ]
 }

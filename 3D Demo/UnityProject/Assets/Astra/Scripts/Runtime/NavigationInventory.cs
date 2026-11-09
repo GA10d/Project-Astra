@@ -34,7 +34,7 @@ namespace AstraCabin.Navigation
             {
                 if(i==null){errors.Add("物品不可为null");continue;}
                 if(i.id==null || !System.Text.RegularExpressions.Regex.IsMatch(i.id,@"^[A-Za-z0-9_-]{1,64}$") || !ids.Add(i.id) || string.IsNullOrWhiteSpace(i.name) || i.name.Length>32 || i.capacity<1 || i.capacity>1000000 || i.initial<0 || i.initial>i.capacity)errors.Add("物品定义无效："+i.id);
-                if(!string.IsNullOrEmpty(i.fabricatorBlueprint) && (!new[]{"seal_ring","connection_flange","buffer_gasket"}.Contains(i.fabricatorBlueprint)||!blueprints.Add(i.fabricatorBlueprint)))errors.Add("打印图纸无效或重复绑定："+i.id);
+                if(!string.IsNullOrEmpty(i.fabricatorBlueprint) && (!CabinFabricator.BlueprintIds.Contains(i.fabricatorBlueprint)||!blueprints.Add(i.fabricatorBlueprint)))errors.Add("打印图纸无效或重复绑定："+i.id);
             }
             Action<ItemAmount[],string> check=(a,where)=>{var e=AmountError(a,items);if(e!=null)errors.Add(where+"："+e);};
             foreach(var s in c.sectors)foreach(var n in s.nodes??new MapNode[0])
@@ -100,14 +100,21 @@ namespace AstraCabin
 {
     public sealed partial class NavigationMode
     {
+        internal bool MihuoerTeeUnlocked =>
+            ActiveGalaxyId=="zyl"&&Session!=null&&!Session.Blocked&&
+            Campaign.items?.Any(item=>item.id=="item_1"&&item.fabricatorBlueprint==CabinFabricator.MihuoerTeeBlueprint)==true&&
+            Session.Save.commands.Any(command=>command.kind=="observed"&&command.id=="zyl_countdown_attempt");
+
+        internal int MihuoerTeeStock => MihuoerTeeUnlocked&&Session.Engine.Items.TryGetValue("item_1",out int stock)?stock:0;
+
         public bool PreparePrintedItems(int[] counts,out string voyage,out string payload,out int[] acceptedCounts)
         {
-            voyage=null;payload=null;acceptedCounts=new int[3];Initialize();
-            if(counts==null||counts.Length!=3||counts.Any(n=>n<0)){Message="打印部件数量无效。";return false;}
+            voyage=null;payload=null;acceptedCounts=new int[CabinFabricator.BlueprintIds.Length];Initialize();
+            if(counts==null||(counts.Length!=CabinFabricator.MihuoerTeeIndex&&counts.Length!=CabinFabricator.BlueprintIds.Length)||counts.Any(n=>n<0)){Message="打印部件数量无效。";return false;}
             if(Session==null||Session.Blocked||IsGalaxyOverview||Session.Engine.Complete){Message="请先在导航中进入有效的未完成航程，再领取剧情部件。";return false;}
             var amounts=new System.Collections.Generic.List<Navigation.ItemAmount>();
-            string[] keys={"seal_ring","connection_flange","buffer_gasket"};
-            for(int n=0;n<3;n++)if(counts[n]>0)
+            var keys=CabinFabricator.BlueprintIds;
+            for(int n=0;n<counts.Length;n++)if(counts[n]>0&&(n!=CabinFabricator.MihuoerTeeIndex||MihuoerTeeUnlocked))
             {
                 var item=(Campaign.items??new Navigation.ItemDefinition[0]).FirstOrDefault(i=>i.fabricatorBlueprint==keys[n]);
                 if(item==null)continue;
@@ -117,8 +124,8 @@ namespace AstraCabin
             if(amounts.Count==0)
             {
                 if(counts.All(n=>n==0)){Message="没有已完成的部件。";return false;}
-                string[] names={"密封环","连接法兰","缓冲垫片"};
-                string completed=string.Join("、",Enumerable.Range(0,3).Where(n=>counts[n]>0).Select(n=>names[n]));
+                var names=CabinFabricator.BlueprintNames;
+                string completed=string.Join("、",Enumerable.Range(0,counts.Length).Where(n=>counts[n]>0).Select(n=>names[n]));
                 var bound=(Campaign.items??new Navigation.ItemDefinition[0]).Where(i=>!string.IsNullOrEmpty(i.fabricatorBlueprint)).ToArray();
                 string expected=string.Join("、",bound.Select(i=>i.name+"（"+names[Array.IndexOf(keys,i.fabricatorBlueprint)]+"）"));
                 Message="已完成的"+completed+"未绑定本航程物品，已保留。"+(bound.Length>0?"请打印并领取："+expected+"。":"请在星图物品定义中绑定打印机图纸。");return false;
