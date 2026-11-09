@@ -3,25 +3,48 @@
   'use strict';
   const C = NavEditorCore, $ = id => document.getElementById(id), STORAGE = 'astra-navigation-editor-v1';
   let campaign = C.clone(DEFAULT_CAMPAIGN), sectorId = campaign.startSectorId, nodeId = 'entry', mode = 'node', eventId = null;
-  let fileBinding=null, fileBusy=false;
-  const F=NavEditorFileStore, canWrite=typeof window.showOpenFilePicker==='function' && typeof window.showSaveFilePicker==='function';
+  let fileBinding=null, lastSave=null, fileBusy=false;
+  const locationUI=EditorFileLocation;
+  async function fingerprint(text){
+    if(!globalThis.crypto?.subtle)return null;
+    const bytes=new TextEncoder().encode(text);
+    const hash=await crypto.subtle.digest('SHA-256',bytes);
+    return Array.from(new Uint8Array(hash),byte=>byte.toString(16).padStart(2,'0')).join('');
+  }
+  function labelFile(file) {
+    if(fileBinding?.info.id===file.id)fileBinding.info={...fileBinding.info,path:file.path};
+    if(lastSave?.id===file.id)lastSave={...lastSave,path:file.path};
+    persist(false);fileUI();
+  }
+  const F=NavEditorFileStore, localFiles=window.EditorLocalFiles;
+  const pickOpen=localFiles?.open || window.showOpenFilePicker?.bind(window), pickSave=localFiles?.save || window.showSaveFilePicker?.bind(window);
+  const canWrite=typeof pickOpen==='function' && typeof pickSave==='function';
   const undo = [], redo = []; let drag = null, linkFrom = null;
   try {
     const draft = localStorage.getItem(STORAGE);
     if (draft) {
-      const candidate = JSON.parse(draft), list = value => Array.isArray(value) && value.every(v => v && typeof v === 'object');
+      const stored=JSON.parse(draft), candidate=stored.campaign ?? stored, list = value => Array.isArray(value) && value.every(v => v && typeof v === 'object');
       if (!candidate || !list(candidate.sectors) || !candidate.sectors.length || !list(candidate.resources) || !candidate.resources.length || !list(candidate.events) || !Array.isArray(candidate.travelCosts) ||
           !candidate.sectors.every(s => list(s.nodes) && s.nodes.length && s.nodes.every(n => Array.isArray(n.next))) ||
           !candidate.events.every(e => list(e.choices) && e.choices.every(o => Array.isArray(o.costs) && Array.isArray(o.rewards)))) throw Error('草稿结构损坏');
-      campaign = candidate; sectorId = campaign.startSectorId; status('已恢复本机草稿。导出前请处理校验结果。');
+      campaign = candidate;
+      if(stored.campaign){
+        fileBinding=stored.file ? {...stored.file,handle:null} : null;
+        lastSave=stored.lastSave ?? null;
+      }
+      sectorId = campaign.startSectorId; status('已恢复本机草稿。导出前请处理校验结果。');
     }
   } catch (_) { status('本机草稿无法读取，已使用示例。原草稿不会自动覆盖，直至再次编辑。', true); }
   const sector = () => campaign.sectors.find(s => s.id === sectorId) || campaign.sectors[0];
   const node = () => sector().nodes.find(n => n.id === nodeId);
   function element(tag, text, className) { const el = document.createElement(tag); if (text != null) el.textContent = text; if (className) el.className = className; return el; }
   function status(text, error = false) { $('status').textContent = text; $('status').classList.toggle('toast-error', error); }
-  function persist() {
-    try { localStorage.setItem(STORAGE, JSON.stringify(campaign)); status('草稿已保存在本机 · ' + new Date().toLocaleTimeString()); }
+  function persist(announce=true) {
+    try {
+      const file=fileBinding && {info:fileBinding.info,expectedDigest:fileBinding.expectedDigest};
+      localStorage.setItem(STORAGE,JSON.stringify({campaign,file,lastSave}));
+      if(announce)status('草稿已保存在本机 · ' + new Date().toLocaleTimeString());
+    }
     catch (_) { status('浏览器无法保存草稿，请导出 JSON 保留改动。', true); }
   }
   function mutate(change) {
@@ -37,7 +60,8 @@
   }
   function fileUI() {
     const saved=fileBinding && fileBinding.savedJSON===JSON.stringify(campaign);
-    $('file-status').textContent=fileBinding ? fileBinding.handle.name+' · '+(saved?'已保存到文件':'有未保存修改') : '尚未关联文件 · 仅浏览器草稿';
+    $('file-status').textContent=fileBinding ? fileBinding.info.name+' · '+(fileBinding.handle?(saved?'已关联文件':'有未保存修改'):'浏览器副本 · 保存时请选择位置') : '尚未关联文件 · 仅浏览器草稿';
+    locationUI.render(fileBinding?.info,lastSave,labelFile,fileBusy);
     $('file-status').title='文件关联仅在本次页面会话有效，刷新后保存会重新询问位置。';
     for(const id of ['load','save','save-as','example'])$(id).disabled=fileBusy;
     $('save').title=canWrite?'Ctrl+S：保存到当前文件；未关联时选择位置':'当前浏览器不支持直接写入，请用“导出到游戏”下载';
@@ -338,7 +362,7 @@
     if(!canWrite){$('file').click();return;}
     fileBusy=true;fileUI();status('正在打开文件…');
     try {
-      const [handle]=await window.showOpenFilePicker({multiple:false,types:F.types});
+      const [handle]=await pickOpen({multiple:false,types:F.types});
       const {file,text}=await F.read(handle);
       await importFile(file,{handle,expectedText:text},text);
     } catch(error) { if(error.name==='AbortError')status('已取消打开，当前草稿未改变。'); else status('打开失败，原草稿保留：'+error.message,true); }
@@ -348,8 +372,11 @@
     if (!file) return;
     try {
       if (file.size > 2 * 1024 * 1024) throw Error('文件超过 2 MB');
-      const next = C.parse((sourceText ?? await file.text()).replace(/^\uFEFF/,''));
-      if(binding)binding.savedJSON=JSON.stringify(next);
+      const raw=sourceText ?? await file.text();
+      const next=C.parse(raw.replace(/^\uFEFF/,''));
+      const same=!!binding?.handle && !!fileBinding?.handle && await binding.handle.isSameEntry(fileBinding.handle);
+      binding={handle:binding?.handle ?? null,expectedText:raw,expectedDigest:await fingerprint(raw),savedJSON:JSON.stringify(next),
+        info:same?fileBinding.info:locationUI.newFile(file.name,binding?.handle)};
       if (!confirm('载入「' + next.name + '」并替换当前草稿？可以撤销。')) return;
       mutate(() => { fileBinding=binding; campaign = next; sectorId = next.startSectorId; nodeId = sector().startNodeId; mode = 'node'; }); status('已打开配置：' + file.name);
     } catch (error) { status('导入失败，原草稿保留：' + error.message, true); const body = $('modal-body'); body.replaceChildren(element('h2', '配置未导入'), element('p', error.message)); $('modal').showModal(); }
@@ -366,12 +393,28 @@
     fileBusy=true;fileUI();status('正在保存文件…');
     try {
       let target=fileBinding;
-      if(saveAs || !target){
-        const handle=await window.showSaveFilePicker({suggestedName:target?.handle.name || 'campaign.json',types:F.types});
-        const current=await F.read(handle);target={handle,expectedText:current.text};
+      if(saveAs || !target?.handle){
+        const handle=await pickSave({suggestedName:target?.info.name || 'campaign.json',types:F.types});
+        if(target?.handle && await handle.isSameEntry(target.handle)){
+          target={...target,handle};
+        }else{
+          const current=await F.read(handle);
+          const samePath=handle.path && target?.info.verifiedPath &&
+            handle.path.toLowerCase()===target.info.path.toLowerCase();
+          const possibleOriginal=target && !target.handle && (handle.path && target.info.verifiedPath ?
+            samePath : handle.name.toLowerCase()===target.info.name.toLowerCase());
+          if(possibleOriginal && (!target.expectedDigest || await fingerprint(current.text)!==target.expectedDigest))
+            throw Error('所选同名文件与草稿的原始版本不同。请换一个文件名另存，或重新打开文件合并。');
+          target={handle,expectedText:current.text,info:locationUI.newFile(handle.name,handle)};
+        }
       }
-      await F.write(target,text);target.savedJSON=snapshot;fileBinding=target;
-      status('已写入文件：'+target.handle.name+' · '+new Date().toLocaleTimeString());
+      const expectedDigest=await fingerprint(text);
+      await F.write(target,text);
+      target.expectedDigest=expectedDigest;
+      target.savedJSON=snapshot;fileBinding=target;
+      lastSave={...target.info,at:Date.now()};
+      persist(false);
+      status('已写入文件：'+target.handle.name);
     } catch(error) {
       if(error.name==='AbortError')status('已取消保存；当前修改仍保留。');
       else status('保存失败，未确认写入成功：'+error.message,true);

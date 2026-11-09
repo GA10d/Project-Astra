@@ -14,3 +14,10 @@
 .dialogue-block.drop-before{box-shadow:0 -4px #4d7b3b}
 .dialogue-block.drop-after{box-shadow:0 4px #4d7b3b}
 .dialogue-footer{display:flex;justify-content:flex-start;margin-top:16px}
+
+.config-location{font-size:12px;line-height:1.65;min-width:0;padding:8px 0 11px}
+.config-location>div{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:2px 0}
+.config-location strong{flex:0 0 auto}
+.config-location span{min-width:0;overflow-wrap:anywhere;user-select:text}
+.config-location button{padding:2px 7px;font-size:11px}
+.config-location{padding-inline:12px}

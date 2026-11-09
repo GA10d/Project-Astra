@@ -205,7 +205,10 @@
     {
       "text": "但是已经没有时间解释了，现在就是故事里分秒必争的危局。",
       "duration": 6,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw8iz6rc_sw20xsg68j",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "我一定不会让我的人生这么可悲地收尾，等一下，等我一下，我马上就能想到办法出去。",
@@ -323,7 +326,10 @@
     {
       "text": "……",
       "duration": 3,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw8iz6rc_e9nj8bvyq9",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "没有效果……还打扰了一群奇怪的东西……",
@@ -464,7 +470,10 @@
     {
       "text": "…………",
       "duration": 4,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw8iz6rc_crn8awwbie",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "为什么你这么冷静？戏剧大师们肯定最讨厌你这种观众！当然……肯定很喜欢我。",
@@ -509,7 +518,10 @@
     {
       "text": "……",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw8iz6rc_y126ecd5k6",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "对不起，我不该这么说，我的人生才是真正没有意义。",
@@ -530,7 +542,10 @@
     {
       "text": "可是他们一边揍我一边说”能力就是正义“。",
       "duration": 6,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw8iz6rc_owx9t6v0v0",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "于是当我后来发现自己很有盗窃天赋后，我也理直气壮地去盗窃别人。",
@@ -591,17 +606,26 @@
     {
       "text": "罚我远离任何人，也罚任何人远离我。",
       "duration": 5,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw8iz6rc_9tp8ttv0xz",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "如果我就独自找个无人知晓的地方死掉，也算是用这颗炸弹盛大告别我无意义的人生。",
       "duration": 7,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw8iz6rc_c7vl4tb4lj",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "可是如果还要带上你和这只大怪兽的生命，那是对我人生意义的彻底否定。",
       "duration": 7,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw8iz6rc_4raqcppt7i",
+      "timerAction": null,
+      "replyTimerActions": []
     },
     {
       "text": "所以，我不能让你们因为我被炸死在这里。",
