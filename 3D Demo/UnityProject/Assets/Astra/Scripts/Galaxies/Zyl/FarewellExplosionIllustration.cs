@@ -8,13 +8,11 @@ namespace AstraCabin.Galaxies.Zyl
     sealed class FarewellExplosionIllustration : IDisposable
     {
         const string ResourceRoot = "Galaxies/Zyl/Farewell/";
-        internal const float FadeIn = .10f;
-        const float FadeOut = .16f;
+        const float LastFrameHold = .16f;
         const float SingleFrameHold = .25f;
         internal const int FrameCount = 6;
         static readonly float[] AuthoredTimes = { 0, .14f, .38f, .74f, 1.15f, 1.50f };
-        internal float ArtworkEnd { get; }
-        internal float Duration => ArtworkEnd + FadeOut;
+        internal float Duration { get; }
 
         // Artwork-space bounds, ordered as the four foreground rocks and the two central remnants.
         // The central pair is still covered by the flash in the first drawing.
@@ -34,10 +32,7 @@ namespace AstraCabin.Galaxies.Zyl
         static Vector4 ArtBounds(int left, int top, int right, int bottom) =>
             new Vector4((left + right) / 3840f, 1 - (top + bottom) / 2160f,
                 (right - left) / 3840f, (bottom - top) / 2160f);
-        static readonly int First = Shader.PropertyToID("_First");
-        static readonly int Next = Shader.PropertyToID("_Next");
-        static readonly int Mix = Shader.PropertyToID("_Mix");
-        static readonly int Opacity = Shader.PropertyToID("_Opacity");
+        static readonly int FrameTexture = Shader.PropertyToID("_Frame");
 
         readonly Texture2D[] frames;
         readonly float[] times;
@@ -48,8 +43,7 @@ namespace AstraCabin.Galaxies.Zyl
         readonly Vector3[][] rockVertices;
         readonly Vector4[] projectedRocks = new Vector4[DebrisRocks.Length];
         static readonly int RockTargets = Shader.PropertyToID("_RockTargets");
-        static readonly int FirstRocks = Shader.PropertyToID("_FirstRocks");
-        static readonly int NextRocks = Shader.PropertyToID("_NextRocks");
+        static readonly int FrameRocks = Shader.PropertyToID("_FrameRocks");
         static readonly int OpeningFit = Shader.PropertyToID("_OpeningFit");
         static readonly int DebrisFit = Shader.PropertyToID("_DebrisFit");
 
@@ -69,18 +63,18 @@ namespace AstraCabin.Galaxies.Zyl
                 frames.Add(frame);
                 times.Add(nextTime);
                 // Keep the outgoing beat of each selected drawing and skip omitted beats.
-                if (i + 1 < FrameCount) nextTime += AuthoredTimes[i + 1] - AuthoredTimes[i];
+                nextTime += i + 1 < FrameCount ? AuthoredTimes[i + 1] - AuthoredTimes[i] : LastFrameHold;
             }
-            return new FarewellExplosionIllustration(parent, layer, shader, frames.ToArray(), times.ToArray(), selected[0], rocks);
+            return new FarewellExplosionIllustration(parent, layer, shader, frames.ToArray(), times.ToArray(), selected[0], rocks, nextTime);
         }
 
         FarewellExplosionIllustration(Transform parent, int layer, Shader shader, Texture2D[] frames,
-            float[] times, bool includesOpeningFrame, Transform[] rocks)
+            float[] times, bool includesOpeningFrame, Transform[] rocks, float duration)
         {
             this.frames = frames;
             this.times = times;
             this.includesOpeningFrame = includesOpeningFrame;
-            ArtworkEnd = FadeIn + (frames.Length == 1 ? SingleFrameHold : times[times.Length - 1]);
+            Duration = frames.Length == 1 ? SingleFrameHold : duration;
             this.rocks = rocks;
             rockVertices = new Vector3[rocks.Length][];
             for (int i = 0; i < rocks.Length; i++)
@@ -176,21 +170,12 @@ namespace AstraCabin.Galaxies.Zyl
 
         internal void Sample(float time)
         {
-            float local = Mathf.Clamp(time, FadeIn, ArtworkEnd) - FadeIn;
             int index = 0;
-            while (index < times.Length - 2 && local >= times[index + 1]) index++;
-            int next = Mathf.Min(index + 1, frames.Length - 1);
-            float mix = index == next ? 0 : Mathf.SmoothStep(0, 1, Mathf.InverseLerp(times[index], times[next], local));
+            while (index + 1 < times.Length && time >= times[index + 1]) index++;
             bool openingFrame = includesOpeningFrame && index == 0;
-            float opacity = Mathf.SmoothStep(0, 1, time / FadeIn) *
-                (1 - Mathf.SmoothStep(0, 1, (time - ArtworkEnd) / FadeOut));
-            material.SetTexture(First, frames[index]);
-            material.SetTexture(Next, frames[next]);
-            material.SetVectorArray(FirstRocks, openingFrame ? OpeningRocks : DebrisRocks);
-            material.SetVectorArray(NextRocks, DebrisRocks);
+            material.SetTexture(FrameTexture, frames[index]);
+            material.SetVectorArray(FrameRocks, openingFrame ? OpeningRocks : DebrisRocks);
             material.SetFloat("_OpeningFrame", openingFrame ? 1 : 0);
-            material.SetFloat(Mix, mix);
-            material.SetFloat(Opacity, opacity);
         }
 
         public void Dispose()

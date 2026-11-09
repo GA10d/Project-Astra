@@ -238,8 +238,9 @@ namespace AstraCabin.Galaxies.Zyl
         float PreviewProgress(float elapsed) =>
             .19f * Mathf.Clamp01(elapsed / Mathf.Max(.001f, settings.farewellChestLeadTime));
 
-        public void SampleChest(float t, float shake, float previewElapsed)
+        public void SampleChest(float t, float shake, float previewElapsed, float dt = 0f)
         {
+            motion.Sample(MihuoerPose.HeadClutch, dt);
             Camera.transform.localPosition = new Vector3(0, 1.1f, -2.35f)
                 + new Vector3(Mathf.Sin(t * 37), Mathf.Sin(t * 29), 0) * (.048f * shake);
             Camera.fieldOfView=Mathf.SmoothStep(CallFov,WaveFov,waveFraming*(1f-Mathf.Clamp01(t/.62f)));
@@ -328,45 +329,27 @@ namespace AstraCabin.Galaxies.Zyl
                 settings.farewellIllustrationFrames);
         }
 
-        internal bool BeginExplosionIllustration(CabinController controller)
+        internal bool BeginExplosionIllustration(CabinController controller, float blastElapsed, float blastDuration)
         {
             if (illustration == null) return false;
             illustration.Begin(controller);
+            SampleExplosionIllustration(0f, blastElapsed, blastDuration);
             return true;
         }
 
         internal void SampleExplosionIllustration(float elapsed, float blastElapsed, float blastDuration)
         {
-            float speed = settings.farewellIllustrationSpeed;
-            float playbackTime = elapsed * speed;
+            float playbackTime = elapsed * settings.farewellIllustrationSpeed;
             if (planetEnergy.gameObject.activeSelf)
             {
-                SamplePlanetEnergy(blastElapsed, blastDuration);
-                if (playbackTime >= FarewellExplosionIllustration.FadeIn)
-                {
-                    // Once the flash is covered, prepare the original debris pose for the outgoing handoff.
-                    float fractureAtEntry = concealedFractureTime;
-                    if (blastElapsed < blastDuration) SamplePlanetEnergy(blastDuration, blastDuration);
-                    illustrationLead = concealedFractureTime - fractureAtEntry;
-                    FinishPlanetEnergy();
-                }
+                float fractureAtEntry = concealedFractureTime;
+                if (blastElapsed < blastDuration) SamplePlanetEnergy(blastDuration, blastDuration);
+                illustrationLead = concealedFractureTime - fractureAtEntry;
+                FinishPlanetEnergy();
             }
-
-            if (playbackTime >= FarewellExplosionIllustration.FadeIn)
-            {
-                float tail = Mathf.Min(playbackTime, illustration.Duration) - illustration.ArtworkEnd;
-                illustrationDebrisTime = Mathf.Max(-concealedFractureTime, tail / speed);
-                if (illustrationLead > 0 && tail < 0)
-                {
-                    float blend = Mathf.InverseLerp(FarewellExplosionIllustration.FadeIn,
-                        illustration.ArtworkEnd, playbackTime);
-                    illustrationDebrisTime = Mathf.SmoothStep(-illustrationLead, 0, blend);
-                }
-                SampleFragments(0);
-            }
-            if (playbackTime < FarewellExplosionIllustration.FadeIn ||
-                playbackTime >= illustration.ArtworkEnd || illustrationLead > 0)
-                illustration.AlignRocks(cabin.transform.position);
+            illustrationDebrisTime = Mathf.SmoothStep(-illustrationLead, 0f, playbackTime / illustration.Duration);
+            SampleFragments(0);
+            illustration.AlignRocks(cabin.transform.position);
             illustration.Sample(playbackTime);
         }
 

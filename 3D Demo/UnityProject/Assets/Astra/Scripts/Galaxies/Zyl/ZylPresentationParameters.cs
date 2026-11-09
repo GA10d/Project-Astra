@@ -32,6 +32,7 @@ namespace AstraCabin.Galaxies.Zyl {
 
   public float escapeFlightDuration=32f,escapeExitDistance=12000f,escapeHullLoss=36f,escapeFadeDuration=1.2f;
   public float escapeSproutShakeDelay=1.15f;
+  public float escapeBackgroundGustDelay=1.2f;
   public float escapePlaybackSpeed = 1f;
   public float escapeSproutWaveAmplitude = 2f;
   public float escapeSproutWaveHz = 0.8f;
@@ -81,6 +82,8 @@ namespace AstraCabin.Galaxies.Zyl {
   public float foolsFrontHold=2f;
   public float foolsOrbitDuration=7f;
   public float foolsOrbitTargetFov=62f;
+  public float foolsOrbitEndDistance=4.2f;
+  public float foolsOrbitEndHeight=2f;
   public float foolsPullbackDuration=5f;
   public float foolsFinalHold=3f;
   public MihuoerDialogueLine[] foolsGroundDialogue=new[]{new MihuoerDialogueLine{text="【占位：请填写米霍尔离开飞船后的台词。】",duration=4f,replies=new string[0]}};
@@ -168,6 +171,7 @@ namespace AstraCabin.Galaxies.Zyl {
    Check("escapeHullLoss",escapeHullLoss,5f,70f);
    Check("escapeFadeDuration",escapeFadeDuration,0.2f,5f);
    Check("escapeSproutShakeDelay",escapeSproutShakeDelay,0f,8f);
+   Check("escapeBackgroundGustDelay",escapeBackgroundGustDelay,0f,8f);
    Check("escapePlaybackSpeed",escapePlaybackSpeed,0.5f,3f);
    Check("escapeSproutWaveAmplitude",escapeSproutWaveAmplitude,0f,15f);
    Check("escapeSproutWaveHz",escapeSproutWaveHz,0.1f,8f);
@@ -245,6 +249,8 @@ namespace AstraCabin.Galaxies.Zyl {
    Check("foolsFrontHold",foolsFrontHold,0.5f,15f);
    Check("foolsOrbitDuration",foolsOrbitDuration,2f,30f);
    Check("foolsOrbitTargetFov",foolsOrbitTargetFov,25f,85f);
+   Check("foolsOrbitEndDistance",foolsOrbitEndDistance,1.2f,12f);
+   Check("foolsOrbitEndHeight",foolsOrbitEndHeight,.65f,6f);
    Check("foolsPullbackDuration",foolsPullbackDuration,1f,20f);
    Check("foolsFinalHold",foolsFinalHold,1f,30f);
    ValidateCinematicDialogue(foolsGroundDialogue);

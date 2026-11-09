@@ -192,6 +192,16 @@ namespace AstraCabin.Galaxies.Zyl
                 }
             }
             environmentRoot.transform.SetPositionAndRotation(AuthoredToRuntime.MultiplyPoint3x4(Vector3.zero), Quaternion.Inverse(pose.rotation));
+            var planted = environmentRoot.transform.Find(EscapeSprout.PlantedName);
+            if (planted && planted.GetComponentInChildren<MeshRenderer>() is MeshRenderer sproutRenderer)
+            {
+                var parameters = ZylPresentationParameters.Load();
+                var block = new MaterialPropertyBlock();
+                sproutRenderer.GetPropertyBlock(block);
+                block.SetFloat("_WaveAmplitude", parameters.escapeSproutWaveAmplitude * .01f);
+                block.SetFloat("_WaveHz", parameters.escapeSproutWaveHz);
+                sproutRenderer.SetPropertyBlock(block);
+            }
             var actorRoot=new GameObject("Mihuoer | persistent stomach visitor");actorRoot.transform.SetParent(environmentRoot.transform,false);
             MihuoerActor=actorRoot.AddComponent<StomachMihuoerActor>();MihuoerActor.Initialize(navigation.Director,MihuoerAnchor.transform,MihuoerShipAnchor.transform);
             prepared = true;orientationDirty=true;

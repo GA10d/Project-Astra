@@ -8,7 +8,9 @@ Shader "Astra/Zyl/SproutWave"
         _Glossiness ("Smoothness", Range(0,1)) = .62
         _WaveCenter ("Object-space wave center", Vector) = (0,0,0,0)
         _WaveAmplitude ("Radial amplitude", Range(0,.15)) = .02
+        _WaveHz ("Planted wave frequency", Float) = .8
         _WavePhase ("Wave phase", Float) = 0
+        [HideInInspector] _ManualWavePhase ("Use sampled phase", Float) = 0
     }
     SubShader
     {
@@ -21,7 +23,7 @@ Shader "Astra/Zyl/SproutWave"
         fixed4 _Color;
         half _Glossiness;
         float3 _WaveCenter;
-        float _WaveAmplitude, _WavePhase;
+        float _WaveAmplitude, _WaveHz, _WavePhase, _ManualWavePhase;
         struct Input { float2 uv_MainTex; };
 
         void displace(inout appdata_full v)
@@ -30,8 +32,9 @@ Shader "Astra/Zyl/SproutWave"
             const float3 second = float3(-9.8, 3.3, 6.2);
             float3 radius = v.vertex.xyz - _WaveCenter;
             float3 direction = normalize(radius);
-            float2 angle = float2(dot(direction, first) + _WavePhase,
-                dot(direction, second) - .71 * _WavePhase);
+            float phase = _ManualWavePhase > .5 ? _WavePhase : _Time.y * _WaveHz * 6.2831853;
+            float2 angle = float2(dot(direction, first) + phase,
+                dot(direction, second) - .71 * phase);
             float wave = dot(sin(angle), float2(1, .48)) / 1.48;
             // The underside stays still where the roots join the crown.
             float pinned = saturate((direction.y + .9) / .45);

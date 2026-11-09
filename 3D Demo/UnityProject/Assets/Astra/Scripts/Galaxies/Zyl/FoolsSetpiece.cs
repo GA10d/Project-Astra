@@ -167,7 +167,7 @@ namespace AstraCabin.Galaxies.Zyl
             float rotationProgress=Mathf.SmoothStep(0,1,orbit);
             var direction=Quaternion.AngleAxis(180*rotationProgress,Slope.Up)*root.forward;
             var near=center+direction*.86f+Slope.Up*.035f;
-            var far=root.position+direction*4.2f+Slope.Up*2.0f;
+            var far=root.position+direction*parameters.foolsOrbitEndDistance+Slope.Up*parameters.foolsOrbitEndHeight;
             var position=pull<=0?near:Slope.CameraPosition(Vector3.Lerp(near,far,pull),center);
             CameraPose(position,Vector3.Lerp(center,root.position+root.forward*1.8f+Slope.Up*1.05f,pull),Mathf.Lerp(40,parameters.foolsOrbitTargetFov,rotationProgress),false);
         }

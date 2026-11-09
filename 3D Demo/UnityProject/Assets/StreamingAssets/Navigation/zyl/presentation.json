@@ -1,13 +1,13 @@
 {
   "farewellIllustrationEnabled": true,
   "farewellIllustrationStartOffset": -0.2,
-  "farewellIllustrationSpeed": 2.5,
+  "farewellIllustrationSpeed": 3,
   "farewellIllustrationFrames": [
     true,
-    false,
+    true,
     true,
     false,
-    true,
+    false,
     false
   ],
   "schemaVersion": 1,
@@ -921,5 +921,8 @@
   "escapeSproutWaveHz": 1,
   "escapeSproutPulledWaveAmplitude": 15,
   "escapeSproutPulledWaveHz": 2.9,
+  "foolsOrbitEndDistance": 4.2,
+  "foolsOrbitEndHeight": 2,
+  "escapeBackgroundGustDelay": 1.2,
   "farewellDepartureTitleInterval": 0.1
 }

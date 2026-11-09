@@ -730,6 +730,26 @@ window.ZYL_PARAMETERS={
     },
     {
       "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsOrbitEndDistance",
+      "label": "绕后终点 · 后撤距离",
+      "value": 4.2,
+      "min": 1.2,
+      "max": 12,
+      "unit": "单位",
+      "desc": "绕过后脑后，相机沿背后方向的水平距离。4.2 沿用原机位，遇遮挡时由原机位避障处理。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsOrbitEndHeight",
+      "label": "绕后终点 · 相机高度",
+      "value": 2,
+      "min": 0.65,
+      "max": 6,
+      "unit": "单位",
+      "desc": "以米霍尔脚下为高度零点。2 沿用原机位。此值与后撤距离独立，构图目标仍是米霍尔和前景。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
       "key": "foolsPullbackDuration",
       "label": "绕头后半程拉开时长",
       "value": 5,
@@ -817,6 +837,16 @@ window.ZYL_PARAMETERS={
       "max": 8,
       "unit": "秒",
       "desc": "肉芽提起到手上后，等待多久开始墓前镜头晃动。仅在勾选拔取台词时生效。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeBackgroundGustDelay",
+      "label": "背景木石吹散延迟",
+      "value": 1.2,
+      "min": 0,
+      "max": 8,
+      "unit": "秒",
+      "desc": "从前景木屑开始向右飞起计时。到点后，米霍尔身后的枯木先碎开，重石略晚贴地滚动再被风带走。对白较短时会等背景碎块飞出才开始渐黑。"
     },
     {
       "group": "16 · 泰德野里_逃出生天",
@@ -1102,7 +1132,7 @@ window.ZYL_PARAMETERS={
       "group": "17 · 泰德野里_别离",
       "key": "farewellIllustrationEnabled",
       "type": "boolean",
-      "label": "插入爆炸插画过渡",
+      "label": "播放爆炸插画",
       "value": true,
       "unit": "开关",
       "desc": "勾选后，在实机星球强闪与碎石画面之间播放六张插画。取消勾选后，实机强闪直接接回实机碎石。"
@@ -1115,17 +1145,17 @@ window.ZYL_PARAMETERS={
       "min": -2,
       "max": 2,
       "unit": "秒",
-      "desc": "相对实机强闪的峰值。0 在峰值插入，负数提前（最早在强闪开始且镜头抵达舷窗时），正数延后并保持强闪画面。只在勾选插画过渡时生效。"
+      "desc": "相对实机强闪的峰值。0 在峰值插入，负数提前（最早在强闪开始且镜头抵达舷窗时），正数延后并保持强闪画面。只在启用爆炸插画时生效。"
     },
     {
       "group": "17 · 泰德野里_别离",
       "key": "farewellIllustrationSpeed",
-      "label": "爆炸插画过渡速度",
+      "label": "爆炸插画播放速度",
       "value": 1,
       "min": 0.5,
       "max": 3,
       "unit": "倍",
-      "desc": "1 倍沿用当前节奏。倍率同时影响已选插画之间的切换和首尾淡入淡出。"
+      "desc": "控制已勾选画面的停留时间。进入插画、图与图之间、回到相机均直接切换。1 倍沿用原关键帧节拍。"
     },
     {
       "group": "17 · 泰德野里_别离",
@@ -1750,7 +1780,10 @@ window.ZYL_PARAMETERS={
     "escapeSproutWaveAmplitude": 2,
     "escapeSproutWaveHz": 0.8,
     "escapeSproutPulledWaveAmplitude": 7,
-    "escapeSproutPulledWaveHz": 2.4
+    "escapeSproutPulledWaveHz": 2.4,
+    "foolsOrbitEndDistance": 4.2,
+    "foolsOrbitEndHeight": 2,
+    "escapeBackgroundGustDelay": 1.2
   },
   "rules": [
     [

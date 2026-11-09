@@ -35,7 +35,7 @@ namespace AstraCabin.Galaxies.Zyl
         Mesh originalWallMesh;
         public float IndentDepth { get; private set; }
         const float TipRadius = .12f, RestGap = .28f;
-        Vector3 axis,right,up,forward,cutRight,cutUp,wordCenter,finalLook;
+        Vector3 axis,right,up,forward,cutRight,cutUp,wordCenter,finalLook,letterUp;
         float distance;
         readonly float microbeSpeed;
         public float WordReadyTime => BurstStart + (WordReady - BurstStart) / microbeSpeed;
@@ -238,7 +238,7 @@ namespace AstraCabin.Galaxies.Zyl
             var random=new System.Random(1507);
             var mesh=BuildMicrobeMesh();meshes.Add(mesh);
             var palette=new[]{Material("Microbial ivory",new Color(.84f,.91f,.59f),0,.65f),Material("Microbial olive",new Color(.42f,.67f,.29f),0,.8f),Material("Microbial warm",new Color(.89f,.73f,.33f),0,.55f)};
-            Quaternion finalRotation=Quaternion.LookRotation(wordCenter-FinalCameraPosition,up);var letterRight=finalRotation*Vector3.right;var letterUp=finalRotation*Vector3.up;
+            Quaternion finalRotation=Quaternion.LookRotation(wordCenter-FinalCameraPosition,up);var letterRight=finalRotation*Vector3.right;letterUp=finalRotation*Vector3.up;
             for(int l=0;l<4;l++)for(int y=0;y<7;y++)for(int x=0;x<5;x++)if(letters[l][y][x]=='1')for(int k=0;k<4;k++)
             {
                 int i=microbes.Count;
@@ -315,11 +315,20 @@ namespace AstraCabin.Galaxies.Zyl
                 var second=Vector3.Lerp(cloud,target,.76f)+bank*.48f+forward*Mathf.Sin(i*.41f)*1.2f;
                 var tangent=v*v*(first-cloud)+2*v*u*(second-first)+u*u*(target-second);
                 microbe.position=v*v*v*cloud+3*v*v*u*first+3*v*u*u*second+u*u*u*target;
-                microbe.position+=(right*Mathf.Sin(i+swarmTime*2)+up*Mathf.Cos(i*.7f+swarmTime*1.6f))*.026f*u;
+                microbe.position += right * (Mathf.Sin(i + swarmTime * 2) * .026f * u);
+                microbe.position += letterUp * (Hover(i, t) * u * u);
                 var tumble=Quaternion.AngleAxis(i*47+swarmTime*28,forward)*Quaternion.FromToRotation(Vector3.up,right);
                 microbe.rotation=Quaternion.Slerp(tumble,Quaternion.FromToRotation(Vector3.up,tangent),Mathf.Sin(Mathf.PI*u)*.86f);
             }
         }
+        static float Hover(int index, float time)
+        {
+            // Offset neighbouring bacteria in both phase and frequency so the letters stay put.
+            float amplitude = .085f + .045f * (index % 7) / 6f;
+            float frequency = .55f + .35f * (index % 11) / 10f;
+            return amplitude * Mathf.Sin(time * frequency * (2f * Mathf.PI) + index * 2.399963f);
+        }
+
         public int VisibleMicrobes {get{return microbes.FindAll(m=>m&&m.gameObject.activeSelf).Count;}}
         void ReadBreathingBlock(Renderer renderer, int slot)
         {
@@ -353,13 +362,14 @@ namespace AstraCabin.Galaxies.Zyl
         }
         public void SampleReturn(float time,float duration,float hold=4.5f)
         {
-            Sample(WordReadyTime+hold);
+            float holdEnd = WordReadyTime + hold;
+            Sample(holdEnd);
             float follow=Mathf.SmoothStep(0,1,Mathf.Clamp01(time/duration));
             Camera.transform.rotation=Quaternion.LookRotation(Vector3.Lerp(finalLook,Contact,follow)-FinalCameraPosition,up);
             for(int i=0;i<microbes.Count;i++)
             {
                 float u=Mathf.SmoothStep(0,1,Mathf.InverseLerp((i%31)/31f*duration*.18f,duration,time));var m=microbes[i];
-                var origin=m.position;
+                var origin=m.position + letterUp * (Hover(i, holdEnd + time) - Hover(i, holdEnd));
                 var middle=Vector3.Lerp(origin,Contact,.5f)-axis*2+cutRight*Mathf.Sin(i*1.73f)*1.2f;
                 m.position=(1-u)*(1-u)*origin+2*(1-u)*u*middle+u*u*(Contact+axis*.45f);
                 var returnRotation=Quaternion.LookRotation((Contact-m.position).sqrMagnitude>.001f?Contact-m.position:axis,up)*Quaternion.Euler(90,0,i*31);

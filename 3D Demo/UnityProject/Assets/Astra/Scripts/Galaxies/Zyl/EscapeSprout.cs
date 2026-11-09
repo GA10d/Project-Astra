@@ -60,6 +60,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
 
             var rootSurface = new Material(flesh) { name = "Sprout | pale root fibers", mainTexture = null };
+            rootSurface.shader = Shader.Find("Standard (Specular setup)");
             rootSurface.color = new Color(.78f, .46f, .35f);
             rootSurface.SetFloat("_Glossiness", .43f);
             resources.Add(rootSurface);
@@ -70,6 +71,7 @@ namespace AstraCabin.Galaxies.Zyl
             crownSurface = new Material(flesh) { name = "Sprout | rippling flesh", shader = shader };
             resources.Add(crownSurface);
             crownSurface.SetVector("_WaveCenter", fleshMesh.bounds.center);
+            crownSurface.SetFloat("_ManualWavePhase", 1f);
             AdvanceWave(float.NegativeInfinity, 0f);
             Render(crown, fleshMesh, crownSurface);
             crown.localScale = Vector3.one * CrownScale;

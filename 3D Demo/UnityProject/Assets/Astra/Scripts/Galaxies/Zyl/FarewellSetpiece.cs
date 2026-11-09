@@ -210,7 +210,7 @@ namespace AstraCabin.Galaxies.Zyl
                             Surface.Caption = "";
                             Enter(Step.ChestBurst);
                             if (chestPreRoll <= 0) Stage.AnchorChestBurst();
-                            Stage.SampleChest(0, CinematicShake, chestPreRoll);
+                            Stage.SampleChest(0, CinematicShake, chestPreRoll, dt);
                             break;
                         }
                         dialogue.Tick(dt, false);
@@ -219,7 +219,7 @@ namespace AstraCabin.Galaxies.Zyl
                         UpdateChestPreview();
                         break;
                     case Step.ChestBurst:
-                        Stage.SampleChest(PhaseTime, CinematicShake, chestPreRoll);
+                        Stage.SampleChest(PhaseTime, CinematicShake, chestPreRoll, dt);
                         if (PhaseTime >= p.farewellChestDuration)
                         {
                             Surface.Video = null;
@@ -263,7 +263,7 @@ namespace AstraCabin.Galaxies.Zyl
                         if (Elapsed - planetStartedAt >= planetDuration + illustrationOffset)
                         {
                             director.PlayCue("impact", .65f);
-                            if (Stage.BeginExplosionIllustration(director.controller))
+                            if (Stage.BeginExplosionIllustration(director.controller, PlanetElapsed, planetDuration))
                                 Enter(Step.ExplosionIllustration);
                             else
                             {

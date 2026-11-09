@@ -23,6 +23,7 @@ namespace AstraCabin.Galaxies.Zyl
         EscapeSprout sprout;
         Transform plantedSprout;
         EscapeGust gust;
+        EscapeBackgroundGust backgroundGust;
         float sproutCue, shakeTime;
         Vector3 shotPosition;
         Quaternion shotRotation;
@@ -65,13 +66,14 @@ namespace AstraCabin.Galaxies.Zyl
             var cameraPosition=Ground.Ground(frame.MultiplyPoint3x4(CameraAuth))+Ground.Up*1.55f;actorFacing=cameraPosition-actorGround;
             var root=new GameObject("Zyl16 | three graves");GravesRoot=root.transform;
             var stone=new Material(Shader.Find("Standard"));stone.name="Zyl16 weathered memorial stone";stone.color=new Color(.28f,.25f,.21f);stone.SetFloat("_Glossiness",.08f);resources.Add(stone);
-            var grain=new Texture2D(64,64,TextureFormat.RGB24,false);grain.name="Memorial stone grain";var rng=new System.Random(1603);
-            for(int y=0;y<64;y++)for(int x=0;x<64;x++){float n=.65f+(float)rng.NextDouble()*.35f;grain.SetPixel(x,y,new Color(n,n*.97f,n*.91f));}grain.Apply();stone.mainTexture=grain;resources.Add(grain);
-            var soil=new Material(stone);soil.mainTexture=null;soil.color=new Color(.15f,.11f,.075f);resources.Add(soil);
+            EngraveStone(stone);
+            var mesh = StoneMesh();
+            resources.Add(mesh);
+            var soil=new Material(Shader.Find("Standard"));soil.color=new Color(.15f,.11f,.075f);resources.Add(soil);
             for(int i=0;i<3;i++)
             {
                 var point=Ground.Ground(frame.MultiplyPoint3x4(GraveAuth[i]));var t=new GameObject("Grave "+(i+1)).transform;t.SetParent(root.transform);t.position=point;t.rotation=Quaternion.LookRotation(Vector3.ProjectOnPlane(cameraPosition-point,Ground.Up),Ground.Up);t.gameObject.layer=25;
-                var mesh=StoneMesh();resources.Add(mesh);t.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;t.gameObject.AddComponent<MeshRenderer>().sharedMaterial=stone;
+                t.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;t.gameObject.AddComponent<MeshRenderer>().sharedMaterial=stone;
                 var mound=GameObject.CreatePrimitive(PrimitiveType.Sphere);mound.name="Grave soil";mound.transform.SetParent(t,false);mound.transform.localPosition=new Vector3(0,.025f,.4f);mound.transform.localScale=new Vector3(1.15f,.12f,1.8f);mound.layer=25;Destroy(mound.GetComponent<Collider>());mound.GetComponent<Renderer>().sharedMaterial=soil;
             }
             var cameraObject=new GameObject("Zyl16 | fixed graves camera");Camera=cameraObject.AddComponent<Camera>();Camera.CopyFrom(director.controller.viewCamera);Camera.targetTexture=null;Camera.rect=new Rect(0,0,1,1);Camera.cullingMask=1<<25;Camera.nearClipPlane=.05f;Camera.depth=director.controller.viewCamera.depth+10;Camera.farClipPlane=Mathf.Max(500,Camera.farClipPlane);Camera.clearFlags=CameraClearFlags.SolidColor;
@@ -97,7 +99,11 @@ namespace AstraCabin.Galaxies.Zyl
                 lineStart += line.duration;
             }
             if (!float.IsPositiveInfinity(sproutCue))
-                gust = new EscapeGust(GravesRoot, exterior.MihuoerShipAnchor.transform.parent, Camera, resources);
+            {
+                var environment = exterior.MihuoerShipAnchor.transform.parent;
+                gust = new EscapeGust(GravesRoot, environment, Camera, resources);
+                backgroundGust = new EscapeBackgroundGust(environment, Camera, Ground.Up, resources);
+            }
         }
         static Mesh StoneMesh()
         {
@@ -106,9 +112,72 @@ namespace AstraCabin.Galaxies.Zyl
             for(int n=0;n<=10;n++){float a=n*Mathf.PI/10;outline.Add(new Vector2(Mathf.Cos(a)*.45f,.8f+Mathf.Sin(a)*.45f));}
             int c=outline.Count;var v=new Vector3[c*2+2];v[c*2]=new Vector3(0,.55f,-.13f);v[c*2+1]=new Vector3(0,.55f,.13f);var tri=new List<int>();
             for(int i=0;i<c;i++){v[i]=new Vector3(outline[i].x,outline[i].y,-.13f);v[c+i]=new Vector3(outline[i].x,outline[i].y,.13f);int j=(i+1)%c;tri.AddRange(new[]{c*2,j,i,c*2+1,c+i,c+j,i,j,c+j,i,c+j,c+i});}
-            var uv=new Vector2[v.Length];for(int i=0;i<v.Length;i++)uv[i]=new Vector2(v[i].x+.5f,v[i].y);
-            var mesh=new Mesh{name="Zyl16 | arched stone"};mesh.vertices=v;mesh.uv=uv;mesh.triangles=tri.ToArray();mesh.RecalculateNormals();mesh.RecalculateBounds();return mesh;
+            var uv=new Vector2[v.Length];
+            for(int i=0;i<v.Length;i++)
+            {
+                bool front = v[i].z > 0;
+                uv[i] = new Vector2(.5f + (front ? -v[i].x : v[i].x), front ? v[i].y * .8f : v[i].y * .35f);
+            }
+            var mesh=new Mesh{name="Zyl16 | arched stone"};mesh.vertices=v;mesh.uv=uv;mesh.triangles=tri.ToArray();mesh.RecalculateNormals();mesh.RecalculateTangents();mesh.RecalculateBounds();return mesh;
         }
+        void EngraveStone(Material stone)
+        {
+            const int size = 128;
+            var lines = new (Vector2 a, Vector2 b)[]
+            {
+                (new Vector2(.26f,.50f),new Vector2(.26f,.65f)),
+                (new Vector2(.26f,.65f),new Vector2(.36f,.65f)),
+                (new Vector2(.36f,.65f),new Vector2(.38f,.62f)),
+                (new Vector2(.38f,.62f),new Vector2(.36f,.58f)),
+                (new Vector2(.36f,.58f),new Vector2(.26f,.58f)),
+                (new Vector2(.31f,.58f),new Vector2(.39f,.50f)),
+                (new Vector2(.44f,.65f),new Vector2(.55f,.65f)),
+                (new Vector2(.495f,.65f),new Vector2(.495f,.50f)),
+                (new Vector2(.44f,.50f),new Vector2(.55f,.50f)),
+                (new Vector2(.62f,.50f),new Vector2(.62f,.65f)),
+                (new Vector2(.62f,.65f),new Vector2(.72f,.65f)),
+                (new Vector2(.72f,.65f),new Vector2(.75f,.62f)),
+                (new Vector2(.75f,.62f),new Vector2(.72f,.58f)),
+                (new Vector2(.72f,.58f),new Vector2(.62f,.58f))
+            };
+            var heights = new float[size * size];
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                var uv = new Vector2((x + .5f) / size, (y + .5f) / size);
+                float distance = float.PositiveInfinity;
+                foreach (var line in lines)
+                {
+                    var stroke = line.b - line.a;
+                    var closest = line.a + stroke * Mathf.Clamp01(Vector2.Dot(uv - line.a, stroke) / stroke.sqrMagnitude);
+                    distance = Mathf.Min(distance, (uv - closest).sqrMagnitude);
+                }
+                heights[y * size + x] = 1f - Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(.005f, .016f, Mathf.Sqrt(distance)));
+            }
+            var grain = new Texture2D(size, size, TextureFormat.RGB24, true) { name = "Memorial stone | engraved RIP grain" };
+            var normals = new Texture2D(size, size, TextureFormat.RGBA32, true, true) { name = "Memorial stone | recessed letter normals" };
+            var colors = new Color[size * size];
+            var bumps = new Color[size * size];
+            var rng = new System.Random(1603);
+            for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                int i = y * size + x;
+                float lightness = (.65f + (float)rng.NextDouble() * .35f) * Mathf.Lerp(1f, .32f, heights[i]);
+                colors[i] = new Color(lightness, lightness * .97f, lightness * .91f);
+                float dx = heights[y * size + Mathf.Min(x + 1, size - 1)] - heights[y * size + Mathf.Max(0, x - 1)];
+                float dy = heights[Mathf.Min(y + 1, size - 1) * size + x] - heights[Mathf.Max(0, y - 1) * size + x];
+                var normal = new Vector3(dx * .65f, dy * .65f, 1f).normalized * .5f + Vector3.one * .5f;
+                bumps[i] = new Color(normal.x, normal.y, normal.z, 1f);
+            }
+            grain.SetPixels(colors);grain.Apply(true, true);
+            normals.SetPixels(bumps);normals.Apply(true, true);
+            stone.mainTexture = grain;
+            stone.SetTexture("_BumpMap", normals);
+            stone.EnableKeyword("_NORMALMAP");
+            resources.Add(grain);resources.Add(normals);
+        }
+
         void Update(){Tick(Time.deltaTime);}
         public void Tick(float dt)
         {
@@ -133,7 +202,9 @@ namespace AstraCabin.Galaxies.Zyl
                         sprout.Sample(age, GravesPose, dt);
                         shakeTime = age - EscapeSprout.LiftEnd - p.escapeSproutShakeDelay;
                         ShakeGravesCamera(1f);
-                        if (dialogue.Ended && (float.IsPositiveInfinity(sproutCue) || shakeTime >= .85f))
+                        float gustEnd = backgroundGust != null && backgroundGust.Duration > 0f
+                            ? p.escapeBackgroundGustDelay + backgroundGust.Duration : .85f;
+                        if (dialogue.Ended && (float.IsPositiveInfinity(sproutCue) || shakeTime >= gustEnd))
                         {
                             Curtain.ResetPaintConfirmation();
                             TransitionAlpha = .001f;
@@ -181,6 +252,7 @@ namespace AstraCabin.Galaxies.Zyl
             if (shakeTime <= 0f) return;
             float t = shakeTime;
             gust?.Sample(t, Camera.aspect);
+            backgroundGust?.Sample(t - p.escapeBackgroundGustDelay);
             float strength = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(t / .24f)) *
                 Mathf.Lerp(1f, .38f, Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((t - .65f) / 1.45f))) * fade;
             float x = Mathf.Sin(t * 37f) + .4f * Mathf.Sin(t * 19f);
@@ -195,6 +267,7 @@ namespace AstraCabin.Galaxies.Zyl
         {
             if(plantedSprout) plantedSprout.gameObject.SetActive(true);
             plantedSprout=null;sprout=null;gust=null;
+            backgroundGust?.Dispose();backgroundGust=null;
             if(Camera){Camera.enabled=false;Destroy(Camera.gameObject);}Camera=null;if(Walker!=null)Walker.Dispose();Walker=null;if(Ground!=null)Ground.Dispose();Ground=null;
             if(GravesRoot){GravesRoot.gameObject.SetActive(false);Destroy(GravesRoot.gameObject);}GravesRoot=null;foreach(var r in resources)if(r)Destroy(r);resources.Clear();
         }

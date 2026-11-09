@@ -2,18 +2,14 @@ Shader "Astra/Zyl/FarewellIllustration"
 {
     Properties
     {
-        _First ("First frame", 2D) = "black" {}
-        _Next ("Next frame", 2D) = "black" {}
-        _Mix ("Frame blend", Range(0, 1)) = 0
-        _Opacity ("Handoff opacity", Range(0, 1)) = 1
+        _Frame ("Illustration frame", 2D) = "black" {}
     }
     SubShader
     {
-        Tags { "Queue"="Transparent" "RenderType"="Transparent" "IgnoreProjector"="True" }
+        Tags { "Queue"="Geometry" "RenderType"="Opaque" "IgnoreProjector"="True" }
         Cull Off
-        ZWrite Off
+        ZWrite On
         ZTest LEqual
-        Blend SrcAlpha OneMinusSrcAlpha
 
         Pass
         {
@@ -23,10 +19,8 @@ Shader "Astra/Zyl/FarewellIllustration"
             #pragma fragment frag
             #include "UnityCG.cginc"
 
-            sampler2D _First, _Next;
-            half _Mix, _Opacity;
-
-            float4 _FirstRocks[6], _NextRocks[6], _RockTargets[6];
+            sampler2D _Frame;
+            float4 _FrameRocks[6], _RockTargets[6];
 
             float4 _OpeningFit, _DebrisFit;
             float _OpeningFrame;
@@ -55,17 +49,13 @@ Shader "Astra/Zyl/FarewellIllustration"
 
             fixed4 frag(v2f_img input) : SV_Target
             {
-                float3 firstFit = 0, nextFit = 0;
-                float4 firstPlacement = lerp(_DebrisFit, _OpeningFit, _OpeningFrame);
+                float3 fit = 0;
+                float4 placement = lerp(_DebrisFit, _OpeningFit, _OpeningFrame);
                 [unroll] for (int i = 0; i < 6; i++)
-                {
-                    AccumulateFit(input.uv, _FirstRocks[i], _RockTargets[i], firstPlacement, firstFit);
-                    AccumulateFit(input.uv, _NextRocks[i], _RockTargets[i], _DebrisFit, nextFit);
-                }
-                float2 firstUV = FitUV(input.uv, firstPlacement) + firstFit.xy / max(1, firstFit.z);
-                float2 nextUV = FitUV(input.uv, _DebrisFit) + nextFit.xy / max(1, nextFit.z);
-                fixed3 color = lerp(tex2D(_First, firstUV).rgb, tex2D(_Next, nextUV).rgb, _Mix);
-                return fixed4(color, _Opacity);
+                    AccumulateFit(input.uv, _FrameRocks[i], _RockTargets[i], placement, fit);
+
+                float2 uv = FitUV(input.uv, placement) + fit.xy / max(1, fit.z);
+                return fixed4(tex2D(_Frame, uv).rgb, 1);
             }
             ENDCG
         }
