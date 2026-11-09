@@ -12,6 +12,13 @@ window.ZYL_DIALOGUE={
   }
   if(Array.isArray(next.freeDialogue))for(const line of next.freeDialogue)if(line&&typeof line==='object'&&line.replies==null)line.replies=[];
   if(Array.isArray(next.stomachDialogue))for(const line of next.stomachDialogue)if(line&&typeof line==='object'&&line.replies==null)line.replies=[];
+  if(Array.isArray(next.printingDialogue)&&raw.printingPoleCueConfigured!==true){
+   if(!next.printingDialogue.some(line=>line?.showPole===true)){
+    const legacy=next.printingDialogue.find(line=>line?.timerKey==='timer_mw4rs1ln_1y4yq56mf8'||(typeof line?.text==='string'&&line.text.includes('杆子')));
+    if(legacy)legacy.showPole=true;
+   }
+   next.printingPoleCueConfigured=true;
+  }
   if(Array.isArray(next.printingDialogue))for(const line of next.printingDialogue)if(line&&typeof line==='object'&&line.replies==null)line.replies=[];
   for(const key of ['farewellDialogue','freeDialogue','stomachDialogue','printingDialogue','foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue','escapeGravesDialogue','escapeEncouragement'])if(Array.isArray(next[key]))next[key].forEach(line=>ZYL_TIMER_DATA.normalizeLine(line));
   for(const key of ['foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue','escapeGravesDialogue','escapeEncouragement'])if(Array.isArray(next[key]))for(const line of next[key])if(line&&line.replies==null)line.replies=[];

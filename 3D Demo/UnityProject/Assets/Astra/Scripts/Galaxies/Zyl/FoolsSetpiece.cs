@@ -142,7 +142,7 @@ namespace AstraCabin.Galaxies.Zyl
                         dialogue.Tick(dt,false);Walker.SampleStandingAt(closingGround,closingFacing,DialoguePose,dt);ClosingShot();if(dialogue.Ended)Finish();
                         break;
                 }
-                Stage.UpdateBreathing(Elapsed);
+                if (!Complete) Stage.UpdateBreathing(Elapsed);
             }
             catch(Exception e){Fail(e.Message);}
         }
@@ -192,7 +192,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
             finally{GUI.matrix=matrix;GUI.color=color;GUI.depth=depth;}
         }
-        void RestoreView(){if(Stage!=null&&Stage.Camera)Stage.Camera.enabled=false;if(director){director.controller.cinematicWindowLock=false;if(capturedUI)director.controller.showUI=oldUI;}capturedUI=false;}
+        void RestoreView(){if(Stage!=null){if(Stage.Camera)Stage.Camera.enabled=false;Stage.RestoreBreathing();}if(director){director.controller.cinematicWindowLock=false;if(capturedUI)director.controller.showUI=oldUI;}capturedUI=false;}
         public void Clear()
         {
             RestoreView();if(Walker!=null)Walker.Dispose();Walker=null;if(Slope!=null)Slope.Dispose();Slope=null;

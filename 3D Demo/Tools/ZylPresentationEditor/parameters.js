@@ -1588,6 +1588,7 @@ window.ZYL_PARAMETERS={
     "countdownOffsetY": 0,
     "countdownColor": "#FF4D2E",
     "countdownWarningColor": "#FF160B",
+    "printingPoleCueConfigured": true,
     "printingDialogue": [
       {
         "text": "【占位台词，请在HTML中填写米霍尔的正式对白。】",

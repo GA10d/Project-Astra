@@ -10,6 +10,7 @@ namespace AstraCabin.Galaxies.Zyl
         public string[] replies=new string[0];
         public string timerKey;
         public bool pullSprout;
+        public bool showPole;
         public CountdownAction timerAction;
         public CountdownAction[] replyTimerActions;
         public static void Validate(MihuoerDialogueLine[] lines)

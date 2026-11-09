@@ -51,7 +51,7 @@ namespace AstraCabin.Galaxies.Zyl
         void ApplyTimer(int line,string phase,CountdownAction action)
         {
             var entry = parameters.printingDialogue[line];
-            if (phase == "line" && pole == null && (entry.timerKey == "timer_mw4rs1ln_1y4yq56mf8" || entry.text.Contains("杆子")))
+            if (phase == "line" && pole == null && entry.showPole)
             {
                 pole = new MihuoerPole(Exterior.MihuoerActor.Craft);
                 pole.Sample(.06f);

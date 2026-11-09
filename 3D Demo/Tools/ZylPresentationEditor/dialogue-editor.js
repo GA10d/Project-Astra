@@ -99,7 +99,7 @@ function initDialogueEditor(){
   {key:'escapeGravesDialogue',group:11,cinematic:true,title:'三座墓碑前 · 固定镜头对白',help:'勾选一段台词，米霍尔会在这句开始时弯腰拔肉芽。根须连着地面，拔出后等待设定的时间再晃动。对白和拔取演出结束后黑屏进入牵引逃亡。',empty:'无墓前对白：展示固定镜头后进入转场。'},
   {key:'escapeEncouragement',group:11,cinematic:true,title:'牵引逃亡 · 米霍尔鼓励台词',help:'战斗右侧通讯栏按段落时长播放，可自由增删。整段飞行以牵引逃亡时长为准；抵达出口会结束尚未播完的台词。',empty:'无飞行台词：右侧只显示船体和距离。'},
   {key:'foolsClosingDialogue',group:10,cinematic:true,title:'黑屏转场后 · 最后对白',help:'前段背影画面结束后先黑屏，再显现新站位。镜头固定，按顺序播放本组台词；全部结束后返回导航，仍手动结算傻瓜。',empty:'没有最后对白：新镜头显现后返回导航。'},
-  {key:'printingDialogue',group:9,title:'米霍尔需要打印构件 · 对话内容',help:'切到舷窗，米霍尔坐在现有飞船上面向玩家。每段可配置台词、时长、回复与计时操作；最后一段结束后自动返回导航，不自动结算事件。',empty:'没有对话段落：切到舷窗并就座后立即返回导航。'}
+  {key:'printingDialogue',group:9,title:'米霍尔需要打印构件 · 对话内容',help:'切到舷窗，米霍尔坐在现有飞船上面向玩家。可在任意一句勾选开始展示短杆，每次只勾选一句。每段可配置台词、时长、回复与计时操作；最后一段结束后自动返回导航，不自动结算事件。',empty:'没有对话段落：切到舷窗并就座后立即返回导航。'}
  ]){
   const group=$('group'+spec.group);const area=dialogueElement('section','dialogue-editor');
   const header=dialogueElement('div','group-title');header.append(dialogueElement('h3','',spec.title));area.append(header);
@@ -133,19 +133,20 @@ function renderDialogueSequence(spec){
   const header=dialogueElement('div','dialogue-block-head');const heading=dialogueElement('div','dialogue-heading');heading.append(dialogueHandle(spec,card,i,list.length),dialogueElement('strong','',`对话 ${String(i+1).padStart(2,'0')}`));header.append(heading);const actions=dialogueElement('div','dialogue-actions');
   const up=dialogueButton('上移',()=>change(lines=>[lines[i-1],lines[i]]=[lines[i],lines[i-1]]));up.disabled=i===0;
   const down=dialogueButton('下移',()=>change(lines=>[lines[i+1],lines[i]]=[lines[i],lines[i+1]]));down.disabled=i===list.length-1;
-  actions.append(up,down,dialogueButton('复制',()=>change(lines=>{const duplicate=ZYL_TIMER_DATA.copyLine(lines[i]);if(key==='escapeGravesDialogue')delete duplicate.pullSprout;lines.splice(i+1,0,duplicate);})),dialogueButton('删除本段',()=>change(lines=>lines.splice(i,1))));header.append(actions);card.append(header);
+  actions.append(up,down,dialogueButton('复制',()=>change(lines=>{const duplicate=ZYL_TIMER_DATA.copyLine(lines[i]);if(key==='escapeGravesDialogue')delete duplicate.pullSprout;if(key==='printingDialogue')delete duplicate.showPole;lines.splice(i+1,0,duplicate);})),dialogueButton('删除本段',()=>change(lines=>lines.splice(i,1))));header.append(actions);card.append(header);
   const textLabel=dialogueElement('label','','米霍尔台词');textLabel.htmlFor=key+'-text-'+i;card.append(textLabel);
   const text=dialogueElement('textarea');Object.assign(text,{id:textLabel.htmlFor,rows:3,maxLength:1000,value:line.text,required:true});text.onchange=()=>{change(lines=>lines[i].text=text.value,false);setDialogueSearch(card,spec,values[key][i]);};card.append(text);
   const timing=dialogueElement('div','dialogue-timing'),label=dialogueElement('label','','米霍尔台词持续时间');label.htmlFor=key+'-duration-'+i;timing.append(label);
   const duration=dialogueElement('input');Object.assign(duration,{id:label.htmlFor,type:'number',min:.1,max:600,step:'any',value:line.duration,required:true});duration.onchange=()=>change(lines=>lines[i].duration=duration.value.trim()===''?null:Number(duration.value),false);timing.append(duration,dialogueElement('span','','秒'));card.append(timing);renderTimerAction(card,line.timerAction,action=>change(lines=>{ZYL_TIMER_DATA.normalizeLine(lines[i]);lines[i].timerAction=action;}));
-  if(key==='escapeGravesDialogue'){
+  if(key==='escapeGravesDialogue'||key==='printingDialogue'){
+   const property=key==='printingDialogue'?'showPole':'pullSprout';
    const cue=dialogueElement('label','dialogue-timing');
-   const checkbox=dialogueElement('input');Object.assign(checkbox,{type:'checkbox',checked:line.pullSprout===true});
+   const checkbox=dialogueElement('input');Object.assign(checkbox,{type:'checkbox',checked:line[property]===true});
    checkbox.onchange=()=>change(lines=>{
-    if(checkbox.checked)lines.forEach(row=>delete row.pullSprout);
-    if(checkbox.checked)lines[i].pullSprout=true;else delete lines[i].pullSprout;
+    if(checkbox.checked)lines.forEach(row=>delete row[property]);
+    if(checkbox.checked)lines[i][property]=true;else delete lines[i][property];
    });
-   cue.append(checkbox,dialogueElement('span','','在这句开始拔肉芽'));card.append(cue);
+   cue.append(checkbox,dialogueElement('span','',property==='showPole'?'在这句开始展示短杆':'在这句开始拔肉芽'));card.append(cue);
   }
   if(spec.cinematic){card.append(dialogueElement('p','dialogue-help','此处为连续演出对白，不设置玩家回复。'));spec.list.append(card);return;}
   const replyHead=dialogueElement('div','dialogue-block-head');replyHead.append(dialogueElement('strong','','玩家回复选项'),dialogueButton('＋ 增加玩家回复选项',()=>change(lines=>{const row=lines[i];ZYL_TIMER_DATA.normalizeLine(row);row.replies.push('请填写玩家回复。');row.replyTimerActions.push(null);})));card.append(replyHead);

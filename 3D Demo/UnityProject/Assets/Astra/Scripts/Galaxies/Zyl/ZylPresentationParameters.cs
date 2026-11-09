@@ -100,6 +100,7 @@ namespace AstraCabin.Galaxies.Zyl {
   public string countdownColor="#FF4D2E",countdownWarningColor="#FF160B";
   public float stomachWaterHold=1.5f,stomachTurnDuration=6f;
   public MihuoerDialogueLine[] stomachDialogue=new[]{new MihuoerDialogueLine{text="我们被吞进它的肚子里了。",duration=5f,replies=new[]{"这里到底是什么地方？"}},new MihuoerDialogueLine{text="先别慌，我们得想办法出去。",duration=6f,replies=new[]{"先看看周围吧。"}}};
+  public bool printingPoleCueConfigured;
   public MihuoerDialogueLine[] printingDialogue=new[]{new MihuoerDialogueLine{text="【占位台词，请在HTML中填写米霍尔的正式对白。】",duration=5f,replies=new string[0]}};
   public MihuoerDialogueLine[] freeDialogue; // null means legacy config; an explicit empty array means no free dialogue.
   public void NormalizeDialogue(){if(freeDialogue==null)freeDialogue=new[]{new MihuoerDialogueLine{text=explainText,duration=explainDuration},new MihuoerDialogueLine{text=thinkText,duration=600f}};}
@@ -161,6 +162,7 @@ namespace AstraCabin.Galaxies.Zyl {
    catch(Exception e){Debug.LogError("zyl演出参数无效，整份回退默认值："+e.Message);var fallback=new ZylPresentationParameters();fallback.NormalizeDialogue();return fallback;}
   }
   public void Validate(){
+   NormalizePrintingCue();
    Check("escapeFlightDuration",escapeFlightDuration,24f,180f);
    Check("escapeExitDistance",escapeExitDistance,1000f,100000f);
    Check("escapeHullLoss",escapeHullLoss,5f,70f);
@@ -325,6 +327,20 @@ namespace AstraCabin.Galaxies.Zyl {
    if(portalNearDistance>=portalInitialDistance)throw new InvalidDataException("portalNearDistance必须小于portalInitialDistance");
    if(portalInitialOpening>=portalFinalOpening)throw new InvalidDataException("portalInitialOpening必须小于portalFinalOpening");
    if(visitorArrivalDuration>=visitorInvitationTime)throw new InvalidDataException("visitorArrivalDuration必须小于visitorInvitationTime");
+  }
+  void NormalizePrintingCue()
+  {
+   if(printingDialogue == null) return;
+   if(!printingPoleCueConfigured)
+   {
+    var legacy = Array.Find(printingDialogue, line => line != null &&
+     (line.timerKey == "timer_mw4rs1ln_1y4yq56mf8" || (line.text?.Contains("杆子") ?? false)));
+    if(legacy != null && !Array.Exists(printingDialogue, line => line != null && line.showPole))
+     legacy.showPole = true;
+    printingPoleCueConfigured = true;
+   }
+   if(Array.FindAll(printingDialogue, line => line != null && line.showPole).Length > 1)
+    throw new InvalidDataException("只能勾选一句台词开始展示短杆");
   }
   static void ValidateCinematicDialogue(MihuoerDialogueLine[] lines){MihuoerDialogueLine.Validate(lines);foreach(var line in lines)if(line.replies.Length>0)throw new InvalidDataException("连续演出对白不支持玩家回复");}
   static void CheckText(string key,string value,int max){

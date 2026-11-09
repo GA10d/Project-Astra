@@ -22,11 +22,19 @@ namespace AstraCabin.Galaxies.Zyl
         readonly List<Transform> microbes=new List<Transform>();
         readonly List<Vector3> targets=new List<Vector3>(),scatter=new List<Vector3>();
         readonly List<Material> ownedMaterials=new List<Material>();
-        readonly List<Renderer> walls=new List<Renderer>();
-        readonly List<Material[]> originalMaterials=new List<Material[]>();
         readonly List<Material> membranes=new List<Material>();
+        static readonly int BreathTime = Shader.PropertyToID("_BreathPreviewTime");
+        readonly List<(Renderer renderer, int slot, float previousTime)> breathingWalls = new List<(Renderer, int, float)>();
+        readonly MaterialPropertyBlock breathingBlock = new MaterialPropertyBlock();
+        float currentBreathTime = float.NaN;
         readonly List<Mesh> meshes=new List<Mesh>();
-        Transform shaft,tip,lip,pocket;
+        Transform shaft,tip;
+        MeshFilter wallFilter;
+        MeshRenderer wallRenderer;
+        Material[] originalWallMaterials;
+        Mesh originalWallMesh;
+        public float IndentDepth { get; private set; }
+        const float TipRadius = .12f, RestGap = .28f;
         Vector3 axis,right,up,forward,cutRight,cutUp,wordCenter,finalLook;
         float distance;
         readonly float microbeSpeed;
@@ -57,8 +65,12 @@ namespace AstraCabin.Galaxies.Zyl
             var shotRight=Vector3.Cross(up,shotForward).normalized;
             Base=craft.position+up*.38f+shotRight*.85f;
             axis=(up+shotRight*.64f+shotForward*.14f).normalized;
-            Contact=FindCeiling(environment,Base,axis);distance=Vector3.Distance(Base,Contact);
+            var contact=FindCeilingHit(environment,Base,axis,out wallFilter);
+            Contact=contact.point;distance=Vector3.Distance(Base,Contact);
             if(distance<6)throw new InvalidOperationException("杆子上方没有找到足够高的胃壁，请检查飞船位置。");
+            Vector3 intoWall = Vector3.Dot(contact.normal,axis) < 0 ? -contact.normal : contact.normal;
+            var surfaceRight = Vector3.Cross(forward, intoWall).normalized;
+            var surfaceUp = Vector3.Cross(intoWall, surfaceRight).normalized;
             cutRight=Vector3.Cross(forward,axis).normalized;cutUp=Vector3.Cross(axis,cutRight).normalized;
             FirstCameraPosition=ClearCamera(environment,craft,craft.position+up*1.9f-shotForward*4.5f,up,shotForward);
             FinalCameraPosition=ClearCamera(environment,craft,craft.position+up*2.4f-shotForward*5f,up,shotForward);
@@ -74,21 +86,42 @@ namespace AstraCabin.Galaxies.Zyl
             tip=Primitive("Rounded probing tip",PrimitiveType.Sphere,metal);tip.localScale=new Vector3(.24f,.24f,.24f);
             var socket=Primitive("Pole base collar",PrimitiveType.Cylinder,rim);socket.position=Base;socket.rotation=Quaternion.FromToRotation(Vector3.up,axis);socket.localScale=new Vector3(.44f,.22f,.44f);
             var shader=Resources.Load<Shader>("Galaxies/Zyl/Fools/FoolsMucosa");if(!shader)throw new InvalidOperationException("都是傻瓜：胃壁裂口Shader缺失。");
-            foreach(var renderer in environment.GetComponentsInChildren<Renderer>(true))
+            // All wall chunks must share one phase at their adjoining vertices.
+            foreach (var renderer in environment.GetComponentsInChildren<MeshRenderer>(true))
             {
-                var original=renderer.sharedMaterials;var replacement=(Material[])original.Clone();bool changed=false;
-                for(int i=0;i<original.Length;i++)if(original[i]&&original[i].shader&&original[i].shader.name=="Astra/Zyl/BreathingMucosa")
+                var materials = renderer.sharedMaterials;
+                for (int slot = 0; slot < materials.Length; slot++)
                 {
-                    var copy=new Material(original[i]);copy.shader=shader;copy.name=original[i].name+" | private Zyl15 incision";
-                    copy.SetVector("_CutCenter",Contact);copy.SetVector("_CutNormal",axis);copy.SetVector("_CutRight",cutRight);copy.SetVector("_CutUp",cutUp);
-                    membranes.Add(copy);ownedMaterials.Add(copy);replacement[i]=copy;changed=true;
+                    var material = materials[slot];
+                    if (!material || !material.shader || material.shader.name != "Astra/Zyl/BreathingMucosa") continue;
+                    ReadBreathingBlock(renderer, slot);
+                    float previousTime = breathingBlock.HasFloat(BreathTime)
+                        ? breathingBlock.GetFloat(BreathTime) : material.GetFloat(BreathTime);
+                    breathingWalls.Add((renderer, slot, previousTime));
                 }
-                if(changed){walls.Add(renderer);originalMaterials.Add(original);renderer.sharedMaterials=replacement;}
+            }
+
+            wallRenderer = wallFilter.GetComponent<MeshRenderer>();
+            originalWallMaterials = wallRenderer.sharedMaterials;
+            var replacement = (Material[])originalWallMaterials.Clone();
+            for(int i=0;i<originalWallMaterials.Length;i++)
+            {
+                var original = originalWallMaterials[i];
+                if(!original || !original.shader || original.shader.name!="Astra/Zyl/BreathingMucosa") continue;
+                var copy = new Material(original) { shader = shader, name = original.name + " | private Zyl15 incision" };
+                copy.SetVector("_CutCenter",Contact);
+                copy.SetVector("_CutNormal",intoWall);
+                copy.SetVector("_PoleAxis",axis);
+                copy.SetVector("_CutRight",surfaceRight);
+                copy.SetVector("_CutUp",surfaceUp);
+                membranes.Add(copy);ownedMaterials.Add(copy);replacement[i]=copy;
             }
             if(membranes.Count==0)throw new InvalidOperationException("都是傻瓜：没有找到胃壁材质。");
-            lip=new GameObject("Wet irregular tissue lips").transform;lip.SetParent(Root,true);lip.position=Contact-axis*.10f;lip.rotation=Quaternion.LookRotation(axis,cutUp);
-            var mesh=BuildLip();meshes.Add(mesh);lip.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;lip.gameObject.AddComponent<MeshRenderer>().sharedMaterial=Material("Wet incision edge",new Color(.26f,.045f,.05f),0,.04f);lip.gameObject.layer=ZylStomachEnvironment.EnvironmentLayer;
-            pocket=Primitive("Dark cavity behind split",PrimitiveType.Sphere,Material("Interior depth",new Color(.012f,.004f,.007f)));pocket.position=Contact+axis*.45f;pocket.rotation=lip.rotation;
+            wallRenderer.sharedMaterials = replacement;
+            originalWallMesh = wallFilter.sharedMesh;
+            var contactMesh = FoolsContactMesh.Refine(wallFilter, Contact);
+            meshes.Add(contactMesh);
+            wallFilter.sharedMesh = contactMesh;
             BuildMicrobes();
             var lightObject=new GameObject("Zyl15 | soft pole and membrane fill");lightObject.transform.SetParent(Root,true);lightObject.transform.position=Contact-axis*3;
             var light=lightObject.AddComponent<Light>();light.type=LightType.Point;light.color=new Color(1,.68f,.45f);light.range=17;light.intensity=1.2f;light.cullingMask=1<<ZylStomachEnvironment.EnvironmentLayer;
@@ -125,9 +158,12 @@ namespace AstraCabin.Galaxies.Zyl
             }
             finally{Physics.queriesHitBackfaces=previous;foreach(var go in proxies){go.SetActive(false);Release(go);}}
         }
-        public static Vector3 FindCeiling(Transform environment,Vector3 origin,Vector3 direction)
+        public static Vector3 FindCeiling(Transform environment,Vector3 origin,Vector3 direction) =>
+            FindCeilingHit(environment,origin,direction,out _).point;
+
+        static RaycastHit FindCeilingHit(Transform environment,Vector3 origin,Vector3 direction,out MeshFilter hitFilter)
         {
-            float nearest=float.MaxValue;Vector3 point=Vector3.zero;bool previous=Physics.queriesHitBackfaces;
+            float nearest=float.MaxValue;RaycastHit contact=default;hitFilter=null;bool previous=Physics.queriesHitBackfaces;
             Physics.queriesHitBackfaces=true;
             try
             {
@@ -140,25 +176,14 @@ namespace AstraCabin.Galaxies.Zyl
                     {
                         probe.transform.SetPositionAndRotation(filter.transform.position,filter.transform.rotation);probe.transform.localScale=filter.transform.lossyScale;
                         var collider=probe.AddComponent<MeshCollider>();collider.sharedMesh=filter.sharedMesh;
-                        RaycastHit hit;if(collider.Raycast(new Ray(origin,direction),out hit,250)&&hit.distance>4&&hit.distance<nearest){nearest=hit.distance;point=hit.point;}
+                        RaycastHit hit;if(collider.Raycast(new Ray(origin,direction),out hit,250)&&hit.distance>4&&hit.distance<nearest){nearest=hit.distance;contact=hit;hitFilter=filter;}
                         collider.enabled=false;
                     }
                     finally{probe.SetActive(false);Release(probe);}
                 }
             }
             finally{Physics.queriesHitBackfaces=previous;}
-            if(nearest==float.MaxValue)throw new InvalidOperationException("杆子方向未命中胃壁顶部；未使用虚构终点。");return point;
-        }
-        Mesh BuildLip()
-        {
-            const int count=80;var vertices=new Vector3[count*3];var triangles=new int[count*12];
-            for(int n=0;n<count;n++)
-            {
-                float a=n*Mathf.PI*2/count;float noise=1+.055f*Mathf.Sin(a*7)+.03f*Mathf.Sin(a*13+1);
-                for(int ring=0;ring<3;ring++)vertices[n*3+ring]=new Vector3(Mathf.Cos(a)*(1.35f+ring*.2f)*noise,Mathf.Sin(a)*(.46f+ring*.17f)*noise,ring==1?-.16f:.10f);
-                for(int ring=0;ring<2;ring++){int i=n*12+ring*6,v=n*3+ring,next=((n+1)%count)*3+ring;triangles[i]=v;triangles[i+1]=next;triangles[i+2]=v+1;triangles[i+3]=next;triangles[i+4]=next+1;triangles[i+5]=v+1;}
-            }
-            var mesh=new Mesh{name="Irregular split mucosa lip"};mesh.vertices=vertices;mesh.triangles=triangles;mesh.RecalculateNormals();mesh.RecalculateBounds();return mesh;
+            if(nearest==float.MaxValue)throw new InvalidOperationException("杆子方向未命中胃壁顶部；未使用虚构终点。");return contact;
         }
         static Mesh BuildMicrobeMesh()
         {
@@ -232,22 +257,31 @@ namespace AstraCabin.Galaxies.Zyl
             }
         }
         static float Ease(float a,float b,float t){return Mathf.SmoothStep(0,1,Mathf.InverseLerp(a,b,t));}
-        public static float Jab(float t,float start,float strength)
+        static float Thrust(float time, float start, float pull, float depth, float windup, float drive, float release)
         {
-            float u=(t-start)/1.35f;if(u<0||u>1)return 0;return Mathf.Sin(u*Mathf.PI)*strength;
+            float t = time - start;
+            if (t <= 0f || t >= windup + drive + release) return 0f;
+            if (t < windup) return -pull * Ease(0f, windup, t);
+            t -= windup;
+            if (t < drive) return Mathf.Lerp(-pull, RestGap + depth, Ease(0f, drive, t));
+            return (RestGap + depth) * (1f - Ease(drive, drive + release, t));
         }
+
         public void Sample(float t)
         {
             TimeSample=Mathf.Max(0,t);t=TimeSample;
             float swarmTime=t<=BurstStart?t:BurstStart+(t-BurstStart)*microbeSpeed;
-            float grown=Mathf.Lerp(.06f,distance-.35f,Ease(0,10.7f,t));
-            float impact=Jab(t,12.1f,.32f)+Jab(t,14.4f,.32f)+Jab(t,16.8f,.9f);
+            float grown=Mathf.Lerp(.06f,distance-TipRadius-RestGap,Ease(0,10.7f,t));
+            float jab = Thrust(t, 12.1f, .30f, .22f, .28f, .18f, .42f)
+                + Thrust(t, 14.4f, .30f, .22f, .28f, .18f, .42f)
+                + Thrust(t, 16.8f, 1.10f, .85f, .48f, .13f, .72f);
             float retract=Mathf.Lerp(0,1.3f,Ease(19,21,t));
-            float length=grown+impact-retract;
+            float length=grown+jab-retract;
+            IndentDepth=Mathf.Max(0f,length+TipRadius-distance);
             Tip=Base+axis*length;shaft.position=(Base+Tip)*.5f;shaft.rotation=Quaternion.FromToRotation(Vector3.up,axis);shaft.localScale=new Vector3(.15f,length*.5f,.15f);tip.position=Tip;
             Opening=Ease(TearStart,20.6f,t);
-            foreach(var m in membranes){m.SetFloat("_CutOpen",Opening);m.SetFloat("_Poke",impact);m.SetFloat("_BreathPreviewTime",t);}
-            lip.gameObject.SetActive(Opening>.001f);pocket.gameObject.SetActive(Opening>.001f);lip.localScale=new Vector3(1,Mathf.Lerp(.12f,1,Opening),1)*Mathf.Lerp(.01f,1,Opening);pocket.localScale=new Vector3(2.8f,Mathf.Lerp(.02f,1f,Opening),.6f)*Opening;
+            foreach(var m in membranes){m.SetFloat("_CutOpen",Opening);m.SetFloat("_Poke",IndentDepth);}
+            UpdateBreathing(t);
             if(t<CloseCut){Camera.transform.position=FirstCameraPosition;Camera.transform.rotation=Quaternion.LookRotation(Vector3.Lerp(Base+up*.7f,Tip,Mathf.Lerp(.05f,.92f,Ease(1,9,t)))-FirstCameraPosition,up);Camera.fieldOfView=70;}
             else if(swarmTime<WordCut){Camera.transform.position=Contact-axis*6+cutRight*2+cutUp*.25f;Camera.transform.rotation=Quaternion.LookRotation(Contact-Camera.transform.position,cutUp);Camera.fieldOfView=46;}
             else
@@ -270,7 +304,7 @@ namespace AstraCabin.Galaxies.Zyl
                 float gatherEnd=WordReady-(i%13)*.047f;
                 float cloudTime=Mathf.Min(swarmTime,gatherStart);
                 float burst=Ease(born,born+2.1f,cloudTime);
-                var cloud=Contact+Vector3.Lerp(-axis*.2f,scatter[i],burst);
+                var cloud=Contact+Vector3.Lerp(axis*.64f,scatter[i],burst);
                 cloud+=cutRight*Mathf.Sin(cloudTime*2+i*.73f)*.18f+cutUp*Mathf.Cos(cloudTime*1.7f+i*.51f)*.16f;
 
                 float u=Ease(gatherStart,gatherEnd,swarmTime);
@@ -287,7 +321,36 @@ namespace AstraCabin.Galaxies.Zyl
             }
         }
         public int VisibleMicrobes {get{return microbes.FindAll(m=>m&&m.gameObject.activeSelf).Count;}}
-        public void UpdateBreathing(float time){foreach(var material in membranes)material.SetFloat("_BreathPreviewTime",time);}
+        void ReadBreathingBlock(Renderer renderer, int slot)
+        {
+            renderer.GetPropertyBlock(breathingBlock, slot);
+            if (breathingBlock.isEmpty) renderer.GetPropertyBlock(breathingBlock);
+        }
+
+        void SetBreathingTime(Renderer renderer, int slot, float time)
+        {
+            if (!renderer) return;
+            // Keep the authored-to-runtime matrices and any other renderer overrides.
+            ReadBreathingBlock(renderer, slot);
+            breathingBlock.SetFloat(BreathTime, time);
+            renderer.SetPropertyBlock(breathingBlock, slot);
+        }
+
+        public void UpdateBreathing(float time)
+        {
+            if (currentBreathTime == time) return;
+            currentBreathTime = time;
+            foreach (var wall in breathingWalls)
+                SetBreathingTime(wall.renderer, wall.slot, time);
+        }
+
+        internal void RestoreBreathing()
+        {
+            if (float.IsNaN(currentBreathTime)) return;
+            currentBreathTime = float.NaN;
+            foreach (var wall in breathingWalls)
+                SetBreathingTime(wall.renderer, wall.slot, wall.previousTime);
+        }
         public void SampleReturn(float time,float duration,float hold=4.5f)
         {
             Sample(WordReadyTime+hold);
@@ -307,7 +370,10 @@ namespace AstraCabin.Galaxies.Zyl
         public void Dispose()
         {
             if(Camera)Camera.enabled=false;
-            for(int i=0;i<walls.Count;i++)if(walls[i])walls[i].sharedMaterials=originalMaterials[i];walls.Clear();originalMaterials.Clear();
+            RestoreBreathing();
+            breathingWalls.Clear();
+            if(wallFilter && originalWallMesh)wallFilter.sharedMesh=originalWallMesh;
+            if(wallRenderer && originalWallMaterials != null)wallRenderer.sharedMaterials=originalWallMaterials;
             if(Root){Root.gameObject.SetActive(false);Release(Root.gameObject);Root=null;}
             foreach(var m in ownedMaterials)if(m)Release(m);ownedMaterials.Clear();membranes.Clear();
             foreach(var mesh in meshes)if(mesh)Release(mesh);meshes.Clear();microbes.Clear();
