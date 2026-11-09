@@ -63,7 +63,7 @@ namespace AstraCabin.Galaxies.Zyl {
    var light=new GameObject("Encounter exterior key");light.transform.SetParent(root,false);light.transform.position=new Vector3(2,5,-4);var lamp=light.AddComponent<Light>();lamp.type=LightType.Point;lamp.range=130;lamp.intensity=.8f;lamp.cullingMask=1<<26;lamp.shadows=LightShadows.None;
    var vc=new GameObject("ASTRA LINK live exterior camera");vc.transform.SetParent(root,false);videoCamera=vc.AddComponent<Camera>();videoCamera.enabled=false;videoCamera.cullingMask=(1<<26)|(1<<27);videoCamera.nearClipPlane=.05f;videoCamera.farClipPlane=p.videoFarClip;videoCamera.fieldOfView=p.videoFov;videoCamera.clearFlags=CameraClearFlags.SolidColor;videoCamera.backgroundColor=new Color(.005f,.01f,.025f);
    Video=new RenderTexture(1280,720,24){name="Mihuoer live call"};Video.Create();videoCamera.targetTexture=Video;videoCamera.aspect=16f/9f;CreateCallEnvironment();
-   d.computer.SetEventAlert("舷窗检测到未知身份生物","舷窗检测到未知身份生物");d.computer.Open();d.PlayCue("alert",.6f);
+   d.computer.SetEventAlert(p.promptEncounterTitle, p.promptEncounterBody);d.computer.Open();d.PlayCue("alert",.6f);
   }
   void Layer(GameObject value,int layer=26){foreach(var t in value.GetComponentsInChildren<Transform>(true))t.gameObject.layer=layer;}
   void PrepareMaterials(Transform value,bool preserveSurface=false){foreach(var renderer in value.GetComponentsInChildren<Renderer>(true)){

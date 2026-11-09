@@ -199,7 +199,7 @@ namespace AstraCabin
                     Message = ActiveGalaxyId == "zyl" ? "" : "演出已完成，返回导航模式选择处置方案。";
                     if (IsZylFarewell(e))
                     {
-                        computer.SetEventAlert("动力恢复", Galaxies.Zyl.FarewellSetpiece.EngineRestoredMessage);
+                        Director.farewell.ShowRecoveryAlert();
                         Director.PlayCue("success", .5f);
                     }
                     else if (Message.Length > 0) controller.ShowNotice(Message);

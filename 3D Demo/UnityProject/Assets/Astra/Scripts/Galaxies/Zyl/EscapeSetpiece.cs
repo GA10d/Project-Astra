@@ -80,7 +80,7 @@ namespace AstraCabin.Galaxies.Zyl
             oldUI=director.controller.showUI;captured=true;director.controller.showUI=false;
             dialogue=Dialogue(p.escapeGravesDialogue,"graves");
             Walker.SampleStandingAt(actorGround,actorFacing,GravesPose,0);
-            sprout = new EscapeSprout(GravesRoot, Walker, sproutSoil, actorGround, actorFacing, Ground.Up, resources, plantedSprout);
+            sprout = new EscapeSprout(GravesRoot, Walker, sproutSoil, actorGround, actorFacing, Ground.Up, resources, plantedSprout, p);
             if(plantedSprout) plantedSprout.gameObject.SetActive(false);
             shotPosition = Camera.transform.position;
             shotRotation = Camera.transform.rotation;
@@ -147,6 +147,7 @@ namespace AstraCabin.Galaxies.Zyl
                             shakeTime += dt;
                             ShakeGravesCamera(1f - TransitionAlpha);
                         }
+                        sprout.AdvanceWave(shakeTime + EscapeSprout.LiftEnd + p.escapeSproutShakeDelay, dt);
                         if(phaseTime>=p.escapeFadeDuration){TransitionAlpha=1;Enter(Step.BlackBeforeBattle);}break;
                     case Step.BlackBeforeBattle:
                         if(!Painted()||phaseTime<.15f)return;
@@ -157,7 +158,8 @@ namespace AstraCabin.Galaxies.Zyl
                         TransitionAlpha=1-Mathf.SmoothStep(0,1,Mathf.Clamp01(phaseTime/p.escapeFadeDuration));
                         if(phaseTime>=p.escapeFadeDuration){TransitionAlpha=0;Enter(Step.Flying);}break;
                     case Step.Flying:
-                        Flight.Tick(dt);encouragement.Tick(dt,false);if(encouragement.Current!=null)Combat.EscapeText=encouragement.Current.text;
+                        float playbackDelta = dt * p.escapePlaybackSpeed;
+                        Flight.Tick(playbackDelta);encouragement.Tick(playbackDelta,false);if(encouragement.Current!=null)Combat.EscapeText=encouragement.Current.text;
                         if(Flight.Finished){Curtain.ResetPaintConfirmation();TransitionAlpha=.001f;Enter(Step.FadeToExit);}break;
                     case Step.FadeToExit:
                         TransitionAlpha=Mathf.SmoothStep(0,1,Mathf.Clamp01(phaseTime/p.escapeFadeDuration));

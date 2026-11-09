@@ -12,7 +12,8 @@ window.ZYL_PARAMETERS={
     "14 · 泰德野里_米霍尔需要打印构件",
     "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
     "16 · 泰德野里_逃出生天",
-    "17 · 泰德野里_别离"
+    "17 · 泰德野里_别离",
+    "电脑 · 演出提示框"
   ],
   "fields": [
     {
@@ -769,13 +770,23 @@ window.ZYL_PARAMETERS={
     },
     {
       "group": "16 · 泰德野里_逃出生天",
+      "key": "escapePlaybackSpeed",
+      "label": "战斗演出速度",
+      "value": 1,
+      "min": 0.5,
+      "max": 3,
+      "unit": "倍",
+      "desc": "只调整战斗窗口内的牵引、障碍和鼓励对白。实际牵引时长＝牵引逃亡时长 ÷ 速度。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
       "key": "escapeFlightDuration",
       "label": "牵引逃亡时长",
       "value": 32,
       "min": 24,
       "max": 180,
       "unit": "秒",
-      "desc": "从开始牵引到抵达出口的时间。短于 42 秒时，胃壁、障碍和牵引动作会随演出一起加速。"
+      "desc": "1 倍速时从开始牵引到抵达出口的基准时长。播放速度会同时缩放动作与鼓励对白。"
     },
     {
       "group": "16 · 泰德野里_逃出生天",
@@ -806,6 +817,46 @@ window.ZYL_PARAMETERS={
       "max": 8,
       "unit": "秒",
       "desc": "肉芽提起到手上后，等待多久开始墓前镜头晃动。仅在勾选拔取台词时生效。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeSproutWaveAmplitude",
+      "label": "肉芽未拔 · 起伏幅度",
+      "value": 2,
+      "min": 0,
+      "max": 15,
+      "unit": "% 半径",
+      "desc": "0 时不改变球体表面，数值越高凸起与凹陷越明显。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeSproutWaveHz",
+      "label": "肉芽未拔 · 起伏频率",
+      "value": 0.8,
+      "min": 0.1,
+      "max": 8,
+      "unit": "Hz",
+      "desc": "拔出前每秒起伏次数。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeSproutPulledWaveAmplitude",
+      "label": "肉芽拔出后 · 起伏幅度",
+      "value": 7,
+      "min": 0,
+      "max": 15,
+      "unit": "% 半径",
+      "desc": "拔出后平滑过渡到该值。请设得高于未拔时。"
+    },
+    {
+      "group": "16 · 泰德野里_逃出生天",
+      "key": "escapeSproutPulledWaveHz",
+      "label": "肉芽拔出后 · 起伏频率",
+      "value": 2.4,
+      "min": 0.1,
+      "max": 8,
+      "unit": "Hz",
+      "desc": "拔出后平滑加快。请设得高于未拔时。"
     },
     {
       "group": "16 · 泰德野里_逃出生天",
@@ -1119,13 +1170,330 @@ window.ZYL_PARAMETERS={
       "max": 3,
       "unit": "秒",
       "desc": "碎石显现时达到峰值，随后在该时间内平滑回落。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptImpactTitle",
+      "label": "撞击警报 · 标题",
+      "value": "舱体遭遇撞击",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptImpactBody",
+      "label": "撞击警报 · 正文",
+      "value": "应急电源已启动\n前往 B 墙取下维修锤\n修复 D 墙裂痕：0 / 3",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptRepairProgressTitle",
+      "label": "维修进度 · 标题",
+      "value": "舱体遭遇撞击",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptRepairProgressBody",
+      "label": "维修进度 · 正文",
+      "value": "应急电源维持中\n修复 D 墙裂痕：{repaired} / 3",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "保留 {repaired} 可显示已修复裂痕数量。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptRepairBlockedTitle",
+      "label": "维修完成 · 引擎仍堵塞 · 标题",
+      "value": "舱体未完全修复",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptRepairBlockedBody",
+      "label": "维修完成 · 引擎仍堵塞 · 正文",
+      "value": "三处裂痕已封闭\n主电源恢复\n引擎被未知物质堵塞",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。实体屏幕将最后一行标红。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptRepairCompleteTitle",
+      "label": "维修完成 · 危机解除 · 标题",
+      "value": "舱体修复完成",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptRepairCompleteBody",
+      "label": "维修完成 · 危机解除 · 正文",
+      "value": "三处裂痕已封闭\n主电源恢复 / 危机解除",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptVisitorTitle",
+      "label": "近距飞行物 · 标题",
+      "value": "不明飞行物靠近",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptVisitorBody",
+      "label": "近距飞行物 · 正文",
+      "value": "近距目标已停泊于观察窗外\n检测到生命体 / 对方正在招手",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptMirrorContactTitle",
+      "label": "镜像舱体 · 初次检测 · 标题",
+      "value": "检测到重复船体编号",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptMirrorContactBody",
+      "label": "镜像舱体 · 初次检测 · 正文",
+      "value": "目标舱体：CABIN 04\n信号延迟：0.5 秒\n另一名乘员正在模仿你的动作",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptMirrorAnomalyTitle",
+      "label": "镜像舱体 · 动作异常 · 标题",
+      "value": "检测到重复船体编号",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptMirrorAnomalyBody",
+      "label": "镜像舱体 · 动作异常 · 正文",
+      "value": "目标舱体：CABIN 04\n动作时序异常 / 对方的动作开始领先",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptSortingArrivalTitle",
+      "label": "分拣站 · 抵达 · 标题",
+      "value": "抵达自动分拣站",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptSortingArrivalBody",
+      "label": "分拣站 · 抵达 · 正文",
+      "value": "接管运输中 / 无需人工操作\n检测对象：生物传感器 ×1",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptSortingScanTitle",
+      "label": "分拣站 · 检测 · 标题",
+      "value": "正在检测生物传感器",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptSortingScanBody",
+      "label": "分拣站 · 检测 · 正文",
+      "value": "生命体征稳定 / 认知功能残余正常\n正在评估剩余使用价值……",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptSortingPassTitle",
+      "label": "分拣站 · 检测通过 · 标题",
+      "value": "检测通过 / 再次投放",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptSortingPassBody",
+      "label": "分拣站 · 检测通过 · 正文",
+      "value": "生物传感器 ×1 / 状态：可继续使用\n包装无需更换。感谢您的持续服役。",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptSortingDispatchTitle",
+      "label": "分拣站 · 分流 · 标题",
+      "value": "生物传感器 ×1",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptSortingDispatchBody",
+      "label": "分拣站 · 分流 · 正文",
+      "value": "状态：可继续使用\n自动分流目的地：再次投放",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptPortalTitle",
+      "label": "11 · 传送门 · 标题",
+      "value": "舷窗检测到不明物体",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptPortalBody",
+      "label": "11 · 传送门 · 正文",
+      "value": "舷窗外检测到不明物体，引擎动力损坏无法躲避",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptEncounterTitle",
+      "label": "12 · 舷窗来客 · 标题",
+      "value": "舷窗检测到未知身份生物",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptEncounterBody",
+      "label": "12 · 舷窗来客 · 正文",
+      "value": "舷窗检测到未知身份生物",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptRecoveryTitle",
+      "label": "17 · 动力恢复 · 标题",
+      "value": "动力恢复",
+      "type": "text",
+      "maxLength": 48,
+      "unit": "标题",
+      "desc": "仅用于 zyl 航程的演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptRecoveryBody",
+      "label": "17 · 动力恢复 · 正文",
+      "value": "引擎堵塞物质被分解，动力恢复。",
+      "type": "text",
+      "maxLength": 240,
+      "unit": "正文",
+      "desc": "支持换行。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptHeader",
+      "label": "桌面提示框前缀",
+      "value": "舰载监控 / ",
+      "type": "text",
+      "maxLength": 32,
+      "unit": "文字",
+      "desc": "共用于 zyl 演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptViewButton",
+      "label": "查看按钮",
+      "value": "◉  查看",
+      "type": "text",
+      "maxLength": 32,
+      "unit": "文字",
+      "desc": "共用于 zyl 演出提示框。"
+    },
+    {
+      "group": "电脑 · 演出提示框",
+      "key": "promptConfirmButton",
+      "label": "确认按钮",
+      "value": "◉  确认",
+      "type": "text",
+      "maxLength": 32,
+      "unit": "文字",
+      "desc": "共用于 zyl 演出提示框。"
     }
   ],
   "defaults": {
     "farewellIllustrationEnabled": true,
     "farewellIllustrationStartOffset": 0,
     "farewellIllustrationSpeed": 1,
-    "farewellIllustrationFrames": [true, true, true, true, true, true],
+    "farewellIllustrationFrames": [
+      true,
+      true,
+      true,
+      true,
+      true,
+      true
+    ],
     "schemaVersion": 1,
     "escapeSproutShakeDelay": 1.15,
     "repairAlarmDelay": 3,
@@ -1345,7 +1713,43 @@ window.ZYL_PARAMETERS={
     "farewellShakeSustain": 0.42,
     "farewellImpactDecay": 1.4,
     "foolsMicrobeSpeed": 1.35,
-    "foolsOrbitTargetFov": 62
+    "foolsOrbitTargetFov": 62,
+    "promptImpactTitle": "舱体遭遇撞击",
+    "promptImpactBody": "应急电源已启动\n前往 B 墙取下维修锤\n修复 D 墙裂痕：0 / 3",
+    "promptRepairProgressTitle": "舱体遭遇撞击",
+    "promptRepairProgressBody": "应急电源维持中\n修复 D 墙裂痕：{repaired} / 3",
+    "promptRepairBlockedTitle": "舱体未完全修复",
+    "promptRepairBlockedBody": "三处裂痕已封闭\n主电源恢复\n引擎被未知物质堵塞",
+    "promptRepairCompleteTitle": "舱体修复完成",
+    "promptRepairCompleteBody": "三处裂痕已封闭\n主电源恢复 / 危机解除",
+    "promptVisitorTitle": "不明飞行物靠近",
+    "promptVisitorBody": "近距目标已停泊于观察窗外\n检测到生命体 / 对方正在招手",
+    "promptMirrorContactTitle": "检测到重复船体编号",
+    "promptMirrorContactBody": "目标舱体：CABIN 04\n信号延迟：0.5 秒\n另一名乘员正在模仿你的动作",
+    "promptMirrorAnomalyTitle": "检测到重复船体编号",
+    "promptMirrorAnomalyBody": "目标舱体：CABIN 04\n动作时序异常 / 对方的动作开始领先",
+    "promptSortingArrivalTitle": "抵达自动分拣站",
+    "promptSortingArrivalBody": "接管运输中 / 无需人工操作\n检测对象：生物传感器 ×1",
+    "promptSortingScanTitle": "正在检测生物传感器",
+    "promptSortingScanBody": "生命体征稳定 / 认知功能残余正常\n正在评估剩余使用价值……",
+    "promptSortingPassTitle": "检测通过 / 再次投放",
+    "promptSortingPassBody": "生物传感器 ×1 / 状态：可继续使用\n包装无需更换。感谢您的持续服役。",
+    "promptSortingDispatchTitle": "生物传感器 ×1",
+    "promptSortingDispatchBody": "状态：可继续使用\n自动分流目的地：再次投放",
+    "promptPortalTitle": "舷窗检测到不明物体",
+    "promptPortalBody": "舷窗外检测到不明物体，引擎动力损坏无法躲避",
+    "promptEncounterTitle": "舷窗检测到未知身份生物",
+    "promptEncounterBody": "舷窗检测到未知身份生物",
+    "promptRecoveryTitle": "动力恢复",
+    "promptRecoveryBody": "引擎堵塞物质被分解，动力恢复。",
+    "promptHeader": "舰载监控 / ",
+    "promptViewButton": "◉  查看",
+    "promptConfirmButton": "◉  确认",
+    "escapePlaybackSpeed": 1,
+    "escapeSproutWaveAmplitude": 2,
+    "escapeSproutWaveHz": 0.8,
+    "escapeSproutPulledWaveAmplitude": 7,
+    "escapeSproutPulledWaveHz": 2.4
   },
   "rules": [
     [
@@ -1399,6 +1803,14 @@ window.ZYL_PARAMETERS={
     [
       "visitorArrivalDuration",
       "visitorInvitationTime"
+    ],
+    [
+      "escapeSproutWaveAmplitude",
+      "escapeSproutPulledWaveAmplitude"
+    ],
+    [
+      "escapeSproutWaveHz",
+      "escapeSproutPulledWaveHz"
     ]
   ]
 };

@@ -41,7 +41,10 @@ namespace AstraCabin.Galaxies.Zyl
             }
         }
 
-        public const string EngineRestoredMessage = "引擎堵塞物质被分解，动力恢复。";
+        internal void ShowRecoveryAlert()
+        {
+            director.computer.SetEventAlert(p.promptRecoveryTitle, p.promptRecoveryBody, farewellRecovery: true);
+        }
         const string DepartureTitle = "泰德野里的别离";
         float departureDuration;
         const float TitleFade = .9f;

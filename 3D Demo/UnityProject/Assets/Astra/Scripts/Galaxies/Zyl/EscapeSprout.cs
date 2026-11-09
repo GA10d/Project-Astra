@@ -22,14 +22,18 @@ namespace AstraCabin.Galaxies.Zyl
         readonly Vector3 plantedGrip, gripOffset;
         readonly Mesh roots;
         readonly MeshRenderer tetherRenderer;
+        readonly Material crownSurface;
+        readonly ZylPresentationParameters settings;
+        float wavePhase;
         readonly Vector3[] rootVertices = new Vector3[Roots * Rings * Sides];
         readonly float[] rootAngles = { 0f, .4f, 1.55f, 2.58f, 3.57f, 4.62f, 5.53f };
         readonly float[] rootSpread = { .04f, .35f, .24f, .36f, .28f, .34f, .26f };
 
         public EscapeSprout(Transform parent, FoolsWalker actor, Vector3 soil, Vector3 standingGround,
-            Vector3 standingFacing, Vector3 vertical, List<UnityEngine.Object> resources, Transform planted)
+            Vector3 standingFacing, Vector3 vertical, List<UnityEngine.Object> resources, Transform planted, ZylPresentationParameters settings)
         {
             walker = actor;
+            this.settings = settings;
             ground = soil;
             actorGround = standingGround;
             facing = standingFacing;
@@ -61,7 +65,13 @@ namespace AstraCabin.Galaxies.Zyl
             resources.Add(rootSurface);
 
             crown = Create("Sprout | lobed crown", baseRoot);
-            Render(crown, fleshMesh, flesh);
+            var shader = Resources.Load<Shader>("Galaxies/Zyl/Escape/SproutWave");
+            if (!shader) throw new InvalidOperationException("肉芽起伏着色器缺失。");
+            crownSurface = new Material(flesh) { name = "Sprout | rippling flesh", shader = shader };
+            resources.Add(crownSurface);
+            crownSurface.SetVector("_WaveCenter", fleshMesh.bounds.center);
+            AdvanceWave(float.NegativeInfinity, 0f);
+            Render(crown, fleshMesh, crownSurface);
             crown.localScale = Vector3.one * CrownScale;
 
             var tether = Create("Sprout | soil-anchored roots", baseRoot);
@@ -105,6 +115,7 @@ namespace AstraCabin.Galaxies.Zyl
 
         internal void Sample(float age, MihuoerPose pose, float dt)
         {
+            AdvanceWave(age, dt);
             float reach = Ease(age / .90f);
             float lift = Ease((age - GripTime) / (LiftEnd - GripTime));
             float crouch = reach * (1f - lift);
@@ -146,6 +157,16 @@ namespace AstraCabin.Galaxies.Zyl
 
             float grasp = Ease((age - GripTime) / .15f);
             PoseProp(Vector3.Lerp(plantedGrip, hand.TransformPoint(gripOffset), grasp), lift);
+        }
+
+        internal void AdvanceWave(float age, float dt)
+        {
+            float pulled = Ease((age - LiftEnd) / .45f);
+            float amplitude = Mathf.Lerp(settings.escapeSproutWaveAmplitude, settings.escapeSproutPulledWaveAmplitude, pulled);
+            float frequency = Mathf.Lerp(settings.escapeSproutWaveHz, settings.escapeSproutPulledWaveHz, pulled);
+            wavePhase = Mathf.Repeat(wavePhase + dt * frequency * (2f * Mathf.PI), 200f * Mathf.PI);
+            crownSurface.SetFloat("_WaveAmplitude", amplitude * .01f);
+            crownSurface.SetFloat("_WavePhase", wavePhase);
         }
 
         void PoseProp(Vector3 grip, float lift)

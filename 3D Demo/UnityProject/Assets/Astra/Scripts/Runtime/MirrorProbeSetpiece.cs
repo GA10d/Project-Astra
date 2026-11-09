@@ -76,7 +76,7 @@ namespace AstraCabin
             nextEcho = 14f;
             if (director)
             {
-                director.SetAlert("检测到重复船体编号", "目标舱体：CABIN 04\n信号延迟：0.5 秒\n另一名乘员正在模仿你的动作");
+                director.SetAlert(director.PresentationParameters.promptMirrorContactTitle, director.PresentationParameters.promptMirrorContactBody);
                 director.PlayCue("echo", .4f);
             }
         }
@@ -251,7 +251,7 @@ namespace AstraCabin
                 if(!alertSent)
                 {
                     alertSent=true;
-                    if(director) director.SetAlert("检测到重复船体编号","目标舱体：CABIN 04\n动作时序异常 / 对方的动作开始领先");
+                    if(director) director.SetAlert(director.PresentationParameters.promptMirrorAnomalyTitle, director.PresentationParameters.promptMirrorAnomalyBody);
                 }
                 if(!targetLights&&!darkened) { darkened=true; if(director) director.PlayCue("echo",.60f); }
                 if(Elapsed>=nextEcho) { nextEcho=Elapsed+11f; if(director) director.PlayCue("echo",.25f); }

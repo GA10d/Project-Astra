@@ -32,7 +32,7 @@ namespace AstraCabin {
     p.GetComponent<Renderer>().sharedMaterial=surface;planets.Add(p.transform);
    }
    gate.gameObject.SetActive(false);tunnel.gameObject.SetActive(false);destination.gameObject.SetActive(false);
-   d.computer.SetEventAlert("舷窗检测到不明物体","舷窗外检测到不明物体，引擎动力损坏无法躲避");d.computer.Open();d.PlayCue("alert",.65f);
+   d.computer.SetEventAlert(p.promptPortalTitle, p.promptPortalBody);d.computer.Open();d.PlayCue("alert",.65f);
   }
   public void View(){if(Started)return;Started=true;Elapsed=0;d.computer.ClearEventAlert();d.computer.Close();d.controller.SnapToWall(1);d.controller.EnterWindowView();d.controller.cinematicWindowLock=true;gate.gameObject.SetActive(true);Animate();}
   void Update(){

@@ -173,7 +173,13 @@ namespace AstraCabin.Galaxies.Zyl
             {
                 root.transform.SetParent(environmentRoot.transform, true);
                 foreach (var t in root.GetComponentsInChildren<Transform>(true)) t.gameObject.layer = EnvironmentLayer;
-                foreach (var light in root.GetComponentsInChildren<Light>(true)) light.cullingMask = 1 << EnvironmentLayer;
+                foreach (var light in root.GetComponentsInChildren<Light>(true))
+                {
+                    light.cullingMask = 1 << EnvironmentLayer;
+                    // Keep shadow lights important. Other fills share the existing per-object pixel-light budget.
+                    if (light.shadows == LightShadows.None && light.renderMode == LightRenderMode.ForcePixel)
+                        light.renderMode = LightRenderMode.Auto;
+                }
                 foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
                 for (int i = 0; i < renderer.sharedMaterials.Length; i++)
                 {

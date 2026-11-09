@@ -64,6 +64,7 @@ namespace AstraCabin
         readonly bool[] repaired=new bool[3];
         float shakeRemaining,shakeDuration,shakeStrength;
         Galaxies.Zyl.ZylPresentationParameters zylParameters=new Galaxies.Zyl.ZylPresentationParameters();
+        internal Galaxies.Zyl.ZylPresentationParameters PresentationParameters => zylParameters;
         bool ZylRepair { get { return ActiveMode==BlockedEngineMode && computer.Navigation && computer.Navigation.ActiveGalaxyId=="zyl"; } }
         string alertDetail="";
         Vector3 originalPlanetPosition,originalPlanetScale;
@@ -130,7 +131,7 @@ namespace AstraCabin
             {
                 alarmStarted=true; systems.SetDamageState(true,true); eventAudio.SetAlarm(true);
                 Shake(ZylRepair?zylParameters.repairImpactStrength:.95f,ZylRepair?zylParameters.repairImpactDuration:1.35f); PlayCue("impact",.85f);
-                SetAlert("舱体遭遇撞击","应急电源已启动\n前往 B 墙取下维修锤\n修复 D 墙裂痕：0 / 3");
+                SetAlert(zylParameters.promptImpactTitle, zylParameters.promptImpactBody);
             }
             shakeRemaining=Mathf.Max(0,shakeRemaining-Time.deltaTime);
             ShakeAmount=shakeDuration>0?shakeStrength*Mathf.Pow(shakeRemaining/shakeDuration,1.2f):0;
@@ -154,7 +155,7 @@ namespace AstraCabin
             Quaternion previousPlanetRotation=planet?planet.transform.rotation:Quaternion.identity;
             ClearCurrent();
             ActiveMode=mode; ModeTime=0;
-            zylParameters=Galaxies.Zyl.ZylPresentationParameters.Load(mode==BlockedEngineMode && computer.Navigation && computer.Navigation.ActiveGalaxyId=="zyl");
+            zylParameters=Galaxies.Zyl.ZylPresentationParameters.Load(computer.Navigation && computer.Navigation.ActiveGalaxyId=="zyl");
             if(mode==0)
             {
                 controller.SnapToWall(0); controller.ShowNotice("全部演出已复位 / DEFAULT SCENE"); return true;
@@ -170,7 +171,7 @@ namespace AstraCabin
                     combat.ShowPlanetExplosion(originalPlanetPosition,originalPlanetScale.x*.5f,planet?planet.GetComponent<Renderer>().sharedMaterial:null);
                     break;
                 case 2:
-                    SetAlert("不明飞行物靠近","近距目标已停泊于观察窗外\n检测到生命体 / 对方正在招手");
+                    SetAlert(zylParameters.promptVisitorTitle, zylParameters.promptVisitorBody);
                     visitors.ShowVisitor(); PlayCue("alert",.55f); break;
                 case 3:
                 case BlockedEngineMode:
@@ -326,7 +327,7 @@ namespace AstraCabin
             repaired[index]=true; RepairedCount++; crackArt[index].SetActive(false); patches[index].SetActive(true);
             RepairPoints[index].SetHover(false); RepairPoints[index].GetComponent<Collider>().enabled=false; RepairPoints[index].enabled=false;
             repairing=false;
-            SetAlert("舱体遭遇撞击","应急电源维持中\n修复 D 墙裂痕："+RepairedCount+" / 3");
+            SetAlert(zylParameters.promptRepairProgressTitle, zylParameters.promptRepairProgressBody.Replace("{repaired}", RepairedCount.ToString()));
             if(RepairedCount==3)
             {
                 CrisisActive=false; HasHammer=false; systems.SetDamageState(false,false); systems.SetMainPower(true); systems.SetLights(true);
@@ -334,8 +335,8 @@ namespace AstraCabin
                 foreach(var item in FindObjectsOfType<CabinInteractable>()) if(item.name=="ACT_PowerLever" || item.name=="ACT_LightSwitch") item.ResetToInitialState();
                 SetHammerAvailability(false);
                 if(ActiveMode == BlockedEngineMode)
-                    SetAlert("舱体未完全修复","三处裂痕已封闭\n主电源恢复\n引擎被未知物质堵塞");
-                else SetAlert("舱体修复完成","三处裂痕已封闭\n主电源恢复 / 危机解除"); PlayCue("success",.65f);
+                    SetAlert(zylParameters.promptRepairBlockedTitle, zylParameters.promptRepairBlockedBody);
+                else SetAlert(zylParameters.promptRepairCompleteTitle, zylParameters.promptRepairCompleteBody); PlayCue("success",.65f);
             }
         }
         void MakeHammer(Transform parent)
@@ -356,10 +357,13 @@ namespace AstraCabin
             Box("Popup panel",AlertRoot.transform,Vector3.zero,new Vector3(1.37f,.61f,.012f),promptPaper);
             Box("Red title bar",AlertRoot.transform,new Vector3(0,.23f,-.008f),new Vector3(1.34f,.115f,.012f),promptRed);
             Text(title,AlertRoot.transform,new Vector3(-.61f,.27f,-.022f),Quaternion.identity,.065f,new Color(1,.91f,.75f));
-            if(ActiveMode == BlockedEngineMode && RepairedCount == 3)
+            int warningLine = detail.LastIndexOf('\n');
+            if(ActiveMode == BlockedEngineMode && RepairedCount == 3 && warningLine >= 0)
             {
-                Text("三处裂痕已封闭\n主电源恢复",AlertRoot.transform,new Vector3(-.59f,.08f,-.021f),Quaternion.identity,.042f,new Color(.08f,.13f,.11f));
-                Text("引擎被未知物质堵塞",AlertRoot.transform,new Vector3(-.59f,-.025f,-.021f),Quaternion.identity,.042f,new Color(.43f,.13f,.10f));
+                string instructions = detail.Substring(0, warningLine);
+                float y = .08f - .0525f * instructions.Split('\n').Length;
+                Text(instructions,AlertRoot.transform,new Vector3(-.59f,.08f,-.021f),Quaternion.identity,.042f,new Color(.08f,.13f,.11f));
+                Text(detail.Substring(warningLine + 1),AlertRoot.transform,new Vector3(-.59f,y,-.021f),Quaternion.identity,.042f,new Color(.43f,.13f,.10f));
             }
             else Text(detail,AlertRoot.transform,new Vector3(-.59f,.08f,-.021f),Quaternion.identity,.042f,new Color(.08f,.13f,.11f));
             AlertRoot.SetActive(systems.ScreenHasPower);

@@ -170,8 +170,13 @@ namespace AstraCabin
 
         public void SetOpen(bool value) { if (value) Open(); else Close(); }
 
-        public void SetEventAlert(string title, string detail)
+        bool eventAlertIsFarewellRecovery;
+        Vector2 eventAlertScroll;
+
+        public void SetEventAlert(string title, string detail, bool farewellRecovery = false)
         {
+            eventAlertIsFarewellRecovery = farewellRecovery;
+            eventAlertScroll = Vector2.zero;
             eventAlertTitle = title ?? "";
             eventAlertBody = detail ?? "";
             // A new event can repeat the previous wording before OnGUI sees an empty frame.
@@ -609,7 +614,7 @@ namespace AstraCabin
         }
 
         bool FarewellRecoveryAlert => activeApp == "navigation" && HasPendingEventAlert &&
-            eventAlertBody == Galaxies.Zyl.FarewellSetpiece.EngineRestoredMessage;
+            eventAlertIsFarewellRecovery;
 
         void OnGUI()
         {
@@ -672,11 +677,23 @@ namespace AstraCabin
 
         void DrawEventAlert(int id)
         {
-            DrawPromptFrame(new Rect(0, 0, 680, 222), "舰载监控 / " + eventAlertTitle, eventAlertBody);
             var director=GetComponent<SetpieceDirector>();
+            var parameters = director ? director.PresentationParameters : null;
+            DrawPromptFrame(new Rect(0, 0, 680, 222), (parameters?.promptHeader ?? "舰载监控 / ") + eventAlertTitle, "");
+            var textArea = new Rect(24, 60, 632, 106);
+            float detailHeight = body.CalcHeight(new GUIContent(eventAlertBody), textArea.width);
+            if (detailHeight <= textArea.height) GUI.Label(textArea, eventAlertBody, body);
+            else
+            {
+                const float scrollWidth = 614;
+                detailHeight = body.CalcHeight(new GUIContent(eventAlertBody), scrollWidth);
+                eventAlertScroll = GUI.BeginScrollView(textArea, eventAlertScroll, new Rect(0, 0, scrollWidth, detailHeight));
+                GUI.Label(new Rect(0, 0, scrollWidth, detailHeight), eventAlertBody, body);
+                GUI.EndScrollView();
+            }
             bool encounter=director && director.ActiveMode==SetpieceDirector.EncounterMode && director.encounter && director.encounter.WaitingForView;
             bool portal=director && director.ActiveMode==SetpieceDirector.PortalMode && director.portal && !director.portal.Started;
-            if (RetroButton(new Rect(490, 169, 160, 34), portal || encounter ? "◉  查看" : "◉  确认")) {
+            if (RetroButton(new Rect(490, 169, 160, 34), portal || encounter ? (parameters?.promptViewButton ?? "◉  查看") : (parameters?.promptConfirmButton ?? "◉  确认"))) {
                 acknowledgedAlert = eventAlertTitle + eventAlertBody;
                 if(portal) director.portal.View();
                 if(encounter)director.encounter.View();

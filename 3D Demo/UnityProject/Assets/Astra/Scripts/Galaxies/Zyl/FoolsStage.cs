@@ -160,15 +160,72 @@ namespace AstraCabin.Galaxies.Zyl
             }
             var mesh=new Mesh{name="Irregular split mucosa lip"};mesh.vertices=vertices;mesh.triangles=triangles;mesh.RecalculateNormals();mesh.RecalculateBounds();return mesh;
         }
+        static Mesh BuildMicrobeMesh()
+        {
+            const int sides = 12, hemisphereSteps = 3, rings = hemisphereSteps * 2;
+            const float radius = .5f;
+            var vertices = new Vector3[sides * rings + 2];
+            var normals = new Vector3[vertices.Length];
+            var indices = new List<int>(sides * rings * 6);
+            int bottom = vertices.Length - 1;
+            vertices[0] = normals[0] = Vector3.up;
+            vertices[bottom] = normals[bottom] = Vector3.down;
+
+            // Keep the stock capsule's radius and height, with smooth normals around the caps.
+            for (int ring = 0; ring < rings; ring++)
+            {
+                bool upper = ring < hemisphereSteps;
+                int step = upper ? hemisphereSteps - 1 - ring : ring - hemisphereSteps;
+                float latitude = step * Mathf.PI / (2 * hemisphereSteps) * (upper ? 1 : -1);
+                for (int side = 0; side < sides; side++)
+                {
+                    float angle = side * 2 * Mathf.PI / sides;
+                    int current = 1 + ring * sides + side;
+                    int next = 1 + ring * sides + (side + 1) % sides;
+                    var normal = new Vector3(Mathf.Cos(angle) * Mathf.Cos(latitude), Mathf.Sin(latitude),
+                        Mathf.Sin(angle) * Mathf.Cos(latitude));
+                    normals[current] = normal;
+                    vertices[current] = radius * (normal + (upper ? Vector3.up : Vector3.down));
+
+                    if (ring == 0)
+                    {
+                        indices.Add(0); indices.Add(next); indices.Add(current);
+                    }
+                    if (ring == rings - 1)
+                    {
+                        indices.Add(current); indices.Add(next); indices.Add(bottom);
+                    }
+                    else
+                    {
+                        indices.Add(current); indices.Add(next); indices.Add(current + sides);
+                        indices.Add(next); indices.Add(next + sides); indices.Add(current + sides);
+                    }
+                }
+            }
+
+            return new Mesh { name = "Zyl15 | low-poly bacillus capsule", vertices = vertices,
+                normals = normals, triangles = indices.ToArray() };
+        }
+
         void BuildMicrobes()
         {
             string[][] letters={new[]{"01111","11000","11000","01110","00011","00011","11110"},new[]{"11111","00100","00100","00100","00100","00100","00100"},new[]{"01110","11011","11011","11011","11011","11011","01110"},new[]{"11110","11011","11011","11110","11000","11000","11000"}};
             var random=new System.Random(1507);
+            var mesh=BuildMicrobeMesh();meshes.Add(mesh);
             var palette=new[]{Material("Microbial ivory",new Color(.84f,.91f,.59f),0,.65f),Material("Microbial olive",new Color(.42f,.67f,.29f),0,.8f),Material("Microbial warm",new Color(.89f,.73f,.33f),0,.55f)};
             Quaternion finalRotation=Quaternion.LookRotation(wordCenter-FinalCameraPosition,up);var letterRight=finalRotation*Vector3.right;var letterUp=finalRotation*Vector3.up;
             for(int l=0;l<4;l++)for(int y=0;y<7;y++)for(int x=0;x<5;x++)if(letters[l][y][x]=='1')for(int k=0;k<4;k++)
             {
-                int i=microbes.Count;var microbe=Primitive("Bacillus "+i,PrimitiveType.Capsule,palette[i%3]);microbe.localScale=new Vector3(.10f,.16f,.10f)*(float)(.85+random.NextDouble()*.35);microbes.Add(microbe);
+                int i=microbes.Count;
+                var microbe=new GameObject("Bacillus "+i).transform;
+                microbe.gameObject.layer=ZylStomachEnvironment.EnvironmentLayer;
+                microbe.SetParent(Root,false);
+                microbe.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;
+                var renderer=microbe.gameObject.AddComponent<MeshRenderer>();
+                renderer.sharedMaterial=palette[i%3];
+                renderer.shadowCastingMode=ShadowCastingMode.Off;
+                microbe.localScale=new Vector3(.10f,.16f,.10f)*(float)(.85+random.NextDouble()*.35);
+                microbes.Add(microbe);
                 float jx=(float)(random.NextDouble()-.5)*.22f,jy=(float)(random.NextDouble()-.5)*.22f;
                 targets.Add(wordCenter+letterRight*((l*6+x-11)*.60f+jx)+letterUp*((3-y)*.60f+jy)+forward*(float)(random.NextDouble()-.5)*.18f);
                 scatter.Add(cutRight*(float)(random.NextDouble()-.5)*6+cutUp*(float)(random.NextDouble()-.5)*4-axis*(float)(2+random.NextDouble()*5));

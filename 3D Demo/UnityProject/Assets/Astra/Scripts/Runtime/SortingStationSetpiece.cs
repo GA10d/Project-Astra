@@ -74,7 +74,7 @@ namespace AstraCabin
             StageLight("Tag work light", GeneratedRoot, new Vector3(1f, 1.8f, 3f), new Color(.8f, .95f, .88f), 1.2f, 7f);
             if (director)
             {
-                director.SetAlert("抵达自动分拣站", "接管运输中 / 无需人工操作\n检测对象：生物传感器 ×1");
+                director.SetAlert(director.PresentationParameters.promptSortingArrivalTitle, director.PresentationParameters.promptSortingArrivalBody);
                 director.PlayCue("conveyor", .46f);
             }
             Animate(0f);
@@ -312,7 +312,7 @@ namespace AstraCabin
             if (!scannerCue && t >= 3f)
             {
                 scannerCue = true;
-                if (director) { director.PlayCue("scanner", .50f); director.SetAlert("正在检测生物传感器", "生命体征稳定 / 认知功能残余正常\n正在评估剩余使用价值……"); }
+                if (director) { director.PlayCue("scanner", .50f); director.SetAlert(director.PresentationParameters.promptSortingScanTitle, director.PresentationParameters.promptSortingScanBody); }
             }
             AnimateStamp(t);
             for (int i = 0; i < 24; i++)
@@ -344,7 +344,7 @@ namespace AstraCabin
                 departureCue = true;
                 if (director)
                 {
-                    director.SetAlert("检测通过 / 再次投放", "生物传感器 ×1 / 状态：可继续使用\n包装无需更换。感谢您的持续服役。");
+                    director.SetAlert(director.PresentationParameters.promptSortingPassTitle, director.PresentationParameters.promptSortingPassBody);
                     director.PlayCue("conveyor", .38f);
                 }
             }
@@ -377,7 +377,7 @@ namespace AstraCabin
                 if (director)
                 {
                     director.PlayCue("stamp", .60f); director.Shake(.12f, .3f);
-                    director.SetAlert("生物传感器 ×1", "状态：可继续使用\n自动分流目的地：再次投放");
+                    director.SetAlert(director.PresentationParameters.promptSortingDispatchTitle, director.PresentationParameters.promptSortingDispatchBody);
                 }
             }
         }
