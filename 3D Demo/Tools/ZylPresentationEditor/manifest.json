@@ -1049,6 +1049,59 @@
     },
     {
       "group": "17 · 泰德野里_别离",
+      "key": "farewellIllustrationEnabled",
+      "type": "boolean",
+      "label": "插入爆炸插画过渡",
+      "value": true,
+      "unit": "开关",
+      "desc": "勾选后，在实机星球强闪与碎石画面之间播放六张插画。取消勾选后，实机强闪直接接回实机碎石。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellIllustrationStartOffset",
+      "label": "插画插入时间偏移",
+      "value": 0,
+      "min": -2,
+      "max": 2,
+      "unit": "秒",
+      "desc": "相对实机强闪的峰值。0 在峰值插入，负数提前（最早在强闪开始且镜头抵达舷窗时），正数延后并保持强闪画面。只在勾选插画过渡时生效。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellIllustrationSpeed",
+      "label": "爆炸插画过渡速度",
+      "value": 1,
+      "min": 0.5,
+      "max": 3,
+      "unit": "倍",
+      "desc": "1 倍沿用当前节奏。倍率同时影响已选插画之间的切换和首尾淡入淡出。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
+      "key": "farewellIllustrationFrames",
+      "type": "frameSelection",
+      "label": "使用的爆炸插画",
+      "value": [
+        true,
+        true,
+        true,
+        true,
+        true,
+        true
+      ],
+      "unit": "画面",
+      "options": [
+        "强闪峰值",
+        "冲击波扩散",
+        "中央残骸显露",
+        "蓝光散开",
+        "余光熄灭",
+        "实机残骸衔接"
+      ],
+      "desc": "只播放勾选的画面，顺序以编号为准。跳过未选画面的时长。全部取消时直接接回实机碎石。"
+    },
+    {
+      "group": "17 · 泰德野里_别离",
       "key": "farewellShakeSustain",
       "label": "持续震动比例",
       "value": 0.42,
@@ -1069,6 +1122,10 @@
     }
   ],
   "defaults": {
+    "farewellIllustrationEnabled": true,
+    "farewellIllustrationStartOffset": 0,
+    "farewellIllustrationSpeed": 1,
+    "farewellIllustrationFrames": [true, true, true, true, true, true],
     "schemaVersion": 1,
     "escapeSproutShakeDelay": 1.15,
     "repairAlarmDelay": 3,

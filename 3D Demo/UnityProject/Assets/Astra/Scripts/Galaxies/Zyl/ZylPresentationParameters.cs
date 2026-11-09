@@ -21,6 +21,10 @@ namespace AstraCabin.Galaxies.Zyl {
   public float farewellFractureStart = 0.64f;
   public float farewellFinalFlashDuration = 0.7f;
   public float farewellFinalFlashIntensity = 1f;
+  public bool farewellIllustrationEnabled = true;
+  public float farewellIllustrationStartOffset = 0f;
+  public float farewellIllustrationSpeed = 1f;
+  public bool[] farewellIllustrationFrames = { true, true, true, true, true, true };
   public float farewellShakeSustain = 0.42f;
   public float farewellImpactDecay = 1.4f;
   public float farewellChestDuration=2.8f,farewellSignalHold=1.3f,farewellPlanetDuration=8f,farewellDebrisHold=4f,farewellPhotoDuration=8f,farewellShake=0.35f;
@@ -149,6 +153,10 @@ namespace AstraCabin.Galaxies.Zyl {
    Check("farewellFractureStart",farewellFractureStart,0.58f,0.82f);
    Check("farewellFinalFlashDuration",farewellFinalFlashDuration,0.1f,2f);
    Check("farewellFinalFlashIntensity",farewellFinalFlashIntensity,0.2f,1f);
+   Check("farewellIllustrationStartOffset",farewellIllustrationStartOffset,-2f,2f);
+   Check("farewellIllustrationSpeed",farewellIllustrationSpeed,.5f,3f);
+   if (farewellIllustrationFrames == null || farewellIllustrationFrames.Length != FarewellExplosionIllustration.FrameCount)
+       throw new InvalidDataException("爆炸插画需要六张画面的勾选状态");
    Check("farewellShakeSustain",farewellShakeSustain,0.1f,0.85f);
    Check("farewellImpactDecay",farewellImpactDecay,0.15f,3f);
    MihuoerDialogueLine.Validate(farewellDialogue);

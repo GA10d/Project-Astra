@@ -4,13 +4,13 @@ namespace AstraCabin.Galaxies.Zyl
 {
     public sealed class FarewellSetpiece:MonoBehaviour
     {
-        public enum Step {Talking,ChestBurst,SignalLost,ApproachingWindow,PlanetEnergy,Fragments,Photograph,Finished,Departing,DepartureReturn,Error}
+        public enum Step {Talking,ChestBurst,SignalLost,ApproachingWindow,PlanetEnergy,Fragments,Photograph,Finished,Departing,DepartureReturn,Error,ExplosionIllustration}
         public bool Active {get;private set;}public bool Complete {get;private set;}public Step Phase {get;private set;}
         public string Error {get;private set;}public FarewellStage Stage {get;private set;}public bool ZeroTriggered {get;private set;}
         public bool DialogueInterrupted {get{return dialogue!=null&&dialogue.Interrupted;}}public ConferenceCallSurface Surface {get;private set;}
         public float Elapsed {get;private set;}public float PhaseTime {get;private set;}
         SetpieceDirector director;ZylPresentationParameters p;MihuoerDialoguePlayer dialogue;MihuoerCountdown timer;bool zeroPending;Vector2 scroll;GUIStyle label,button;string captionKey;
-        float chestPreRoll, planetStartedAt, planetDuration;
+        float chestPreRoll, planetStartedAt, planetDuration, illustrationTime;
         public float PlanetElapsed => Mathf.Clamp(Elapsed - planetStartedAt, 0, planetDuration);
         public float PlanetDuration => planetDuration;
 
@@ -29,10 +29,12 @@ namespace AstraCabin.Galaxies.Zyl
                     case Step.PlanetEnergy:
                         float progress = PlanetElapsed / planetDuration;
                         return p.farewellShake * Mathf.SmoothStep(sustain, .90f, progress);
-                    case Step.Fragments:
+                    case Step.ExplosionIllustration:
                         return ImpactShake(PhaseTime);
+                    case Step.Fragments:
+                        return ImpactShake(illustrationTime + PhaseTime);
                     case Step.Photograph:
-                        return ImpactShake(p.farewellDebrisHold + PhaseTime);
+                        return ImpactShake(illustrationTime + p.farewellDebrisHold + PhaseTime);
                     default:
                         return 0;
                 }
@@ -165,6 +167,7 @@ namespace AstraCabin.Galaxies.Zyl
             {
                 if(!director.computer.Navigation||director.computer.Navigation.ActiveGalaxyId!="zyl")throw new InvalidOperationException("别离需要zyl航程");
                 Stage=new FarewellStage(director.controller.viewCamera, p);timer=director.computer.Navigation.Countdown;timer.ReachedZero.AddListener(ReachedZero);Stage.AttachCountdown(timer,p);
+                if (p.farewellIllustrationEnabled) Stage.LoadExplosionIllustration();
                 Surface=new ConferenceCallSurface{Title="米霍尔 · 视频通话",Speaker="米霍尔",Participants=new[]{"米霍尔"},Video=Stage.Video};Surface.Leave=()=>director.computer.OpenApp("navigation");Surface.SetPaused=value=>Surface.Paused=value;Surface.DrawCaptions=DrawCaptions;
                 timer.Apply(new CountdownAction{kind="show"},EventKey+"/farewell/show");timer.Apply(new CountdownAction{kind="start"},EventKey+"/farewell/start");
                 dialogue=new MihuoerDialoguePlayer(p.farewellDialogue,(i,a)=>ApplyTimer(i,-1,a),(i,j,a)=>ApplyTimer(i,j,a));
@@ -250,10 +253,28 @@ namespace AstraCabin.Galaxies.Zyl
                         break;
                     case Step.PlanetEnergy:
                         Stage.SamplePlanetEnergy(PlanetElapsed, planetDuration);
-                        if (PlanetElapsed >= planetDuration)
+                        float illustrationOffset = Stage.HasExplosionIllustration
+                            ? Mathf.Max(p.farewellIllustrationStartOffset,
+                                -Mathf.Min(p.farewellFinalFlashDuration, planetDuration * (1 - p.farewellFractureStart)))
+                            : 0;
+                        if (Elapsed - planetStartedAt >= planetDuration + illustrationOffset)
                         {
-                            Stage.FinishPlanetEnergy();
                             director.PlayCue("impact", .65f);
+                            if (Stage.BeginExplosionIllustration(director.controller))
+                                Enter(Step.ExplosionIllustration);
+                            else
+                            {
+                                Stage.FinishPlanetEnergy();
+                                Enter(Step.Fragments);
+                            }
+                        }
+                        break;
+                    case Step.ExplosionIllustration:
+                        Stage.SampleExplosionIllustration(PhaseTime, PlanetElapsed, planetDuration);
+                        if (PhaseTime >= Stage.ExplosionIllustrationDuration)
+                        {
+                            illustrationTime = Stage.ExplosionIllustrationDuration;
+                            Stage.ReleaseExplosionIllustration();
                             Enter(Step.Fragments);
                         }
                         break;
@@ -312,13 +333,13 @@ namespace AstraCabin.Galaxies.Zyl
             if(Surface==null)return;if(label==null){label=new GUIStyle(GUI.skin.label){font=font,fontSize=18,wordWrap=true,richText=false};label.normal.textColor=Color.white;button=new GUIStyle(GUI.skin.button){font=font,fontSize=16,wordWrap=true,richText=false};}
             director.computer.Meeting.DrawCallSurface(bounds,font,Surface);
         }
-        void Fail(string message){Error="别离："+message;Phase=Step.Error;director.controller.cinematicWindowLock=false;director.controller.ShowNotice(Error);}
+        void Fail(string message){Error="别离："+message;Phase=Step.Error;Stage?.ReleaseExplosionIllustration();director.controller.cinematicWindowLock=false;director.controller.ShowNotice(Error);}
         public void Clear()
         {
             if (DepartureActive && director && director.controller)
                 director.controller.showUI = previousCabinHud;
             if(timer)timer.ReachedZero.RemoveListener(ReachedZero);timer=null;if(Active&&director&&director.computer)director.computer.CloseEncounterApp(false);if(Stage!=null)Stage.Dispose();Stage=null;Surface=null;dialogue=null;
-            if(director){director.controller.cinematicWindowLock=false;}Active=Complete=ZeroTriggered=zeroPending=false;Elapsed=PhaseTime=chestPreRoll=planetStartedAt=planetDuration=0;Error=null;captionKey=null;Phase=Step.Talking;
+            if(director){director.controller.cinematicWindowLock=false;}Active=Complete=ZeroTriggered=zeroPending=false;Elapsed=PhaseTime=chestPreRoll=planetStartedAt=planetDuration=illustrationTime=0;Error=null;captionKey=null;Phase=Step.Talking;
         }
         void OnDisable(){Clear();}void OnDestroy(){Clear();}
     }

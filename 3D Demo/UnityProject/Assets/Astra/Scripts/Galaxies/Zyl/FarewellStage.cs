@@ -25,6 +25,10 @@ namespace AstraCabin.Galaxies.Zyl
         Camera cabin;
         float exteriorScale, concealedFractureTime;
         readonly ZylPresentationParameters settings;
+        FarewellExplosionIllustration illustration;
+        float illustrationDebrisTime, illustrationLead;
+        internal bool HasExplosionIllustration => illustration != null;
+        internal float ExplosionIllustrationDuration => illustration.Duration / settings.farewellIllustrationSpeed;
         public FarewellStage(Camera source, ZylPresentationParameters settings)
         {
             this.settings = settings;
@@ -313,6 +317,65 @@ namespace AstraCabin.Galaxies.Zyl
             planetGlow.SetFloat("_CoreFlash", flash * settings.farewellFinalFlashIntensity);
         }
 
+        internal void LoadExplosionIllustration()
+        {
+            var matchRocks = new[]
+            {
+                pieces[0].Transform, pieces[1].Transform, pieces[2].Transform, pieces[3].Transform,
+                remnants[0], remnants[1]
+            };
+            illustration = FarewellExplosionIllustration.Load(exterior, Planet.gameObject.layer, matchRocks,
+                settings.farewellIllustrationFrames);
+        }
+
+        internal bool BeginExplosionIllustration(CabinController controller)
+        {
+            if (illustration == null) return false;
+            illustration.Begin(controller);
+            return true;
+        }
+
+        internal void SampleExplosionIllustration(float elapsed, float blastElapsed, float blastDuration)
+        {
+            float speed = settings.farewellIllustrationSpeed;
+            float playbackTime = elapsed * speed;
+            if (planetEnergy.gameObject.activeSelf)
+            {
+                SamplePlanetEnergy(blastElapsed, blastDuration);
+                if (playbackTime >= FarewellExplosionIllustration.FadeIn)
+                {
+                    // Once the flash is covered, prepare the original debris pose for the outgoing handoff.
+                    float fractureAtEntry = concealedFractureTime;
+                    if (blastElapsed < blastDuration) SamplePlanetEnergy(blastDuration, blastDuration);
+                    illustrationLead = concealedFractureTime - fractureAtEntry;
+                    FinishPlanetEnergy();
+                }
+            }
+
+            if (playbackTime >= FarewellExplosionIllustration.FadeIn)
+            {
+                float tail = Mathf.Min(playbackTime, illustration.Duration) - illustration.ArtworkEnd;
+                illustrationDebrisTime = Mathf.Max(-concealedFractureTime, tail / speed);
+                if (illustrationLead > 0 && tail < 0)
+                {
+                    float blend = Mathf.InverseLerp(FarewellExplosionIllustration.FadeIn,
+                        illustration.ArtworkEnd, playbackTime);
+                    illustrationDebrisTime = Mathf.SmoothStep(-illustrationLead, 0, blend);
+                }
+                SampleFragments(0);
+            }
+            if (playbackTime < FarewellExplosionIllustration.FadeIn ||
+                playbackTime >= illustration.ArtworkEnd || illustrationLead > 0)
+                illustration.AlignRocks(cabin.transform.position);
+            illustration.Sample(playbackTime);
+        }
+
+        internal void ReleaseExplosionIllustration()
+        {
+            illustration?.Dispose();
+            illustration = null;
+        }
+
         public void FinishPlanetEnergy()
         {
             planetEnergy.gameObject.SetActive(false);
@@ -458,7 +521,7 @@ namespace AstraCabin.Galaxies.Zyl
 
         public void SampleFragments(float elapsed)
         {
-            MoveFragments(concealedFractureTime + elapsed);
+            MoveFragments(concealedFractureTime + illustrationDebrisTime + elapsed);
         }
 
         void MoveFragments(float t)
@@ -667,7 +730,7 @@ namespace AstraCabin.Galaxies.Zyl
             if (cabin) cabin.enabled = cabinCameraWasEnabled;
         }
 
-        public void Dispose(){EndDeparture();if(Root){Root.gameObject.SetActive(false);UnityEngine.Object.Destroy(Root.gameObject);}if(Video){Video.Release();UnityEngine.Object.Destroy(Video);}foreach(var r in resources)if(r)UnityEngine.Object.Destroy(r);resources.Clear();}
+        public void Dispose(){ReleaseExplosionIllustration();EndDeparture();if(Root){Root.gameObject.SetActive(false);UnityEngine.Object.Destroy(Root.gameObject);}if(Video){Video.Release();UnityEngine.Object.Destroy(Video);}foreach(var r in resources)if(r)UnityEngine.Object.Destroy(r);resources.Clear();}
     }
 }
 
