@@ -9,6 +9,7 @@ namespace AstraCabin.Galaxies.Zyl
         public string Error {get;private set;}public FarewellStage Stage {get;private set;}public bool ZeroTriggered {get;private set;}
         public bool DialogueInterrupted {get{return dialogue!=null&&dialogue.Interrupted;}}public ConferenceCallSurface Surface {get;private set;}
         public float Elapsed {get;private set;}public float PhaseTime {get;private set;}
+        MihuoerActionTrack actionTrack;
         SetpieceDirector director;ZylPresentationParameters p;MihuoerDialoguePlayer dialogue;MihuoerCountdown timer;bool zeroPending;Vector2 scroll;GUIStyle label,button;string captionKey;
         float chestPreRoll, planetStartedAt, planetDuration, illustrationTime;
         public float PlanetElapsed => Mathf.Clamp(Elapsed - planetStartedAt, 0, planetDuration);
@@ -166,6 +167,7 @@ namespace AstraCabin.Galaxies.Zyl
         public void Show()
         {
             Clear();Active=true;Phase=Step.Talking;p=ZylPresentationParameters.Load();
+            actionTrack=new MihuoerActionTrack(p.farewellActionClips,p.farewellDialogue);
             try
             {
                 if(!director.computer.Navigation||director.computer.Navigation.ActiveGalaxyId!="zyl")throw new InvalidOperationException("别离需要zyl航程");
@@ -214,7 +216,8 @@ namespace AstraCabin.Galaxies.Zyl
                             break;
                         }
                         dialogue.Tick(dt, false);
-                        Stage.SampleActor(dt,MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Idle));
+                        var cue=actionTrack.SampleDialogue(dialogue,out float cueTime);
+                        Stage.SampleActor(dt,MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Idle),cue,cueTime);
                         SyncCaption();
                         UpdateChestPreview();
                         break;
@@ -341,7 +344,7 @@ namespace AstraCabin.Galaxies.Zyl
         {
             if (DepartureActive && director && director.controller)
                 director.controller.showUI = previousCabinHud;
-            if(timer)timer.ReachedZero.RemoveListener(ReachedZero);timer=null;if(Active&&director&&director.computer)director.computer.CloseEncounterApp(false);if(Stage!=null)Stage.Dispose();Stage=null;Surface=null;dialogue=null;
+            if(timer)timer.ReachedZero.RemoveListener(ReachedZero);timer=null;if(Active&&director&&director.computer)director.computer.CloseEncounterApp(false);if(Stage!=null)Stage.Dispose();Stage=null;Surface=null;dialogue=null;actionTrack=null;
             if(director){director.controller.cinematicWindowLock=false;}Active=Complete=ZeroTriggered=zeroPending=false;Elapsed=PhaseTime=chestPreRoll=planetStartedAt=planetDuration=illustrationTime=0;Error=null;captionKey=null;Phase=Step.Talking;
         }
         void OnDisable(){Clear();}void OnDestroy(){Clear();}

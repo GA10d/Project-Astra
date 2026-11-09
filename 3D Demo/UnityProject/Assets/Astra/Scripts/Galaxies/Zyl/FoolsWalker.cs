@@ -32,7 +32,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
             catch{owner.EndCinematic();throw;}
         }
-        internal void Sample(float distance,bool walking,MihuoerPose pose,float dt)
+        internal void Sample(float distance,bool walking,MihuoerPose pose,float dt,FoolsActionClip cue=null,float cueTime=0f)
         {
             const float stride=.78f;
             distance=Mathf.Clamp(distance,0,slope.Length);
@@ -54,7 +54,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
 
             motion.Sample(walking?(uphill?MihuoerPose.WalkUphill:MihuoerPose.WalkFlat):pose,dt,
-                walking?Mathf.Repeat(cycle-.24f,1f):-1f);
+                walking?Mathf.Repeat(cycle-.24f,1f):-1f,cue,cueTime);
             Root.position-=slope.Up*(.035f*gait);
             FootError=0;
             for(int i=0;i<2;i++)
@@ -69,11 +69,11 @@ namespace AstraCabin.Galaxies.Zyl
                 PlantFoot(i,target,direction,swingHeight);
             }
         }
-        internal void SampleStandingAt(Vector3 ground,Vector3 facing,MihuoerPose pose,float dt,Vector3 weightShift=default,float lowering=0f)
+        internal void SampleStandingAt(Vector3 ground,Vector3 facing,MihuoerPose pose,float dt,Vector3 weightShift=default,float lowering=0f,FoolsActionClip cue=null,float cueTime=0f)
         {
             Root.rotation=Quaternion.LookRotation(Vector3.ProjectOnPlane(facing,slope.Up).normalized,slope.Up);
             Root.position=ground+weightShift+slope.Up*(rootOffset-lowering);
-            motion.Sample(pose,dt);
+            motion.Sample(cue?.Pose??pose,dt,cue:cue,cueTime:cueTime);
             FootError=0;
             for(int i=0;i<2;i++)
             {

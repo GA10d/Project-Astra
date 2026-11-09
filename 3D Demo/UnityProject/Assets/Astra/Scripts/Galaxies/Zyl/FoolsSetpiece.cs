@@ -28,14 +28,15 @@ namespace AstraCabin.Galaxies.Zyl
         SetpieceDirector director;
         ZylPresentationParameters parameters;
         MihuoerDialoguePlayer dialogue;
-        float phaseTime;
+        float phaseTime, dialogueTime;
+        FoolsActionTimeline actions;
         bool capturedUI,oldUI;
         Font font;GUIStyle subtitle;Vector2 subtitleScroll;
         ZylStomachEnvironment Exterior {get{return director&&director.computer&&director.computer.Navigation?director.computer.Navigation.Exterior:null;}}
         public void Initialize(SetpieceDirector owner){director=owner;}
         public void Show()
         {
-            Clear();parameters=ZylPresentationParameters.Load();Active=true;Phase=Step.WaitingForEnvironment;
+            Clear();parameters=ZylPresentationParameters.Load();actions=new FoolsActionTimeline(parameters);Active=true;Phase=Step.WaitingForEnvironment;
             if(!director.computer.Navigation||director.computer.Navigation.ActiveGalaxyId!="zyl"){Fail("都是傻瓜：请先进入zyl胃内航程。");return;}
             director.computer.Close();director.controller.SnapToWall(1);director.controller.cinematicWindowLock=true;
         }
@@ -45,12 +46,23 @@ namespace AstraCabin.Galaxies.Zyl
         void Enter(Step phase){Phase=phase;phaseTime=0;subtitleScroll=Vector2.zero;}
         void Dialogue(MihuoerDialogueLine[] lines,string key)
         {
+            dialogueTime=0;
             dialogue=new MihuoerDialoguePlayer(lines,(i,action)=>{
                 var nav=director.computer.Navigation;var line=lines[i];
                 if(nav&&nav.Countdown)nav.Countdown.Apply(action,(nav.Session?.Engine.Pending?.id??"fools15")+"/fools/"+key+"/"+(string.IsNullOrEmpty(line.timerKey)?i.ToString():line.timerKey));
             });
         }
         MihuoerPose DialoguePose => MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Idle);
+        void SampleAction(bool atCrest, float dt, bool advance)
+        {
+            if (advance)
+            {
+                dialogueTime += dt;
+                dialogue.Tick(dt, false);
+            }
+            var cue = actions.Sample(atCrest, dialogueTime, out float localTime);
+            Walker.Sample(atCrest ? Slope.Length : 0f, false, cue?.Pose ?? DialoguePose, dt, cue, localTime);
+        }
         public void Tick(float dt)
         {
             if(!Active||Complete||Phase==Step.Error)return;
@@ -82,11 +94,11 @@ namespace AstraCabin.Galaxies.Zyl
                         if(phaseTime>=parameters.foolsReturnDuration)
                         {
                             Slope=new FoolsSlope(exterior.MihuoerShipAnchor.transform.parent,exterior.AuthoredToRuntime,exterior.MihuoerAnchor.transform.position);
-                            Walker=new FoolsWalker(exterior.MihuoerActor,Slope);Dialogue(parameters.foolsGroundDialogue,"ground");Enter(Step.GroundDialogue);GroundShot();
+                            Walker=new FoolsWalker(exterior.MihuoerActor,Slope);Dialogue(parameters.foolsGroundDialogue,"ground");Enter(Step.GroundDialogue);SampleAction(false,0f,false);GroundShot();
                         }
                         break;
                     case Step.GroundDialogue:
-                        dialogue.Tick(dt,false);Walker.Sample(0,false,DialoguePose,dt);GroundShot();
+                        SampleAction(false,dt,true);GroundShot();
                         if(dialogue.Ended){Dialogue(parameters.foolsWalkDialogue,"walk");Enter(Step.Walking);}
                         break;
                     case Step.Walking:
@@ -95,16 +107,16 @@ namespace AstraCabin.Galaxies.Zyl
                         if(WalkDistance>=Slope.Length)
                         {
                             dialogue.Tick(0,true);WalkInterrupted=dialogue.Interrupted;
-                            Dialogue(parameters.foolsCrestDialogue,"crest");Walker.Sample(Slope.Length,false,DialoguePose,dt);Enter(Step.CrestDialogue);HeadShot(0);
+                            Dialogue(parameters.foolsCrestDialogue,"crest");SampleAction(true,dt,false);Enter(Step.CrestDialogue);HeadShot(0);
                         }
                         else {dialogue.Tick(dt,false);Walker.Sample(WalkDistance,true,MihuoerPose.Idle,dt);BackShot();}
                         break;
                     case Step.CrestDialogue:
-                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,DialoguePose,dt);HeadShot(0);
+                        SampleAction(true,dt,true);HeadShot(0);
                         if(phaseTime>=parameters.foolsFrontHold)Enter(Step.Orbit);
                         break;
                     case Step.Orbit:
-                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,DialoguePose,dt);
+                        SampleAction(true,dt,true);
                         OrbitPullShot(Mathf.Clamp01(phaseTime/parameters.foolsOrbitDuration),PullProgress(phaseTime-parameters.foolsOrbitDuration*.5f));
                         if(phaseTime>=parameters.foolsOrbitDuration)
                         {
@@ -113,12 +125,12 @@ namespace AstraCabin.Galaxies.Zyl
                         }
                         break;
                     case Step.Pullback:
-                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,DialoguePose,dt);
+                        SampleAction(true,dt,true);
                         OrbitPullShot(1,PullProgress(parameters.foolsOrbitDuration*.5f+phaseTime));
                         if(parameters.foolsOrbitDuration*.5f+phaseTime>=parameters.foolsPullbackDuration)Enter(Step.FinalHold);
                         break;
                     case Step.FinalHold:
-                        dialogue.Tick(dt,false);Walker.Sample(Slope.Length,false,DialoguePose,dt);PullShot(1);
+                        SampleAction(true,dt,true);PullShot(1);
                         if(phaseTime>=parameters.foolsFinalHold&&dialogue.Ended){dialogue=null;TransitionAlpha=.001f;Curtain.ResetPaintConfirmation();Enter(Step.SceneFadeOut);}
                         break;
                     case Step.SceneFadeOut:

@@ -1633,6 +1633,12 @@
     "foolsOrbitDuration": 7,
     "foolsPullbackDuration": 5,
     "foolsFinalHold": 3,
+    "foolsActionClips": [],
+    "encounterActionClips": [],
+    "stomachActionClips": [],
+    "printingActionClips": [],
+    "escapeGravesActionClips": [],
+    "farewellActionClips": [],
     "foolsGroundDialogue": [
       {
         "text": "【占位：请填写米霍尔离开飞船后的台词。】",

@@ -12,6 +12,7 @@ namespace AstraCabin.Galaxies.Zyl
         SetpieceDirector director;
         ZylPresentationParameters parameters;
         MihuoerDialoguePlayer dialogue;
+        MihuoerActionTrack actionTrack;
         MihuoerPole pole;
         float poleTime;
         Vector2 scroll;
@@ -21,7 +22,7 @@ namespace AstraCabin.Galaxies.Zyl
         public void Initialize(SetpieceDirector value){director=value;}
         public void Show()
         {
-            Clear();parameters=ZylPresentationParameters.Load();if(director.computer.Navigation&&director.computer.Navigation.Countdown)director.computer.Navigation.Countdown.ReloadParameters();Active=true;Phase=Step.WaitingForEnvironment;
+            Clear();parameters=ZylPresentationParameters.Load();if(director.computer.Navigation&&director.computer.Navigation.Countdown)director.computer.Navigation.Countdown.ReloadParameters();actionTrack=new MihuoerActionTrack(parameters.printingActionClips,parameters.printingDialogue);Active=true;Phase=Step.WaitingForEnvironment;
             if(!director.computer.Navigation||director.computer.Navigation.ActiveGalaxyId!="zyl"){Fail("米霍尔需要打印构件：请先进入zyl胃内航程。");return;}
             director.computer.Close();director.controller.SnapToWall(1);director.controller.EnterWindowView();director.controller.cinematicWindowLock=true;
         }
@@ -46,7 +47,13 @@ namespace AstraCabin.Galaxies.Zyl
                 poleTime += Time.deltaTime;
                 pole.Sample(Mathf.Lerp(.06f, MihuoerPole.PreviewLength, Mathf.SmoothStep(0, 1, Mathf.Clamp01(poleTime / 1.05f))));
             }
-            if(Phase==Step.Dialogue){dialogue.Tick(Time.deltaTime,false);exterior.MihuoerActor.Pose=MihuoerActing.Seated(dialogue);if(dialogue.Ended)Finish();}
+            if(Phase==Step.Dialogue)
+            {
+                dialogue.Tick(Time.deltaTime,false);
+                var cue=actionTrack.SampleDialogue(dialogue,out float cueTime);
+                exterior.MihuoerActor.SetDialoguePose(MihuoerActing.Seated(dialogue),cue,cueTime);
+                if(dialogue.Ended)Finish();
+            }
         }
         void ApplyTimer(int line,string phase,CountdownAction action)
         {
@@ -96,7 +103,7 @@ var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(a
             }
             finally{GUI.matrix=matrix;GUI.color=color;GUI.enabled=enabled;}
         }
-        public void Clear(){pole?.Dispose();pole=null;if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor&&Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.ChairListen;Active=Complete=false;dialogue=null;Error=null;scroll=Vector2.zero;}
+        public void Clear(){pole?.Dispose();pole=null;if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor&&Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.ChairListen;Active=Complete=false;dialogue=null;actionTrack=null;Error=null;scroll=Vector2.zero;}
         void OnDestroy(){pole?.Dispose();pole=null;if(font)Destroy(font);}
     }
 }

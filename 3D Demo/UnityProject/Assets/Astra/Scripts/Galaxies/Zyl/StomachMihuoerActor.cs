@@ -35,7 +35,20 @@ namespace AstraCabin.Galaxies.Zyl
             SetSeatedOnCraft(cinematicSeated,cinematicReferenceSeat);Craft.rotation=cinematicCraftRotation;
         }
         internal MihuoerMotion StandingMotion => standingMotion;
-        internal MihuoerPose Pose {get;set;}=MihuoerPose.Slumped;
+        MihuoerPose pose = MihuoerPose.Slumped;
+        FoolsActionClip actionCue;
+        float actionCueTime;
+        internal MihuoerPose Pose
+        {
+            get => actionCue?.Pose ?? pose;
+            set => SetDialoguePose(value, null, 0f);
+        }
+        internal void SetDialoguePose(MihuoerPose fallback, FoolsActionClip cue, float cueTime)
+        {
+            pose = fallback;
+            actionCue = cue;
+            actionCueTime = cueTime;
+        }
         public Transform Craft {get;private set;}
         public Transform Actor {get;private set;}
         public void Initialize(SetpieceDirector owner,Transform characterAnchor,Transform shipAnchor)
@@ -101,8 +114,8 @@ namespace AstraCabin.Galaxies.Zyl
         }
         void Sample(float dt)
         {
-            if(!SeatedOnCraft) { standingMotion?.Sample(Pose,dt);return; }
-            if(referenceSeat) { seatedMotion.Sample(Pose,dt);return; }
+            if(!SeatedOnCraft) { standingMotion?.Sample(Pose,dt,cue:actionCue,cueTime:actionCueTime);return; }
+            if(referenceSeat) { seatedMotion.Sample(Pose,dt,cue:actionCue,cueTime:actionCueTime);return; }
 
             // Keep the original seated performance in the fixed pole/ceiling shots.
             var state=seatedAnimation["Think"];

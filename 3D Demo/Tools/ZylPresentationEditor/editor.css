@@ -30,3 +30,52 @@
 .frame-selection-card fieldset label{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer}
 .frame-selection-card fieldset input[type=checkbox]{width:16px;height:16px;margin:2px}
 .frame-selection-card .value-row>span{display:inline;font-size:12px}
+
+/* A compact rail and a horizontally scrollable timeline keep both controls in reach. */
+@media(min-width:651px){
+ aside{padding-block:clamp(14px,3.2vh,36px)}
+ aside .rail-label{margin:clamp(16px,4vh,48px) 0 10px}
+ aside nav{flex:1;min-height:0;overflow-y:scroll;overscroll-behavior:contain;scrollbar-gutter:stable;scrollbar-color:#769887 #1c3c32;scrollbar-width:thin;padding-right:5px}
+ aside .rail-note{margin-top:12px;flex:none}
+}
+nav .timeline-rail-link{color:#c4dba5;padding-left:12px}
+.action-timeline{min-width:0;margin-bottom:18px;padding:20px;background:#e9eee3;border:1px solid #c6d3bd;border-radius:6px;scroll-margin-top:12px}
+.timeline-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.timeline-heading h3{margin:4px 0 0;font-size:20px}
+.timeline-zoom{display:flex;gap:8px;align-items:center;font-size:12px}
+.timeline-zoom input{accent-color:var(--green)}
+.timeline-note,.timeline-notices{font-size:12px;color:#506449;line-height:1.6;margin:8px 0}
+.timeline-notices{color:#854b27}
+.timeline-body{display:grid;grid-template-columns:74px minmax(0,1fr);border:1px solid #c2d0ba;border-radius:5px;background:#fafbf7}
+.timeline-viewport{overflow:auto;scrollbar-color:#7b9a72 #ebefe6;min-width:0}
+.timeline-canvas{position:relative}
+.timeline-labels{font-size:12px;font-weight:600;background:#e2eadb;border-right:1px solid #c2d0ba}
+.timeline-labels div{display:flex;align-items:center;padding:8px 10px;border-bottom:1px solid #d6dfd0}
+.timeline-labels div:nth-child(1),.ruler{height:36px}
+.timeline-labels div:nth-child(2),.dialogue-lane{height:52px}
+.timeline-labels div:nth-child(3),.node-lane{height:42px}
+.timeline-labels div:nth-child(4),.action-lane{height:60px}
+.timeline-lane{position:relative;border-bottom:1px solid #d6dfd0}
+.timeline-lane>*{position:absolute;overflow:hidden;white-space:nowrap}
+.timeline-tick{top:4px;height:29px;padding:0 3px;border-left:1px solid #adbc9e;color:#5b6d53;font-size:10px}
+.timeline-dialogue,.timeline-action,.timeline-locked{top:8px;padding:5px 6px;text-align:left;text-overflow:ellipsis;border-radius:4px;font-size:11px;height:34px}
+.timeline-dialogue{background:#edf0e8;border:1px solid #c7d3bf;color:#3c553a}
+.timeline-node{top:6px;border-left:2px solid #8b6b44;padding:5px;color:#5b472e;font-size:11px;background:#f2eadd}
+.timeline-action{background:#32604d;color:white;border-color:#234c3b;cursor:grab;touch-action:none;padding-inline:11px;z-index:1}
+.timeline-action:hover,.timeline-action.selected{background:#254c40;color:white;border-color:#c6a45a;z-index:2}
+.timeline-trim{position:absolute;top:2px;bottom:2px;width:min(9px,33%);cursor:ew-resize}
+.trim-start{left:0;border-right:1px solid #aec2a8}
+.trim-end{right:0;border-left:1px solid #aec2a8}
+.timeline-snap-guide{position:absolute;inset-block:0;border-left:2px solid #087e9b;pointer-events:none;z-index:3}
+.timeline-snap-label{position:absolute;top:8px;white-space:nowrap;padding:3px 6px;border-radius:3px;background:#07657b;color:#fff;font-size:11px}
+.timeline-locked{background:#e4e7df;color:#596650;border:1px dashed #9eaa94}
+.timeline-edit-bar,.timeline-inspector,.timeline-choices{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.timeline-edit-bar{margin:12px 0 9px;font-size:12px;font-weight:600}
+.timeline-inspector label{display:flex;flex-direction:column;font-size:11px;gap:4px}
+.action-timeline select,.timeline-inspector input{font:inherit;font-size:12px;padding:6px;border:1px solid #aebfa6;background:#fff;color:#2c4b36;border-radius:4px;max-width:200px}
+.timeline-inspector input{width:85px}
+.timeline-inspector button{align-self:flex-end}
+.timeline-pool{margin-top:12px;padding-top:12px;border-top:1px solid #bac8b3;font-size:13px}
+.timeline-choices button{padding:7px 10px;cursor:grab}
+@media(max-width:650px){.action-timeline{padding:12px}.timeline-body{grid-template-columns:54px minmax(0,1fr)}.timeline-labels div{padding:4px 6px}}
+.timeline-view-controls{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.timeline-view-controls button{padding:5px 8px}

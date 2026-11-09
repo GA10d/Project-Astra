@@ -202,9 +202,10 @@ namespace AstraCabin.Galaxies.Zyl
             Camera.Render();var previous=RenderTexture.active;RenderTexture.active=Video;var tex=new Texture2D(1280,720,TextureFormat.RGBA32,false);tex.ReadPixels(new Rect(0,0,1280,720),0,0);tex.Apply();RenderTexture.active=previous;
             Portrait=new Texture2D(320,400,TextureFormat.RGBA32,false);for(int y=0;y<400;y++)for(int x=0;x<320;x++){bool border=x<13||x>=307||y<13||y>=387;var c=tex.GetPixelBilinear(.32f+x/320f*.36f,.03f+y/400f*.93f);float gray=c.grayscale;Portrait.SetPixel(x,y,border?new Color(.88f,.88f,.84f):new Color(gray,gray,gray,1));}Portrait.Apply();resources.Add(Portrait);UnityEngine.Object.Destroy(tex);
         }
-        internal void SampleActor(float dt,MihuoerPose pose)
+        internal void SampleActor(float dt,MihuoerPose pose,FoolsActionClip cue=null,float cueTime=0f)
         {
-            motion.Sample(pose,dt);
+            pose=cue?.Pose??pose;
+            motion.Sample(pose,dt,cue:cue,cueTime:cueTime);
             waveFraming=Mathf.MoveTowards(waveFraming,pose==MihuoerPose.StandWave?1f:0f,dt/.62f);
             Camera.fieldOfView=Mathf.SmoothStep(CallFov,WaveFov,waveFraming);
         }
@@ -240,7 +241,7 @@ namespace AstraCabin.Galaxies.Zyl
 
         public void SampleChest(float t, float shake, float previewElapsed, float dt = 0f)
         {
-            motion.Sample(MihuoerPose.HeadClutch, dt);
+            motion.Continue(dt);
             Camera.transform.localPosition = new Vector3(0, 1.1f, -2.35f)
                 + new Vector3(Mathf.Sin(t * 37), Mathf.Sin(t * 29), 0) * (.048f * shake);
             Camera.fieldOfView=Mathf.SmoothStep(CallFov,WaveFov,waveFraming*(1f-Mathf.Clamp01(t/.62f)));

@@ -115,7 +115,7 @@ namespace AstraCabin.Galaxies.Zyl
             PoseProp(plantedGrip, 0f);
         }
 
-        internal void Sample(float age, MihuoerPose pose, float dt)
+        internal void Sample(float age, MihuoerPose pose, float dt, FoolsActionClip cue=null, float cueTime=0f)
         {
             AdvanceWave(age, dt);
             float reach = Ease(age / .90f);
@@ -123,8 +123,9 @@ namespace AstraCabin.Galaxies.Zyl
             float crouch = reach * (1f - lift);
             var standingDirection = Vector3.ProjectOnPlane(facing, up).normalized;
             var turning = Vector3.Slerp(standingDirection, reachDirection, .40f * crouch);
+            if (age >= 0f) cue=null; // The grab and sustained hand contact are authored by the scene.
             var basePose = age >= 0f && age < LiftEnd + .35f ? MihuoerPose.Idle : pose;
-            walker.SampleStandingAt(actorGround, turning, basePose, dt, reachDirection * (.14f * crouch), .29f * crouch);
+            walker.SampleStandingAt(actorGround, turning, basePose, dt, reachDirection * (.14f * crouch), .29f * crouch, cue, cueTime);
             if (age < 0f) return;
 
             Vector3 bendAxis = Vector3.Cross(up, reachDirection);

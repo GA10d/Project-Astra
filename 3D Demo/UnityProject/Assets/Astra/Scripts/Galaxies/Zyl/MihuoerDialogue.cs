@@ -40,6 +40,8 @@ namespace AstraCabin.Galaxies.Zyl
         readonly Action<int,CountdownAction> lineAction;readonly Action<int,int,CountdownAction> replyAction;
         public int Index {get;private set;}
         public float Elapsed {get;private set;}
+        float completedTime;
+        internal float ScriptTime => completedTime + Elapsed;
         public bool Interrupted {get;private set;}
         public bool Ended {get{return Index>=lines.Length;}}
         public MihuoerDialogueLine Current {get{return Ended||Interrupted?null:lines[Index];}}
@@ -58,14 +60,21 @@ namespace AstraCabin.Galaxies.Zyl
                 float consumed=Math.Min(remaining,Math.Max(0,line.duration-Elapsed));
                 Elapsed+=consumed;remaining-=consumed;
                 if(Elapsed<line.duration||line.replies.Length>0)return;
-                Index++;Elapsed=0;EnterLine();
+                AdvanceLine();
                 if(remaining<=0)return;
             }
+        }
+        void AdvanceLine()
+        {
+            completedTime += lines[Index].duration;
+            Index++;
+            Elapsed=0;
+            EnterLine();
         }
         public bool Choose(int option)
         {
             if(!WaitingForReply||option<0||option>=Current.replies.Length)return false;
-            replyAction?.Invoke(Index,option,Current.replyTimerActions[option]);Index++;Elapsed=0;EnterLine();return true;
+            replyAction?.Invoke(Index,option,Current.replyTimerActions[option]);AdvanceLine();return true;
         }
     }
 }

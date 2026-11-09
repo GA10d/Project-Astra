@@ -16,6 +16,7 @@ namespace AstraCabin.Galaxies.Zyl
         public string CurrentText {get{return dialogue?.Current?.text;}}
         public static readonly Vector3 ActorAuth=new Vector3(3.2732f,0,6.9407f),CameraAuth=new Vector3(-2.0167f,0,9.4961f);
         public static readonly Vector3[] GraveAuth={new Vector3(5.7751f,0,6.5558f),new Vector3(4.2910f,0,4.7240f),new Vector3(2.6227f,0,2.7001f)};
+        MihuoerActionTrack actionTrack;
         SetpieceDirector director;ZylPresentationParameters p;MihuoerDialoguePlayer dialogue,encouragement;
         float phaseTime;bool leaving,oldUI,captured;Vector3 actorGround,actorFacing;Font font;GUIStyle subtitle;
         // Fitted from the marked ground point in the grave reference view.
@@ -81,6 +82,7 @@ namespace AstraCabin.Galaxies.Zyl
             var light=new GameObject("Graves soft fill").AddComponent<Light>();light.transform.SetParent(root.transform);light.transform.position=cameraPosition+Ground.Up*2;light.type=LightType.Point;light.range=18;light.intensity=1.1f;light.color=new Color(1,.77f,.58f);light.cullingMask=1<<25;
             oldUI=director.controller.showUI;captured=true;director.controller.showUI=false;
             dialogue=Dialogue(p.escapeGravesDialogue,"graves");
+            actionTrack=new MihuoerActionTrack(p.escapeGravesActionClips,p.escapeGravesDialogue);
             Walker.SampleStandingAt(actorGround,actorFacing,GravesPose,0);
             sprout = new EscapeSprout(GravesRoot, Walker, sproutSoil, actorGround, actorFacing, Ground.Up, resources, plantedSprout, p);
             if(plantedSprout) plantedSprout.gameObject.SetActive(false);
@@ -199,7 +201,8 @@ namespace AstraCabin.Galaxies.Zyl
                     case Step.GravesDialogue:
                         dialogue.Tick(dt,false);
                         float age = phaseTime - sproutCue;
-                        sprout.Sample(age, GravesPose, dt);
+                        var cue=actionTrack.SampleDialogue(dialogue,out float cueTime);
+                        sprout.Sample(age, GravesPose, dt, cue, cueTime);
                         shakeTime = age - EscapeSprout.LiftEnd - p.escapeSproutShakeDelay;
                         ShakeGravesCamera(1f);
                         float gustEnd = backgroundGust != null && backgroundGust.Duration > 0f
@@ -282,7 +285,7 @@ namespace AstraCabin.Galaxies.Zyl
         public void Clear()
         {
             if(director&&Combat)Combat.EndEscapeStory();ReleaseShot();RestoreUI();if(director)director.controller.cinematicWindowLock=false;
-            Active=Complete=leaving=false;TransitionAlpha=phaseTime=0;Error=null;Flight=null;dialogue=encouragement=null;Phase=Step.WaitingForEnvironment;
+            Active=Complete=leaving=false;TransitionAlpha=phaseTime=0;Error=null;Flight=null;dialogue=encouragement=null;actionTrack=null;Phase=Step.WaitingForEnvironment;
         }
         void OnDisable(){Clear();}void OnDestroy(){Clear();if(font)Destroy(font);}
     }

@@ -81,6 +81,12 @@ namespace AstraCabin.Galaxies.Zyl {
   public float foolsWalkSpeed=0.85f;
   public float foolsFrontHold=2f;
   public float foolsOrbitDuration=7f;
+  public FoolsActionClip[] foolsActionClips = new FoolsActionClip[0];
+  public FoolsActionClip[] encounterActionClips = new FoolsActionClip[0];
+  public FoolsActionClip[] stomachActionClips = new FoolsActionClip[0];
+  public FoolsActionClip[] printingActionClips = new FoolsActionClip[0];
+  public FoolsActionClip[] escapeGravesActionClips = new FoolsActionClip[0];
+  public FoolsActionClip[] farewellActionClips = new FoolsActionClip[0];
   public float foolsOrbitTargetFov=62f;
   public float foolsOrbitEndDistance=4.2f;
   public float foolsOrbitEndHeight=2f;
@@ -253,6 +259,12 @@ namespace AstraCabin.Galaxies.Zyl {
    Check("foolsOrbitEndHeight",foolsOrbitEndHeight,.65f,6f);
    Check("foolsPullbackDuration",foolsPullbackDuration,1f,20f);
    Check("foolsFinalHold",foolsFinalHold,1f,30f);
+   FoolsActionClip.Validate(foolsActionClips);
+   FoolsActionClip.Validate(encounterActionClips, seated: true);
+   FoolsActionClip.Validate(stomachActionClips, seated: false);
+   FoolsActionClip.Validate(printingActionClips, seated: true);
+   FoolsActionClip.Validate(escapeGravesActionClips, seated: false);
+   FoolsActionClip.Validate(farewellActionClips, seated: false);
    ValidateCinematicDialogue(foolsGroundDialogue);
    ValidateCinematicDialogue(foolsWalkDialogue);
    ValidateCinematicDialogue(foolsCrestDialogue);

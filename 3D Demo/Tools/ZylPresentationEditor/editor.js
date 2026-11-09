@@ -1,4 +1,400 @@
 'use strict';
+
+const standingPoses = {
+    Idle:'站立待机', ChinThink:'托腮思考', TempleTouch:'扶太阳穴', Explain:'单手解释',
+    OpenHands:'双手摊开', Emphasis:'食指强调', HeadClutch:'双手抱头', AngryFists:'握拳发怒',
+    Slumped:'垂头沮丧', KneeBrace:'屈膝撑膝', StandWave:'站立挥手'
+};
+const seatedPoses = {
+  ChairWave:'坐姿挥手', ChairTalk:'坐姿讲话', ChairListen:'坐姿听候',
+  ChairWorry:'坐姿担忧', ChairEmphasis:'坐姿强调'
+};
+const motionSections = [
+  {id:12,group:3,key:'encounterActionClips',dialogue:'freeDialogue',title:'自由对话',poses:seatedPoses,
+   note:'接通并回应开场后开始。等待回复暂停动作进度，巨兽仍可打断对话。'},
+  {id:13,group:7,key:'stomachActionClips',dialogue:'stomachDialogue',title:'肚中会谈',poses:standingPoses,
+   note:'转舱到位后开始。等待回复暂停动作进度。'},
+  {id:14,group:9,key:'printingActionClips',dialogue:'printingDialogue',title:'飞船内对白',poses:seatedPoses,
+   note:'飞船就座后开始。等待回复暂停动作进度。',cue:'showPole',cueLabel:'展示短杆'},
+  {id:15,group:10,key:'foolsActionClips',poses:standingPoses},
+  {id:16,group:11,key:'escapeGravesActionClips',dialogue:'escapeGravesDialogue',title:'墓前对白',poses:standingPoses,
+   note:'从墓前对白开始。进入拔肉芽和持握时，由演出接管动作。',cue:'pullSprout',cueLabel:'开始拔肉芽',lock:true},
+  {id:17,group:12,key:'farewellActionClips',dialogue:'farewellDialogue',title:'别离视频通话',poses:standingPoses,
+   note:'从通话对白开始。等待回复暂停动作进度，倒计时归零可打断动作。'}
+];
+
+function createActionTimeline(spec) {
+  const {key,poses}=spec;
+  const continuous=spec.id===15;
+  const titles=continuous ? {ground:'离船对白',walk:'上坡',crest:'坡顶对白与绕后'} : {dialogue:spec.title};
+  const trackKeys=continuous ? {ground:'foolsGroundDialogue',walk:'foolsWalkDialogue',crest:'foolsCrestDialogue'} : {dialogue:spec.dialogue};
+  const editable=continuous ? ['ground','crest'] : ['dialogue'];
+  const ranges = {offset:[0,3600],duration:[.1,600],speed:[.25,3],blend:[0,3]};
+  const routeLength = 33.96592;
+  const snapPixels = 8;
+  let panel, viewport, canvas, summary, inspector, notices, selector, zoom;
+  let chosen = -1;
+
+  function validate(config) {
+    const clips=config[key];
+    if (!Array.isArray(clips) || clips.length > 64) return [`演出 ${spec.id} 动作轨需要数组，最多 64 段。`];
+    return clips.flatMap((c,i) => {
+      if (c && editable.includes(c.section) && Object.hasOwn(poses,c.pose) &&
+          ['loop','hold'].includes(c.playback) && (c.lineId == null || (typeof c.lineId==='string'&&c.lineId.length<=48)) &&
+          Object.entries(ranges).every(([k,[min,max]])=>typeof c[k]==='number'&&Number.isFinite(c[k])&&c[k]>=min&&c[k]<=max)) return [];
+      return [`演出 ${spec.id} 动作轨第 ${i+1} 段的动作、区段或时间参数无效。`];
+    });
+  }
+
+  const element = (tag,css,text) => {
+    const el=document.createElement(tag);
+    if(css)el.className=css;
+    if(text!==undefined)el.textContent=text;
+    return el;
+  };
+  function button(text, onClick, css) {
+    const el=element('button',css,text);
+    el.type='button';el.addEventListener('click',onClick);return el;
+  }
+  const round = n => Math.round(n*100)/100;
+  const finite = (x,fallback) => Number.isFinite(x) ? x : fallback;
+  const clamp = (v,a,b) => Math.min(b,Math.max(a,v));
+
+  function layout(config) {
+    const bySection={};
+    let time=0;
+    for(const section of Object.keys(trackKeys)){
+      let lineTime=0;
+      const entries=Array.isArray(config[trackKeys[section]])?config[trackKeys[section]]:[];
+      const lines=entries.filter(Boolean).map((line,i)=>{
+        const length=clamp(finite(line.duration,0),0,600);
+        const row={line,i,start:lineTime,length};
+        lineTime+=length;
+        return row;
+      });
+      let length=lineTime;
+      if(section==='walk')length=routeLength/Math.max(.2,finite(config.foolsWalkSpeed,.85));
+      if(section==='crest'){
+        const orbit=finite(config.foolsOrbitDuration,7);
+        length=Math.max(length,finite(config.foolsFrontHold,2)+Math.max(orbit,orbit/2+finite(config.foolsPullbackDuration,5))+finite(config.foolsFinalHold,3));
+      }
+      const cue=spec.cue ? lines.find(row=>row.line[spec.cue]===true) : undefined;
+      bySection[section]={start:time,length,lines,cue,actionLength:spec.lock&&cue ? cue.start : length};
+      time+=length;
+    }
+    return {bySection,total:time};
+  }
+
+  function anchor(section,id) {
+    if(!id)return 0;
+    return section.lines.find(row=>row.line.timerKey===id)?.start;
+  }
+
+  function updateClip(index, changes) {
+    const next=copy(values);
+    if (!next[key]?.[index]) return;
+    Object.assign(next[key][index],changes);
+    chosen=index;commit(next,false);
+  }
+
+  function addClip(pose, section, offset) {
+    const next=copy(values);
+    if(!Array.isArray(next[key])||next[key].length>=64)return;
+    if(layout(values).bySection[section].actionLength<=0){
+      notices.textContent='此段没有可编排的对白时间。';
+      return;
+    }
+    chosen=next[key].length;
+    next[key].push({section,lineId:'',offset:round(clamp(offset,0,3600)),duration:2,pose,speed:1,blend:.62,
+      playback:['Emphasis','AngryFists','KneeBrace','StandWave'].includes(pose)?'hold':'loop'});
+    commit(next,false);
+  }
+
+  function init() {
+    const group=document.getElementById('group'+spec.group);
+    if(!group)return;
+    panel=element('section','action-timeline');
+    panel.id=continuous?'fools-action-timeline':`action-timeline-${spec.id}`;
+    const heading=element('div','timeline-heading');
+    const title=element('div');
+    title.append(element('span','eyebrow',`SETPIECE ${spec.id} / MOTION`),element('h3','','米霍尔动作时间轴'));
+    const zoomLabel=element('label','timeline-zoom','时间轴缩放 ');
+    zoom=element('input');
+    Object.assign(zoom,{type:'range',min:6,max:48,value:16});
+    zoom.addEventListener('input',refresh);
+    zoomLabel.append(zoom);
+    const viewControls=element('div','timeline-view-controls');
+    viewControls.append(zoomLabel,button('适配整段',fit));
+    heading.append(title,viewControls);
+    summary=element('p','timeline-note');
+    const body=element('div','timeline-body');
+    const labels=element('div','timeline-labels');
+    for(const name of ['时间','台词','演出节点','动作轨'])labels.append(element('div','',name));
+    viewport=element('div','timeline-viewport');viewport.tabIndex=0;
+    viewport.setAttribute('aria-label','可横向滚动的演出时间轴');
+    canvas=element('div','timeline-canvas');viewport.append(canvas);body.append(labels,viewport);
+    const editBar=element('div','timeline-edit-bar');
+    selector=element('select');selector.setAttribute('aria-label','选择动作段');
+    selector.addEventListener('change',()=>{chosen=Number(selector.value);refresh();});
+    editBar.append(element('span','','动作细调'),selector);
+    inspector=element('div','timeline-inspector');
+    notices=element('div','timeline-notices');notices.setAttribute('role','status');
+    const pool=element('div','timeline-pool');
+    pool.append(element('strong','',poses===seatedPoses?'坐姿动作池':'站姿动作池'),element('p','timeline-note','拖到动作轨，或点一下添加。拖动作块移动，拖两端调整时长。靠近刻度、台词边界或节点会自动对齐，按住 Alt 可微调。'));
+    const choices=element('div','timeline-choices');
+    for(const [id,label] of Object.entries(poses)){
+      const item=button(label,()=>{
+        const selection=values[key]?.[chosen];
+        addClip(id,selection?.section??editable[0],0);
+      });
+      item.draggable=true;
+      item.addEventListener('dragstart',event=>{
+        event.dataTransfer.setData('text/x-zyl-pose',id);event.dataTransfer.effectAllowed='copy';
+      });
+      choices.append(item);
+    }
+    pool.append(choices);
+    panel.append(heading,summary,body,editBar,inspector,notices,pool);
+    group.querySelector('.grid').before(panel);
+    const link=element('a','timeline-rail-link',`↳ ${spec.id} · 米霍尔动作时间轴`);
+    link.href='#'+panel.id;
+    document.querySelector(`#nav a[href="#group${spec.group}"]`).after(link);
+    fit();
+  }
+
+  function fit() {
+    const available=viewport.clientWidth-48;
+    zoom.value=clamp(Math.floor(available/Math.max(layout(values).total,1)),Number(zoom.min),Number(zoom.max));
+    viewport.scrollLeft=0;
+    refresh();
+  }
+
+  function refresh() {
+    if(!panel)return;
+    const model=layout(values), {bySection:sections,total}=model;
+    const clips=Array.isArray(values[key])?values[key]:[];
+    if(chosen>=clips.length)chosen=clips.length-1;
+    const scale=Math.min(Number(zoom.value),50000/Math.max(total,1));
+    const x=t=>t*scale;
+    const width=Math.max(x(total)+48,viewport.clientWidth);
+    canvas.style.width=width+'px';
+    canvas.replaceChildren();
+    summary.textContent=continuous ? `从离船开始 · 预计 ${round(total)} 秒 · 上坡约 ${round(sections.walk.length)} 秒。走到坡顶时切断上坡对白，以游戏实际位置为准。` : `预计 ${round(total)} 秒（按台词时长）。${spec.note}`;
+    const snapPoints=[];
+    const ticks=[];
+    const ruler=element('div','timeline-lane ruler');
+    const tick=Math.max(scale<10?10:scale<22?5:2,Math.ceil(total/75));
+    for(let t=0;t<=total;t+=tick){
+      const mark=element('span','timeline-tick',t+'秒');
+      mark.style.left=x(t)+'px';ruler.append(mark);
+      ticks.push({time:t,label:`${t} 秒刻度`});
+    }
+    canvas.append(ruler);
+    const dialogue=element('div','timeline-lane dialogue-lane');
+    const nodes=element('div','timeline-lane node-lane');
+    const actions=element('div','timeline-lane action-lane');
+    const nodeNames={ground:'离船',walk:'开始上坡',crest:'到达坡顶',dialogue:'开始对白'};
+    for(const [name,section] of Object.entries(sections)){
+      snapPoints.push({time:section.start,label:nodeNames[name]});
+    }
+    snapPoints.push({time:total,label:'动作时间轴末尾'});
+    for(const [name,section] of Object.entries(sections)){
+      const label=element('span','timeline-node',nodeNames[name]);
+      label.style.left=x(section.start)+'px';nodes.append(label);
+      if(section.cue){
+        const time=section.start+section.cue.start;
+        if(section.cue.start===0)label.textContent+=' · '+spec.cueLabel;
+        else {
+          const marker=element('span','timeline-node',spec.cueLabel);
+          marker.style.left=x(time)+'px';nodes.append(marker);
+        }
+        snapPoints.push({time,label:spec.cueLabel});
+      }
+      for(const row of section.lines){
+        const length=Math.min(row.length,section.length-row.start);
+        if(length<=0)break;
+        const item=button(`${row.i+1}. ${row.line.text||'台词'}`,()=>document.getElementById(trackKeys[name]+'-text-'+row.i)?.focus(),'timeline-dialogue');
+        item.title=`${titles[name]} · ${row.line.text||''}${length<row.length?'（预计到坡顶时打断）':''}`;
+        item.style.left=x(section.start+row.start)+'px';
+        item.style.width=Math.max(3,x(length))+'px';dialogue.append(item);
+        const lineLabel=`${titles[name]} · 第 ${row.i+1} 句`;
+        snapPoints.push(
+          {time:section.start+row.start,label:lineLabel+'开始'},
+          {time:section.start+row.start+length,label:lineLabel+'结束'}
+        );
+      }
+    }
+    snapPoints.push(...ticks);
+    const guide=element('div','timeline-snap-guide');
+    const guideLabel=element('span','timeline-snap-label');
+    guide.hidden=true;
+    guide.setAttribute('aria-hidden','true');
+    guide.append(guideLabel);
+    const locked=continuous ? sections.walk : sections.dialogue;
+    if(locked.actionLength<locked.length || continuous){
+      const start=continuous ? 0 : locked.actionLength;
+      const lock=element('div','timeline-locked',continuous?'🔒 坡度驱动步态':'🔒 拔取与持握');
+      lock.style.left=x(locked.start+start)+'px';lock.style.width=x(locked.length-start)+'px';
+      actions.append(lock);
+    }
+    actions.addEventListener('dragover',event=>{
+      if(event.dataTransfer.types.includes('text/x-zyl-pose'))event.preventDefault();
+    });
+    actions.addEventListener('drop',event=>{
+      const pose=event.dataTransfer.getData('text/x-zyl-pose');
+      if(!Object.hasOwn(poses,pose))return;
+      event.preventDefault();
+      const time=(event.clientX-actions.getBoundingClientRect().left)/scale;
+      const section=editable.find(name=>{
+        const lane=sections[name];
+        return time>=lane.start && time<lane.start+lane.actionLength;
+      });
+      if(section)addClip(pose,section,time-sections[section].start);
+      else notices.textContent='请将动作拖到可编辑的对白区间。';
+    });
+    const warnings=[];
+    clips.forEach((clip,index)=>{
+      if(!clip || !editable.includes(clip.section))return;
+      const section=sections[clip.section], at=anchor(section,clip.lineId);
+      if(at===undefined){warnings.push(`动作 ${index+1} 的台词已删除，可重新选择锚点。`);return;}
+      const start=at+finite(clip.offset,0), end=start+finite(clip.duration,0);
+      const length=Math.min(end,section.actionLength)-start;
+      if(length<=0){warnings.push(`动作 ${index+1} 位于区段结束之后。`);return;}
+      if(end>section.actionLength+.001)warnings.push(`动作 ${index+1} 会在区段结束时截断。`);
+      const bar=button(poses[clip.pose]||'动作',()=>{chosen=index;refresh();},'timeline-action'+(chosen===index?' selected':''));
+      bar.title=`${poses[clip.pose]} · ${round(start)}秒起 · ${round(length)}秒`;
+      bar.style.left=x(section.start+start)+'px';bar.style.width=Math.max(8,x(length))+'px';
+      const leftHandle=element('span','timeline-trim trim-start');
+      const rightHandle=element('span','timeline-trim trim-end');
+      leftHandle.dataset.edge='start';leftHandle.title='调整开始位置';
+      rightHandle.dataset.edge='end';rightHandle.title='调整结束位置';
+      bar.append(leftHandle,rightHandle);
+      bar.addEventListener('pointerdown',event=>drag(event,bar,index,clip,{
+        scale,snapPoints,guide,guideLabel,section:{start:section.start,length:section.actionLength},start,end,anchorTime:at
+      }));
+      actions.append(bar);
+    });
+    canvas.append(dialogue,nodes,actions,guide);
+    notices.textContent=warnings.join(' ');
+    selector.replaceChildren(new Option('请选择动作',-1),...clips.map((clip,i)=>new Option(`${i+1}. ${poses[clip?.pose]??'无效动作'} · ${titles[clip?.section]??'区段'}`,i)));
+    selector.value=String(chosen);
+    drawInspector(clips[chosen],sections);
+  }
+
+  function drag(event,bar,index,clip,track) {
+    if(event.button!==0||!event.isPrimary)return;
+    const {scale,snapPoints,guide,guideLabel,section,start,end,anchorTime}=track;
+    const edge=event.target.dataset.edge;
+    const pointerStart=event.clientX;
+    const canvasStart=canvas.getBoundingClientRect().left;
+    const visibleEnd=Math.min(end,section.length);
+    const [minDuration,maxDuration]=ranges.duration;
+    const maxStart=Math.min(anchorTime+ranges.offset[1],section.length-minDuration);
+    const min= edge==='end' ? Math.min(start+minDuration,visibleEnd) :
+      edge==='start' ? Math.max(anchorTime,end-maxDuration) : Math.min(anchorTime,start);
+    const max= edge==='end' ? Math.min(start+maxDuration,section.length) :
+      edge==='start' ? Math.max(start,Math.min(maxStart,end-minDuration)) : Math.max(start,maxStart);
+    const movingTime=edge==='end'?visibleEnd:start;
+    const offsets=edge ? [0] : [0,clip.duration];
+    let pointerX=pointerStart, active=false, changes;
+
+    function preview(altKey) {
+      const pixels=pointerX-pointerStart+canvasStart-canvas.getBoundingClientRect().left;
+      if(!active&&Math.abs(pixels)<3)return;
+      active=true;
+      const desired=clamp(movingTime+pixels/scale,min,max);
+      let time=desired, snapped=null, best=snapPixels+.001;
+      if(!altKey){
+        for(const point of snapPoints){
+          if(point.time<section.start||point.time>section.start+section.length)continue;
+          for(const offset of offsets){
+            const candidate=point.time-section.start-offset;
+            const distance=Math.abs(candidate-desired)*scale;
+            if(candidate<min-1e-9||candidate>max+1e-9||distance>=best-1e-9)continue;
+            time=clamp(candidate,min,max);snapped=point;best=distance;
+          }
+        }
+      }
+      const precision=snapped ? value=>Math.round(value*1e9)/1e9 : round;
+      time=clamp(precision(time),min,max);
+      const nextStart=edge==='end'?start:time;
+      const nextEnd=edge==='end'?time:edge==='start'?end:nextStart+clip.duration;
+      changes={};
+      if(edge!=='end')changes.offset=Math.max(0,nextStart-anchorTime);
+      if(edge)changes.duration=clamp(nextEnd-nextStart,minDuration,maxDuration);
+      bar.style.left=(section.start+nextStart)*scale+'px';
+      bar.style.width=Math.max(8,(Math.min(nextEnd,section.length)-nextStart)*scale)+'px';
+      guide.hidden=!snapped;
+      if(snapped){
+        const guideX=snapped.time*scale;
+        guide.style.left=guideX+'px';
+        guideLabel.textContent=snapped.label;
+        const labelLeft=clamp(guideX+6,viewport.scrollLeft+4,
+          Math.max(viewport.scrollLeft+4,viewport.scrollLeft+viewport.clientWidth-guideLabel.offsetWidth-4));
+        guideLabel.style.left=(labelLeft-guideX)+'px';
+      }
+    }
+
+    function altChanged(e) {
+      if(e.key==='Alt'&&active)preview(e.type==='keydown');
+    }
+    function finish() {
+      window.removeEventListener('keydown',altChanged);
+      window.removeEventListener('keyup',altChanged);
+      bar.onpointermove=bar.onpointerup=bar.onpointercancel=bar.onlostpointercapture=null;
+      guide.hidden=true;
+    }
+
+    bar.setPointerCapture(event.pointerId);
+    window.addEventListener('keydown',altChanged);
+    window.addEventListener('keyup',altChanged);
+    bar.onpointermove=e=>{
+      pointerX=e.clientX;preview(e.altKey);
+    };
+    bar.onpointercancel=bar.onlostpointercapture=()=>{finish();refresh();};
+    bar.onpointerup=e=>{
+      pointerX=e.clientX;preview(e.altKey);finish();
+      if(!active)return;
+      if(Object.keys(changes).some(key=>Math.abs(changes[key]-clip[key])>1e-9))updateClip(index,changes);
+      else refresh();
+    };
+  }
+
+  function drawInspector(clip,sections) {
+    inspector.replaceChildren();
+    if(!clip){inspector.append(element('p','timeline-note','动作轨空白处沿用原表演。重叠时，较晚开始的动作优先。'));return;}
+    const section=sections[clip.section]??sections[editable[0]];
+    const select=(label,key,choices)=>{
+      const wrapper=element('label','',label);
+      const input=element('select');
+      for(const [value,name] of choices)input.add(new Option(name,value));
+      if(![...input.options].some(option=>option.value===(clip[key]??'')))input.add(new Option('原绑定已失效',clip[key]));
+      input.value=clip[key]??'';
+      input.addEventListener('change',()=>updateClip(chosen,key==='section'?{section:input.value,lineId:'',offset:0}:{[key]:input.value}));
+      wrapper.append(input);inspector.append(wrapper);
+    };
+    if(continuous)select('区段','section',editable.map(key=>[key,titles[key]]));
+    select('开始锚点','lineId',[['',continuous?(clip.section==='crest'?'到达坡顶':'离船开始'):'开始对白'],
+      ...section.lines.filter(row=>row.line.timerKey).map(row=>[row.line.timerKey,`第 ${row.i+1} 句 · ${(row.line.text||'').slice(0,18)}`])]);
+    select('动作','pose',Object.entries(poses));
+    select('播放方式','playback',[['loop','循环播放'],['hold','播完保持末帧']]);
+    for(const [key,label] of [['offset','锚点后（秒）'],['duration','占用时长（秒）'],['speed','播放速度（倍）'],['blend','混合时长（秒）']]){
+      const wrapper=element('label','',label);
+      const input=element('input');
+      Object.assign(input,{type:'number',min:ranges[key][0],max:ranges[key][1],step:'any',value:clip[key]});
+      input.addEventListener('change',()=>updateClip(chosen,{[key]:input.value===''?null:Number(input.value)}));
+      wrapper.append(input);inspector.append(wrapper);
+    }
+    inspector.append(button('删除动作',()=>{
+      const next=copy(values);next[key].splice(chosen,1);chosen=-1;commit(next,false);
+    }));
+  }
+
+  return {init,refresh,validate};
+}
+
+const motionTimelines=motionSections.map(createActionTimeline);
+
 const {groups,fields,defaults,rules}=window.ZYL_PARAMETERS;
 const $=id=>document.getElementById(id), legacyDraftKey='astra-zyl-presentation-v1';
 const pageKey=location.pathname, draftKey=legacyDraftKey+':'+pageKey;
@@ -22,7 +418,7 @@ function status(message){
  $('reconnect').hidden=!rememberedFile||!!handle;
  renderFileLocation();
 }
-function validate(v){const errors=ZYL_DIALOGUE.validate(v.farewellDialogue).concat(ZYL_DIALOGUE.validate(v.freeDialogue)).concat(ZYL_DIALOGUE.validate(v.stomachDialogue).map(e=>e.replaceAll("自由对话","肚中会谈")),ZYL_DIALOGUE.validate(v.printingDialogue).map(e=>e.replaceAll("自由对话","打印构件对白")));for(const key of ['foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue','escapeGravesDialogue','escapeEncouragement']){errors.push(...ZYL_DIALOGUE.validate(v[key]).map(e=>e.replaceAll('自由对话',key)));if(Array.isArray(v[key])&&v[key].some(line=>line?.replies?.length))errors.push('连续演出对白不支持玩家回复。');}if(Array.isArray(v.escapeGravesDialogue)){const lines=v.escapeGravesDialogue;if(lines.some(line=>line&&Object.hasOwn(line,'pullSprout')&&typeof line.pullSprout!=='boolean'))errors.push('墓前对白的拔肉芽勾选必须是布尔值。');if(lines.filter(line=>line?.pullSprout===true).length>1)errors.push('只能勾选一句台词开始拔肉芽。');}if(Array.isArray(v.printingDialogue)){if(v.printingDialogue.some(line=>line&&Object.hasOwn(line,'showPole')&&typeof line.showPole!=='boolean'))errors.push('短杆展示勾选必须是布尔值。');if(v.printingDialogue.filter(line=>line?.showPole===true).length>1)errors.push('只能勾选一句台词开始展示短杆。');}if(v.printingPoleCueConfigured!==true)errors.push('短杆展示配置格式无效。');if(v.schemaVersion!==1)errors.push('只支持 schemaVersion 1。');for(const f of fields){let n=v[f.key];if(f.type==='frameSelection'){if(!Array.isArray(n)||n.length!==f.options.length||n.some(flag=>typeof flag!=='boolean'))errors.push('请选择六张爆炸插画的使用状态。');continue;}if(f.type==='boolean'){if(typeof n!=='boolean')errors.push(`${f.label}：请选择开启或关闭。`);continue;}if(f.type==='color'){if(typeof n!=='string'||!/^#[0-9a-fA-F]{6}$/.test(n))errors.push(`${f.label}：需要#RRGGBB颜色。`);continue;}if(f.type==='text'){if(typeof n!=='string'||!n.trim()||n.length>f.maxLength||/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/.test(n))errors.push(`${f.label}：请填写1–${f.maxLength}个字符的台词，支持换行。`);continue;}if(typeof n!=='number'||!Number.isFinite(n)||n<f.min||n>f.max)errors.push(`${f.label}：请输入 ${f.min}–${f.max} 之间的数值。`);}if(!Number.isInteger(v.starCount))errors.push('通话星点数量必须是整数。');for(const [a,b]of rules)if(v[a]>=v[b])errors.push(`${fields.find(f=>f.key===a).label}必须小于${fields.find(f=>f.key===b).label}。`);return errors;}
+function validate(v){const errors=motionTimelines.flatMap(timeline=>timeline.validate(v)).concat(ZYL_DIALOGUE.validate(v.farewellDialogue)).concat(ZYL_DIALOGUE.validate(v.freeDialogue)).concat(ZYL_DIALOGUE.validate(v.stomachDialogue).map(e=>e.replaceAll("自由对话","肚中会谈")),ZYL_DIALOGUE.validate(v.printingDialogue).map(e=>e.replaceAll("自由对话","打印构件对白")));for(const key of ['foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue','escapeGravesDialogue','escapeEncouragement']){errors.push(...ZYL_DIALOGUE.validate(v[key]).map(e=>e.replaceAll('自由对话',key)));if(Array.isArray(v[key])&&v[key].some(line=>line?.replies?.length))errors.push('连续演出对白不支持玩家回复。');}if(Array.isArray(v.escapeGravesDialogue)){const lines=v.escapeGravesDialogue;if(lines.some(line=>line&&Object.hasOwn(line,'pullSprout')&&typeof line.pullSprout!=='boolean'))errors.push('墓前对白的拔肉芽勾选必须是布尔值。');if(lines.filter(line=>line?.pullSprout===true).length>1)errors.push('只能勾选一句台词开始拔肉芽。');}if(Array.isArray(v.printingDialogue)){if(v.printingDialogue.some(line=>line&&Object.hasOwn(line,'showPole')&&typeof line.showPole!=='boolean'))errors.push('短杆展示勾选必须是布尔值。');if(v.printingDialogue.filter(line=>line?.showPole===true).length>1)errors.push('只能勾选一句台词开始展示短杆。');}if(v.printingPoleCueConfigured!==true)errors.push('短杆展示配置格式无效。');if(v.schemaVersion!==1)errors.push('只支持 schemaVersion 1。');for(const f of fields){let n=v[f.key];if(f.type==='frameSelection'){if(!Array.isArray(n)||n.length!==f.options.length||n.some(flag=>typeof flag!=='boolean'))errors.push('请选择六张爆炸插画的使用状态。');continue;}if(f.type==='boolean'){if(typeof n!=='boolean')errors.push(`${f.label}：请选择开启或关闭。`);continue;}if(f.type==='color'){if(typeof n!=='string'||!/^#[0-9a-fA-F]{6}$/.test(n))errors.push(`${f.label}：需要#RRGGBB颜色。`);continue;}if(f.type==='text'){if(typeof n!=='string'||!n.trim()||n.length>f.maxLength||/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/.test(n))errors.push(`${f.label}：请填写1–${f.maxLength}个字符的台词，支持换行。`);continue;}if(typeof n!=='number'||!Number.isFinite(n)||n<f.min||n>f.max)errors.push(`${f.label}：请输入 ${f.min}–${f.max} 之间的数值。`);}if(!Number.isInteger(v.starCount))errors.push('通话星点数量必须是整数。');for(const [a,b]of rules)if(v[a]>=v[b])errors.push(`${fields.find(f=>f.key===a).label}必须小于${fields.find(f=>f.key===b).label}。`);return errors;}
 function persist(){
  try{
   const dirty=revision!==savedRevision;
@@ -61,10 +457,11 @@ function refreshFrameSelection(input,selected){
  }
  input.nextElementSibling.textContent=`已选 ${count} / ${boxes.length} 张`;
 }
-function refresh(){for(const f of fields){const input=$(f.key);if(f.type==='frameSelection')refreshFrameSelection(input,values[f.key]);else if(f.type==='boolean'){input.checked=values[f.key]===true;input.nextElementSibling.textContent=input.checked?'已启用':'已关闭';}else if(document.activeElement!==input)input.value=f.type==='time'?ZYL_TIMER_DATA.format(values[f.key]):['text','color'].includes(f.type)?(values[f.key]??''):(Number.isFinite(values[f.key])?values[f.key]:'');input.closest('.card').classList.toggle('changed',f.type==='frameSelection'?JSON.stringify(values[f.key])!==JSON.stringify(f.value):values[f.key]!==f.value);}$('undo').disabled=!history.length;$('redo').disabled=!future.length;$('errors').textContent=validate(values).join('\n');$('summary').replaceChildren(...[['巨兽初始口部距离',values.initialClearance,'单位'],['全黑加载触发距离',values.loadDistance,'单位'],['胃内淡入时长',values.fadeInDuration,'秒']].map(([s,n,u])=>{let d=document.createElement('div');d.className='metric';d.textContent=s;let b=document.createElement('b');b.textContent=Number.isFinite(n)?n:'—';let small=document.createElement('small');small.textContent=u;b.append(small);d.append(b);return d;}));status();}
-groups.forEach((g,i)=>{let link=document.createElement('a');link.href='#group'+i;link.textContent=g;$('nav').append(link);let section=document.createElement('section');section.className='group';section.id='group'+i;let heading=document.createElement('div');heading.className='group-title';let h=document.createElement('h3');h.textContent=g;let reset=document.createElement('button');reset.textContent='恢复本组默认值';reset.onclick=()=>{const next=copy(values);fields.filter(f=>f.group===g).forEach(f=>next[f.key]=f.value);if(i===3)next.freeDialogue=copy(defaults.freeDialogue);if(i===7)next.stomachDialogue=copy(defaults.stomachDialogue);if(i===9)next.printingDialogue=copy(defaults.printingDialogue);if(i===10)for(const key of ['foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue'])next[key]=copy(defaults[key]);if(i===12)next.farewellDialogue=copy(defaults.farewellDialogue);if(i===11)for(const key of ['escapeGravesDialogue','escapeEncouragement'])next[key]=copy(defaults[key]);commit(next);};heading.append(h,reset);section.append(heading);let grid=document.createElement('div');grid.className='grid';fields.filter(f=>f.group===g).forEach(f=>{let card=document.createElement('article');card.className='card';card.dataset.search=[f.label,f.desc,f.key].join(' ').toLowerCase();card.innerHTML='<div class="field-top"><label></label><span class="tag"></span></div><div class="id"></div><div class="desc"></div><div class="value-row"><input type="number"><span></span><button type="button">还原</button></div><div class="range"></div>';let label=card.querySelector('label');label.textContent=f.label;label.htmlFor=f.key;card.querySelector('.tag').textContent=f.unit;card.querySelector('.id').textContent=f.key;card.querySelector('.desc').textContent=f.desc;if(f.type==='text'){card.classList.add('text-card');card.querySelector('.value-row').innerHTML='<textarea rows=4></textarea><span></span><button type=button>还原</button>';}let input=f.type==='frameSelection'?buildFrameSelection(card,f):card.querySelector(f.type==='text'?'textarea':'input');if(f.type==='frameSelection')label.removeAttribute('for');else if(f.type==='boolean')Object.assign(input,{id:f.key,type:'checkbox'});else if(f.type==='text')Object.assign(input,{id:f.key,maxLength:f.maxLength,required:true});else if(f.type==='color')Object.assign(input,{id:f.key,type:'color',value:f.value,required:true});else if(f.type==='time')Object.assign(input,{id:f.key,type:'text',placeholder:'00:05:00',required:true});else Object.assign(input,{id:f.key,min:f.min,max:f.max,step:f.key==='starCount'?'1':'any',required:true});input.setAttribute('aria-describedby',f.key+'hint');if(f.type!=='frameSelection')input.addEventListener('change',()=>{let next=copy(values);next[f.key]=f.type==='boolean'?input.checked:f.type==='time'?ZYL_TIMER_DATA.parse(input.value):['text','color'].includes(f.type)?input.value:(input.value.trim()===''?null:Number(input.value));commit(next);});card.querySelector('.value-row span').textContent=f.unit;card.querySelector('button').onclick=()=>{let next=copy(values);next[f.key]=f.value;commit(next);};let hint=card.querySelector('.range');hint.id=f.key+'hint';hint.textContent=f.type==='frameSelection'?'默认使用全部六张':f.type==='boolean'?`默认 ${f.value?'开启':'关闭'}`:f.type==='time'?`允许 ${ZYL_TIMER_DATA.format(f.min)}–${ZYL_TIMER_DATA.format(f.max)} · 默认 ${ZYL_TIMER_DATA.format(f.value)}`:f.type==='color'?`默认 ${f.value}`:f.type==='text'?`最多 ${f.maxLength} 字符 · 可换行 · 点击“还原”恢复原台词`:`建议及允许范围 ${f.min}–${f.max} · 默认 ${f.value}`;grid.append(card);});section.append(grid);$('sections').append(section);});
+function refresh(){for(const f of fields){const input=$(f.key);if(f.type==='frameSelection')refreshFrameSelection(input,values[f.key]);else if(f.type==='boolean'){input.checked=values[f.key]===true;input.nextElementSibling.textContent=input.checked?'已启用':'已关闭';}else if(document.activeElement!==input)input.value=f.type==='time'?ZYL_TIMER_DATA.format(values[f.key]):['text','color'].includes(f.type)?(values[f.key]??''):(Number.isFinite(values[f.key])?values[f.key]:'');input.closest('.card').classList.toggle('changed',f.type==='frameSelection'?JSON.stringify(values[f.key])!==JSON.stringify(f.value):values[f.key]!==f.value);}$('undo').disabled=!history.length;$('redo').disabled=!future.length;$('errors').textContent=validate(values).join('\n');$('summary').replaceChildren(...[['巨兽初始口部距离',values.initialClearance,'单位'],['全黑加载触发距离',values.loadDistance,'单位'],['胃内淡入时长',values.fadeInDuration,'秒']].map(([s,n,u])=>{let d=document.createElement('div');d.className='metric';d.textContent=s;let b=document.createElement('b');b.textContent=Number.isFinite(n)?n:'—';let small=document.createElement('small');small.textContent=u;b.append(small);d.append(b);return d;}));status();motionTimelines.forEach(timeline=>timeline.refresh());}
+groups.forEach((g,i)=>{let link=document.createElement('a');link.href='#group'+i;link.textContent=g;$('nav').append(link);let section=document.createElement('section');section.className='group';section.id='group'+i;let heading=document.createElement('div');heading.className='group-title';let h=document.createElement('h3');h.textContent=g;let reset=document.createElement('button');reset.textContent='恢复本组默认值';reset.onclick=()=>{const next=copy(values);fields.filter(f=>f.group===g).forEach(f=>next[f.key]=f.value);if(i===3)next.freeDialogue=copy(defaults.freeDialogue);if(i===7)next.stomachDialogue=copy(defaults.stomachDialogue);if(i===9)next.printingDialogue=copy(defaults.printingDialogue);const motion=motionSections.find(spec=>spec.group===i);if(motion)next[motion.key]=copy(defaults[motion.key]);if(i===10)for(const key of ['foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue'])next[key]=copy(defaults[key]);if(i===12)next.farewellDialogue=copy(defaults.farewellDialogue);if(i===11)for(const key of ['escapeGravesDialogue','escapeEncouragement'])next[key]=copy(defaults[key]);commit(next);};heading.append(h,reset);section.append(heading);let grid=document.createElement('div');grid.className='grid';fields.filter(f=>f.group===g).forEach(f=>{let card=document.createElement('article');card.className='card';card.dataset.search=[f.label,f.desc,f.key].join(' ').toLowerCase();card.innerHTML='<div class="field-top"><label></label><span class="tag"></span></div><div class="id"></div><div class="desc"></div><div class="value-row"><input type="number"><span></span><button type="button">还原</button></div><div class="range"></div>';let label=card.querySelector('label');label.textContent=f.label;label.htmlFor=f.key;card.querySelector('.tag').textContent=f.unit;card.querySelector('.id').textContent=f.key;card.querySelector('.desc').textContent=f.desc;if(f.type==='text'){card.classList.add('text-card');card.querySelector('.value-row').innerHTML='<textarea rows=4></textarea><span></span><button type=button>还原</button>';}let input=f.type==='frameSelection'?buildFrameSelection(card,f):card.querySelector(f.type==='text'?'textarea':'input');if(f.type==='frameSelection')label.removeAttribute('for');else if(f.type==='boolean')Object.assign(input,{id:f.key,type:'checkbox'});else if(f.type==='text')Object.assign(input,{id:f.key,maxLength:f.maxLength,required:true});else if(f.type==='color')Object.assign(input,{id:f.key,type:'color',value:f.value,required:true});else if(f.type==='time')Object.assign(input,{id:f.key,type:'text',placeholder:'00:05:00',required:true});else Object.assign(input,{id:f.key,min:f.min,max:f.max,step:f.key==='starCount'?'1':'any',required:true});input.setAttribute('aria-describedby',f.key+'hint');if(f.type!=='frameSelection')input.addEventListener('change',()=>{let next=copy(values);next[f.key]=f.type==='boolean'?input.checked:f.type==='time'?ZYL_TIMER_DATA.parse(input.value):['text','color'].includes(f.type)?input.value:(input.value.trim()===''?null:Number(input.value));commit(next);});card.querySelector('.value-row span').textContent=f.unit;card.querySelector('button').onclick=()=>{let next=copy(values);next[f.key]=f.value;commit(next);};let hint=card.querySelector('.range');hint.id=f.key+'hint';hint.textContent=f.type==='frameSelection'?'默认使用全部六张':f.type==='boolean'?`默认 ${f.value?'开启':'关闭'}`:f.type==='time'?`允许 ${ZYL_TIMER_DATA.format(f.min)}–${ZYL_TIMER_DATA.format(f.max)} · 默认 ${ZYL_TIMER_DATA.format(f.value)}`:f.type==='color'?`默认 ${f.value}`:f.type==='text'?`最多 ${f.maxLength} 字符 · 可换行 · 点击“还原”恢复原台词`:`建议及允许范围 ${f.min}–${f.max} · 默认 ${f.value}`;grid.append(card);});section.append(grid);$('sections').append(section);});
 $('count').textContent=fields.length+' 个固定参数 + 自由对话段落';
 initDialogueEditor();renderDialogueBlocks();
+motionTimelines.forEach(timeline=>timeline.init());
 function applySearch(){let q=$('search').value.toLowerCase();document.querySelectorAll('.card').forEach(el=>el.hidden=!el.dataset.search.includes(q));document.querySelectorAll('.group').forEach(el=>el.hidden=!!q&&!el.textContent.toLowerCase().includes(q)&&!Array.from(el.querySelectorAll('.card')).some(c=>!c.hidden));}
 $('search').oninput=applySearch;
 $('undo').onclick=()=>{if(!history.length)return;future.push(copy(values));values=history.pop();revision++;persist();refresh();renderDialogueBlocks();};

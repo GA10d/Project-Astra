@@ -17,7 +17,7 @@
   "repairImpactStrength": 0.95,
   "repairImpactDuration": 1.35,
   "portalApproachDuration": 18,
-  "portalInitialDistance": 42,
+  "portalInitialDistance": 80,
   "portalNearDistance": 2.8,
   "portalInitialOpening": 0.2,
   "portalFinalOpening": 1.65,
@@ -67,7 +67,10 @@
       "duration": 4,
       "replies": [],
       "timerKey": "timer_mw61emp8_149ycwsgf7",
-      "timerAction": null,
+      "timerAction": {
+        "kind": "set",
+        "seconds": 28800
+      },
       "replyTimerActions": []
     },
     {
@@ -148,7 +151,7 @@
       "timerKey": "timer_mw61emp8_zxsxiem5xi",
       "timerAction": {
         "kind": "set",
-        "seconds": 3600
+        "seconds": 25200
       },
       "replyTimerActions": [
         null,
@@ -272,7 +275,8 @@
       "replies": [],
       "timerKey": "timer_mw623ddz_0s8q7u6rbh",
       "timerAction": null,
-      "replyTimerActions": []
+      "replyTimerActions": [],
+      "showPole": true
     },
     {
       "text": "原本是用来将飞船悬挂在不方便停泊的地方，或者是潜入……某些……地方……",
@@ -290,7 +294,6 @@
         "好阴险。"
       ],
       "timerKey": "timer_mw4rs1ln_1y4yq56mf8",
-      "showPole": true,
       "timerAction": null,
       "replyTimerActions": [
         null,
@@ -314,7 +317,7 @@
       "replyTimerActions": []
     },
     {
-      "text": "不过现在有一些问题，可能是摔掉了一个构件，我倒是有图纸，只是不知道该怎么做出来。",
+      "text": "不过现在有一个问题，飞船被吞进来的时候摔掉了一个构件，我倒是有图纸，只是不知道该怎么做出来。",
       "duration": 7,
       "replies": [
         "等我一会。",
@@ -335,6 +338,358 @@
   "foolsOrbitDuration": 9,
   "foolsPullbackDuration": 5,
   "foolsFinalHold": 4,
+  "foolsActionClips": [
+    {
+      "section": "ground",
+      "lineId": "",
+      "offset": 0,
+      "duration": 8,
+      "pose": "Slumped",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "ground",
+      "lineId": "timer_mw5zq1ws_kn5ku26shs",
+      "offset": 0,
+      "duration": 2,
+      "pose": "ChinThink",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "ground",
+      "lineId": "",
+      "offset": 10,
+      "duration": 5,
+      "pose": "Explain",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "ground",
+      "lineId": "",
+      "offset": 15,
+      "duration": 3,
+      "pose": "TempleTouch",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "ground",
+      "lineId": "",
+      "offset": 18,
+      "duration": 4,
+      "pose": "OpenHands",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "crest",
+      "lineId": "",
+      "offset": 0,
+      "duration": 3,
+      "pose": "Idle",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "crest",
+      "lineId": "",
+      "offset": 3,
+      "duration": 13,
+      "pose": "HeadClutch",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    }
+  ],
+  "encounterActionClips": [
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_149ycwsgf7",
+      "offset": 0,
+      "duration": 4,
+      "pose": "ChairTalk",
+      "speed": 1,
+      "blend": 0.55,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_qmmmckiuej",
+      "offset": 0,
+      "duration": 5,
+      "pose": "ChairWorry",
+      "speed": 1,
+      "blend": 0.55,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_sfhbsh82no",
+      "offset": 0,
+      "duration": 4,
+      "pose": "ChairTalk",
+      "speed": 1,
+      "blend": 0.55,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_ilx7eq455a",
+      "offset": 0,
+      "duration": 5,
+      "pose": "ChairWorry",
+      "speed": 1,
+      "blend": 0.55,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_15wojpd89u",
+      "offset": 0,
+      "duration": 4,
+      "pose": "ChairEmphasis",
+      "speed": 1,
+      "blend": 0.55,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_klbhr2p5hv",
+      "offset": 0,
+      "duration": 15,
+      "pose": "ChairTalk",
+      "speed": 1,
+      "blend": 0.55,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_oa19j89pgj",
+      "offset": 0,
+      "duration": 5,
+      "pose": "ChairWorry",
+      "speed": 1,
+      "blend": 0.55,
+      "playback": "loop"
+    }
+  ],
+  "stomachActionClips": [
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_zxsxiem5xi",
+      "offset": 0,
+      "duration": 8,
+      "pose": "Slumped",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_7id2bgwjwd",
+      "offset": 0,
+      "duration": 5,
+      "pose": "HeadClutch",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_uh2xm70wzu",
+      "offset": 0,
+      "duration": 6,
+      "pose": "Idle",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_7pcczfersi",
+      "offset": 0,
+      "duration": 7,
+      "pose": "Slumped",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_eektw4y9ro",
+      "offset": 0,
+      "duration": 7,
+      "pose": "TempleTouch",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw8iz6rc_sw20xsg68j",
+      "offset": 0,
+      "duration": 6,
+      "pose": "Explain",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_3ncz4cf0em",
+      "offset": 0,
+      "duration": 6,
+      "pose": "AngryFists",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    }
+  ],
+  "printingActionClips": [
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw4rlejw_pgx1ith7k9",
+      "offset": 0,
+      "duration": 4,
+      "pose": "ChairEmphasis",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw623ddz_0s8q7u6rbh",
+      "offset": 0,
+      "duration": 6,
+      "pose": "ChairEmphasis",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw623ddz_yrqohdvvk1",
+      "offset": 0,
+      "duration": 7,
+      "pose": "ChairTalk",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw4rs1ln_1y4yq56mf8",
+      "offset": 0,
+      "duration": 7,
+      "pose": "ChairEmphasis",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw623ddz_l37clzgacc",
+      "offset": 0,
+      "duration": 5,
+      "pose": "ChairWorry",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw623ddz_qyggik2vuy",
+      "offset": 0,
+      "duration": 7,
+      "pose": "ChairEmphasis",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw4rv83v_1atazmsmuq",
+      "offset": 0,
+      "duration": 7,
+      "pose": "ChairWorry",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    }
+  ],
+  "escapeGravesActionClips": [
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw5zq1ws_6e8z4sfd8p",
+      "offset": 0,
+      "duration": 6,
+      "pose": "Explain",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw6d1jo0_rivtznj5am",
+      "offset": 0,
+      "duration": 6,
+      "pose": "OpenHands",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw6d1jo0_lki56hbr4m",
+      "offset": 0,
+      "duration": 3,
+      "pose": "Idle",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw6d1jo0_w5grby62w3",
+      "offset": 0,
+      "duration": 6,
+      "pose": "KneeBrace",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    }
+  ],
+  "farewellActionClips": [
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_q7ijumpe3t",
+      "offset": 5,
+      "duration": 4,
+      "pose": "StandWave",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "hold"
+    },
+    {
+      "section": "dialogue",
+      "lineId": "",
+      "offset": 0,
+      "duration": 35,
+      "pose": "Idle",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    }
+  ],
   "foolsGroundDialogue": [
     {
       "text": "……",
@@ -489,8 +844,8 @@
       "replyTimerActions": []
     },
     {
-      "text": "为什么你这么冷静？戏剧大师们肯定最讨厌你这种观众！当然……肯定很喜欢我。",
-      "duration": 7,
+      "text": "为什么你这么冷静？戏剧大师们最讨厌你这种观众！莫修斯德会夹着嗓子让你“滚出去！”。",
+      "duration": 10,
       "replies": [],
       "timerKey": "timer_mw5zq1ws_eh7crjxcx9",
       "timerAction": null,
@@ -561,7 +916,7 @@
       "replyTimerActions": []
     },
     {
-      "text": "于是当我后来发现自己很有盗窃天赋后，我也理直气壮地去盗窃别人。",
+      "text": "于是后来当我发现自己很有盗窃天赋后，我也理直气壮地去盗窃别人。",
       "duration": 6,
       "replies": [],
       "timerKey": "timer_mw6d1jo0_anu3zq7xbi",
@@ -674,7 +1029,7 @@
       "replyTimerActions": []
     },
     {
-      "text": "哈哈，现在我们可以等死了。真是非常抱歉啊……",
+      "text": "哈哈，现在我们可以等死了。",
       "duration": 6,
       "replies": [],
       "timerKey": "timer_mw6d1jo0_rivtznj5am",
@@ -739,7 +1094,7 @@
       "replyTimerActions": []
     },
     {
-      "text": "你的飞船动不了吗？没关系，我来带你出去！",
+      "text": "你的飞船动不了吗？相信我！跟紧我！",
       "duration": 5,
       "replies": [],
       "timerKey": "timer_mw6d1jo0_0c4g94xdqj",
@@ -814,7 +1169,7 @@
   "farewellDialogue": [
     {
       "text": "嘿……我……我想已经来不及了……",
-      "duration": 5,
+      "duration": 6,
       "replies": [],
       "timerKey": "timer_mw5zq1ws_86iltm7gvt",
       "timerAction": {
@@ -825,7 +1180,7 @@
     },
     {
       "text": "但是我并不难受，我想明白了一件事。",
-      "duration": 5,
+      "duration": 6,
       "replies": [],
       "timerKey": "timer_mw61emp8_71mkfgo3dp",
       "timerAction": null,
@@ -841,7 +1196,7 @@
     },
     {
       "text": "这就是我一直想完成的正义，我做到了！",
-      "duration": 5,
+      "duration": 6,
       "replies": [],
       "timerKey": "timer_mw61emp8_9gkhlp0li1",
       "timerAction": null,
@@ -856,12 +1211,17 @@
       "replyTimerActions": []
     },
     {
-      "text": "谢谢你们的出现，不然我就该很傻地等死了。再见！",
+      "text": "谢谢你们的出现，不然我就该很傻地等死了。",
       "duration": 5,
       "replies": [],
       "timerKey": "timer_mw61emp8_q7ijumpe3t",
       "timerAction": null,
       "replyTimerActions": []
+    },
+    {
+      "text": "再见！",
+      "duration": 4,
+      "replies": []
     }
   ],
   "farewellDepartureHold": 1,
@@ -884,7 +1244,7 @@
   "farewellShakeSustain": 0.42,
   "farewellImpactDecay": 1.4,
   "foolsMicrobeSpeed": 1.35,
-  "foolsOrbitTargetFov": 62,
+  "foolsOrbitTargetFov": 55,
   "promptImpactTitle": "舱体遭遇撞击",
   "promptImpactBody": "应急电源已启动\n前往 B 墙取下维修锤\n修复 D 墙裂痕：0 / 3",
   "promptRepairProgressTitle": "舱体遭遇撞击",
@@ -916,13 +1276,13 @@
   "promptHeader": "舰载监控 / ",
   "promptViewButton": "◉  查看",
   "promptConfirmButton": "◉  确认",
-  "escapePlaybackSpeed": 1.8,
+  "escapePlaybackSpeed": 2,
   "escapeSproutWaveAmplitude": 4,
   "escapeSproutWaveHz": 1,
   "escapeSproutPulledWaveAmplitude": 15,
   "escapeSproutPulledWaveHz": 2.9,
-  "foolsOrbitEndDistance": 4.2,
+  "foolsOrbitEndDistance": 5,
   "foolsOrbitEndHeight": 2,
-  "escapeBackgroundGustDelay": 1.2,
+  "escapeBackgroundGustDelay": 8,
   "farewellDepartureTitleInterval": 0.1
 }
