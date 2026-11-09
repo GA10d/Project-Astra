@@ -320,6 +320,8 @@
   "foolsWalkSpeed": 0.9,
   "foolsFrontHold": 3,
   "foolsOrbitDuration": 9,
+  "foolsOrbitTargetFov": 62,
+  "foolsMicrobeSpeed": 1.35,
   "foolsPullbackDuration": 5,
   "foolsFinalHold": 4,
   "foolsGroundDialogue": [
@@ -644,7 +646,7 @@
       "replyTimerActions": []
     }
   ],
-  "escapeFlightDuration": 42,
+  "escapeFlightDuration": 32,
   "escapeExitDistance": 12000,
   "escapeHullLoss": 36,
   "escapeFadeDuration": 1.2,
@@ -737,7 +739,7 @@
   "escapeEncouragement": [
     {
       "text": "抓紧，我来带路！",
-      "duration": 8,
+      "duration": 4.5,
       "replies": [],
       "timerKey": "timer_mw5zq1ws_dad5fxf4g5",
       "timerAction": null,
@@ -745,7 +747,7 @@
     },
     {
       "text": "跟着我的航线，别担心！",
-      "duration": 8,
+      "duration": 4.5,
       "replies": [],
       "timerKey": "timer_mw5zq1ws_38jx8wedvp",
       "timerAction": null,
@@ -753,7 +755,7 @@
     },
     {
       "text": "前面有障碍，我来撞开！",
-      "duration": 8,
+      "duration": 4.5,
       "replies": [],
       "timerKey": "timer_mw5zq1ws_pioe0l8dye",
       "timerAction": null,
@@ -761,7 +763,7 @@
     },
     {
       "text": "还撑得住，我们继续！",
-      "duration": 8,
+      "duration": 4.5,
       "replies": [],
       "timerKey": "timer_mw5zq1ws_q4ulde42bt",
       "timerAction": null,
@@ -769,7 +771,7 @@
     },
     {
       "text": "就快到出口了，坚持住！",
-      "duration": 8,
+      "duration": 4.5,
       "replies": [],
       "timerKey": "timer_mw5zq1ws_r1lickwgrp",
       "timerAction": null,
@@ -777,7 +779,7 @@
     },
     {
       "text": "看到亮光了，我们能出去！",
-      "duration": 8,
+      "duration": 4.5,
       "replies": [],
       "timerKey": "timer_mw5zq1ws_hzqd9f7ww4",
       "timerAction": null,
@@ -785,7 +787,7 @@
     },
     {
       "text": "最后一段路，抓稳！",
-      "duration": 8,
+      "duration": 4.5,
       "replies": [],
       "timerKey": "timer_mw5zq1ws_od5ytmjzgb",
       "timerAction": null,
@@ -851,7 +853,7 @@
       "replyTimerActions": []
     }
   ],
-  "farewellDepartureHold": 2,
+  "farewellDepartureHold": 0,
   "farewellDepartureCameraTime": 6,
   "farewellDepartureCameraBack": 6,
   "farewellDepartureCameraRise": 8.8,

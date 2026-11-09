@@ -623,7 +623,7 @@ namespace AstraCabin.Galaxies.Zyl
             float cameraTime = travelTime / settings.farewellDepartureCameraTime;
             float rise = Mathf.SmoothStep(0, 1, cameraTime);
             departureShip.SetPositionAndRotation(
-                departureStart + departureDirection * (96 * exteriorScale * Mathf.Pow(progress, 1.8f)),
+                departureStart + departureDirection * (96 * exteriorScale * Mathf.Lerp(progress, Mathf.Pow(progress, 1.8f), .62f)),
                 Quaternion.Slerp(Quaternion.identity, Quaternion.FromToRotation(Vector3.right, departureDirection), rise));
             SampleDepartureCamera(cameraTime, rise);
 

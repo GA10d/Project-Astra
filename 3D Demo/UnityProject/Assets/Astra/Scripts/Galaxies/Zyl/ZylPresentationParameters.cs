@@ -4,7 +4,7 @@ using UnityEngine;
 namespace AstraCabin.Galaxies.Zyl {
  [Serializable] public sealed class ZylPresentationParameters {
   public int schemaVersion=1;
-  public float farewellDepartureHold = 0.65f;
+  public float farewellDepartureHold = 0f;
   public float farewellDepartureCameraTime = 4.7f;
   public float farewellDepartureCameraBack = 6f;
   public float farewellDepartureCameraRise = 8.8f;
@@ -26,18 +26,20 @@ namespace AstraCabin.Galaxies.Zyl {
   public float farewellChestDuration=2.8f,farewellSignalHold=1.3f,farewellPlanetDuration=8f,farewellDebrisHold=4f,farewellPhotoDuration=8f,farewellShake=0.35f;
   public MihuoerDialogueLine[] farewellDialogue=new[]{new MihuoerDialogueLine{text="【占位：请填写别离视频通话的台词，可添加玩家回复和倒计时操作。倒计时归零将立即打断。】",duration=600f,replies=new string[0]}};
 
-  public float escapeFlightDuration=42f,escapeExitDistance=12000f,escapeHullLoss=36f,escapeFadeDuration=1.2f;
+  public float escapeFlightDuration=32f,escapeExitDistance=12000f,escapeHullLoss=36f,escapeFadeDuration=1.2f;
   public float escapeSproutShakeDelay=1.15f;
   public MihuoerDialogueLine[] escapeGravesDialogue=new[]{new MihuoerDialogueLine{text="【占位：请在HTML填写三座墓碑前米霍尔的台词。】",duration=6f,replies=new string[0]}};
-  public MihuoerDialogueLine[] escapeEncouragement=new[]{new MihuoerDialogueLine{text="抓紧，我来带路！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="跟着我的航线，别担心！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="前面有障碍，我来撞开！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="还撑得住，我们继续！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="就快到出口了，坚持住！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="看到亮光了，我们能出去！",duration=8f,replies=new string[0]},new MihuoerDialogueLine{text="最后一段路，抓稳！",duration=8f,replies=new string[0]}};
+  public MihuoerDialogueLine[] escapeEncouragement=new[]{new MihuoerDialogueLine{text="抓紧，我来带路！",duration=4.5f,replies=new string[0]},new MihuoerDialogueLine{text="跟着我的航线，别担心！",duration=4.5f,replies=new string[0]},new MihuoerDialogueLine{text="前面有障碍，我来撞开！",duration=4.5f,replies=new string[0]},new MihuoerDialogueLine{text="还撑得住，我们继续！",duration=4.5f,replies=new string[0]},new MihuoerDialogueLine{text="就快到出口了，坚持住！",duration=4.5f,replies=new string[0]},new MihuoerDialogueLine{text="看到亮光了，我们能出去！",duration=4.5f,replies=new string[0]},new MihuoerDialogueLine{text="最后一段路，抓稳！",duration=4.5f,replies=new string[0]}};
 
   public float foolsSceneFadeDuration=1.2f,foolsSettlementFadeDuration=1f;
   public MihuoerDialogueLine[] foolsClosingDialogue=new[]{new MihuoerDialogueLine{text="【占位：请在HTML填写黑屏转场后米霍尔的台词。】",duration=5f,replies=new string[0]}};
+  public float foolsMicrobeSpeed=1.35f;
   public float foolsStopHold=4.5f;
   public float foolsReturnDuration=4f;
   public float foolsWalkSpeed=0.85f;
   public float foolsFrontHold=2f;
   public float foolsOrbitDuration=7f;
+  public float foolsOrbitTargetFov=62f;
   public float foolsPullbackDuration=5f;
   public float foolsFinalHold=3f;
   public MihuoerDialogueLine[] foolsGroundDialogue=new[]{new MihuoerDialogueLine{text="【占位：请填写米霍尔离开飞船后的台词。】",duration=4f,replies=new string[0]}};
@@ -151,21 +153,23 @@ namespace AstraCabin.Galaxies.Zyl {
    Check("farewellImpactDecay",farewellImpactDecay,0.15f,3f);
    MihuoerDialogueLine.Validate(farewellDialogue);
    Check("foolsSceneFadeDuration",foolsSceneFadeDuration,.2f,5f);Check("foolsSettlementFadeDuration",foolsSettlementFadeDuration,.2f,5f);ValidateCinematicDialogue(foolsClosingDialogue);
+   Check("foolsMicrobeSpeed",foolsMicrobeSpeed,.5f,3f);
    Check("foolsStopHold",foolsStopHold,1f,30f);
    Check("foolsReturnDuration",foolsReturnDuration,1f,15f);
    Check("foolsWalkSpeed",foolsWalkSpeed,0.2f,2f);
    Check("foolsFrontHold",foolsFrontHold,0.5f,15f);
    Check("foolsOrbitDuration",foolsOrbitDuration,2f,30f);
+   Check("foolsOrbitTargetFov",foolsOrbitTargetFov,25f,85f);
    Check("foolsPullbackDuration",foolsPullbackDuration,1f,20f);
    Check("foolsFinalHold",foolsFinalHold,1f,30f);
    ValidateCinematicDialogue(foolsGroundDialogue);
    ValidateCinematicDialogue(foolsWalkDialogue);
    ValidateCinematicDialogue(foolsCrestDialogue);
    Check("countdownEnabled",countdownEnabled,0f,1f);
-   Check("countdownInitialSeconds",countdownInitialSeconds,0f,5999f);
+   Check("countdownInitialSeconds",countdownInitialSeconds,0f,MihuoerCountdownClock.MaxSeconds);
    Check("countdownInitiallyVisible",countdownInitiallyVisible,0f,1f);
    Check("countdownStartOnTalk",countdownStartOnTalk,0f,1f);
-   Check("countdownWarningSeconds",countdownWarningSeconds,0f,5999f);
+   Check("countdownWarningSeconds",countdownWarningSeconds,0f,MihuoerCountdownClock.MaxSeconds);
    Check("countdownBrightness",countdownBrightness,0f,8f);
    Check("countdownHalo",countdownHalo,0.01f,0.3f);
    Check("countdownWidth",countdownWidth,0.04f,0.2f);

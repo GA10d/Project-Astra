@@ -110,7 +110,7 @@ namespace AstraCabin
             if (Focused && Input.GetKeyDown(KeyCode.Escape)) Close();
             if (player.IsPaused) return;
             if(Printing){saveClock+=Time.deltaTime;if(saveClock>2){saveClock=0;Save();}}
-            blend = Mathf.MoveTowards(blend, Focused ? 1 : 0, Time.deltaTime*2.5f);
+            blend = Mathf.MoveTowards(blend, Focused ? 1 : 0, Time.deltaTime/ .85f);
             if (drawing && Focused)
             {
                 float dt=Time.deltaTime;
@@ -152,12 +152,15 @@ namespace AstraCabin
                 head.position=origin+facing*new Vector3(Mathf.Sin(t*5)*.12f,.16f,Mathf.Cos(t*5)*.12f);
                 if(beam){beam.SetPosition(0,head.position+Vector3.down*.11f);beam.SetPosition(1,new Vector3(head.position.x,origin.y-.27f+PrintProgress*.12f,head.position.z));}
             }
-            if(screen)screen.Refresh(origin,facing,blend,blend>0&&!Galaxies.Zyl.ZylScreenCurtain.IsOpaque,Focused&&!player.IsPaused);
+            const float deployedAt = .52f;
+            float deployment = Mathf.InverseLerp(0,deployedAt,blend);
+            float cameraFocus = Mathf.InverseLerp(deployedAt,1,blend);
+            if(screen)screen.Refresh(origin,facing,deployment,!Galaxies.Zyl.ZylScreenCurtain.IsOpaque,Focused&&cameraFocus>.98f&&!player.IsPaused);
             if(beam)beam.enabled=Printing&&systems.MainPowerOn;
-            if(blend>0 && player.viewCamera)
+            if(cameraFocus>0 && player.viewCamera)
             {
-                var cam=player.viewCamera; float t=Mathf.SmoothStep(0,1,blend);
-                Vector3 target=origin+facing*new Vector3(.08f,.125f,-1.02f);
+                var cam=player.viewCamera; float t=Mathf.SmoothStep(0,1,cameraFocus);
+                Vector3 target=origin+facing*new Vector3(.08f,.125f,CabinFabricatorScreen.MountDepth-.875f);
                 cam.transform.position=Vector3.Lerp(cam.transform.position,target,t);
                 cam.transform.rotation=Quaternion.Slerp(cam.transform.rotation,facing,t);
                 cam.fieldOfView=Mathf.Lerp(cam.fieldOfView,53,t);

@@ -42,12 +42,15 @@ namespace AstraCabin.Galaxies.Zyl
         public const string EngineRestoredMessage = "引擎堵塞物质被分解，动力恢复。";
         const string DepartureTitle = "泰德野里的别离";
         float departureDuration;
+        const float TitleFade = .9f;
         const float DepartureFade = .85f;
         const float CabinFade = .7f;
         public bool DepartureActive => Phase == Step.Departing || Phase == Step.DepartureReturn;
         public float DepartureAlpha => Phase == Step.Departing
             ? Mathf.SmoothStep(0, 1, (PhaseTime - departureDuration + DepartureFade) / DepartureFade)
             : Phase == Step.DepartureReturn ? 1 - Mathf.SmoothStep(0, 1, PhaseTime / CabinFade) : 0;
+        public float DepartureTitleAlpha => Phase == Step.Departing
+            ? Mathf.SmoothStep(0, 1, (PhaseTime - p.farewellDepartureTitleDelay) / TitleFade) : 0;
         public int DepartureTitleCount
         {
             get
@@ -74,7 +77,7 @@ namespace AstraCabin.Galaxies.Zyl
             }
             float flightEnd = p.farewellDepartureHold + p.farewellDepartureFlightTime;
             float cameraEnd = p.farewellDepartureHold + p.farewellDepartureCameraTime;
-            float titleEnd = p.farewellDepartureTitleDelay;
+            float titleEnd = p.farewellDepartureTitleDelay + TitleFade;
             // Keep the complete title on screen and let the camera settle before the closing fade.
             departureDuration = Mathf.Max(flightEnd, Mathf.Max(cameraEnd + .6f, titleEnd + 1.2f) + DepartureFade);
             Stage.PrepareDeparture(controller, director.stars, departureDuration);
@@ -133,9 +136,9 @@ namespace AstraCabin.Galaxies.Zyl
                 string text = DepartureTitle;
                 var shadow = bounds;
                 shadow.y += 3 * scale;
-                GUI.color = new Color(0, 0, 0, .75f);
+                GUI.color = new Color(0, 0, 0, .75f * DepartureTitleAlpha);
                 GUI.Label(shadow, text, departureTitle);
-                GUI.color = new Color(.97f, .94f, .86f, 1);
+                GUI.color = new Color(.97f, .94f, .86f, DepartureTitleAlpha);
                 GUI.Label(bounds, text, departureTitle);
             }
             if (director.controller.IsPaused)

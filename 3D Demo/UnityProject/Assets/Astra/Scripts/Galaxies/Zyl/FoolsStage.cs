@@ -29,8 +29,11 @@ namespace AstraCabin.Galaxies.Zyl
         Transform shaft,tip,lip,pocket;
         Vector3 axis,right,up,forward,cutRight,cutUp,wordCenter,finalLook;
         float distance;
-        public FoolsStage(Transform craft,Transform environment,Matrix4x4 authoredToWorld,Camera source)
+        readonly float microbeSpeed;
+        public float WordReadyTime => BurstStart + (WordReady - BurstStart) / microbeSpeed;
+        public FoolsStage(Transform craft,Transform environment,Matrix4x4 authoredToWorld,Camera source,float microbeSpeed=1)
         {
+            this.microbeSpeed=microbeSpeed;
             try {Build(craft,environment,authoredToWorld,source);}
             catch{Dispose();throw;}
         }
@@ -179,6 +182,7 @@ namespace AstraCabin.Galaxies.Zyl
         public void Sample(float t)
         {
             TimeSample=Mathf.Max(0,t);t=TimeSample;
+            float swarmTime=t<=BurstStart?t:BurstStart+(t-BurstStart)*microbeSpeed;
             float grown=Mathf.Lerp(.06f,distance-.35f,Ease(0,10.7f,t));
             float impact=Jab(t,12.1f,.32f)+Jab(t,14.4f,.32f)+Jab(t,16.8f,.9f);
             float retract=Mathf.Lerp(0,1.3f,Ease(19,21,t));
@@ -188,31 +192,58 @@ namespace AstraCabin.Galaxies.Zyl
             foreach(var m in membranes){m.SetFloat("_CutOpen",Opening);m.SetFloat("_Poke",impact);m.SetFloat("_BreathPreviewTime",t);}
             lip.gameObject.SetActive(Opening>.001f);pocket.gameObject.SetActive(Opening>.001f);lip.localScale=new Vector3(1,Mathf.Lerp(.12f,1,Opening),1)*Mathf.Lerp(.01f,1,Opening);pocket.localScale=new Vector3(2.8f,Mathf.Lerp(.02f,1f,Opening),.6f)*Opening;
             if(t<CloseCut){Camera.transform.position=FirstCameraPosition;Camera.transform.rotation=Quaternion.LookRotation(Vector3.Lerp(Base+up*.7f,Tip,Mathf.Lerp(.05f,.92f,Ease(1,9,t)))-FirstCameraPosition,up);Camera.fieldOfView=70;}
-            else if(t<WordCut){Camera.transform.position=Contact-axis*6+cutRight*2+cutUp*.25f;Camera.transform.rotation=Quaternion.LookRotation(Contact-Camera.transform.position,cutUp);Camera.fieldOfView=46;}
-            else{Camera.transform.position=FinalCameraPosition;Camera.transform.rotation=Quaternion.LookRotation(finalLook-FinalCameraPosition,up);Camera.fieldOfView=70;}
+            else if(swarmTime<WordCut){Camera.transform.position=Contact-axis*6+cutRight*2+cutUp*.25f;Camera.transform.rotation=Quaternion.LookRotation(Contact-Camera.transform.position,cutUp);Camera.fieldOfView=46;}
+            else
+            {
+                var cloudCenter=Contact-axis*4.5f;
+                float track=Ease(WordCut,WordReady-.8f,swarmTime);
+                Camera.transform.position=FinalCameraPosition;
+                Camera.transform.rotation=Quaternion.Slerp(Quaternion.LookRotation(cloudCenter-FinalCameraPosition,up),
+                    Quaternion.LookRotation(finalLook-FinalCameraPosition,up),track);
+                Camera.fieldOfView=70;
+            }
             for(int i=0;i<microbes.Count;i++)
             {
-                var m=microbes[i];float born=BurstStart+(i%31)*.023f;bool visible=t>=born;m.gameObject.SetActive(visible);if(!visible)continue;
-                float burst=Ease(born,born+2.1f,t);var cloud=Contact+Vector3.Lerp(-axis*.2f,scatter[i],burst);
-                cloud+=cutRight*Mathf.Sin(t*2+i*.73f)*.18f+cutUp*Mathf.Cos(t*1.7f+i*.51f)*.16f;
-                float settle=Ease(WordCut+(i%11)*.035f,WordReady,t);
-                m.position=Vector3.Lerp(cloud,targets[i],settle)+(right*Mathf.Sin(i+t*2)+up*Mathf.Cos(i*.7f+t*1.6f))*.026f*settle;
-                m.rotation=Quaternion.AngleAxis(i*47+t*28,forward)*Quaternion.FromToRotation(Vector3.up,right);
+                var microbe=microbes[i];
+                float born=BurstStart+(i%31)*.023f;
+                microbe.gameObject.SetActive(swarmTime>=born);
+                if(!microbe.gameObject.activeSelf)continue;
+
+                float gatherStart=WordCut+(i%29)*.025f;
+                float gatherEnd=WordReady-(i%13)*.047f;
+                float cloudTime=Mathf.Min(swarmTime,gatherStart);
+                float burst=Ease(born,born+2.1f,cloudTime);
+                var cloud=Contact+Vector3.Lerp(-axis*.2f,scatter[i],burst);
+                cloud+=cutRight*Mathf.Sin(cloudTime*2+i*.73f)*.18f+cutUp*Mathf.Cos(cloudTime*1.7f+i*.51f)*.16f;
+
+                float u=Ease(gatherStart,gatherEnd,swarmTime);
+                float v=1-u;
+                var target=targets[i];
+                var bank=right*Mathf.Sin(i*.81f)*2.3f+up*(1.35f+Mathf.Cos(i*.63f)*1.8f);
+                var first=Vector3.Lerp(cloud,target,.28f)+bank;
+                var second=Vector3.Lerp(cloud,target,.76f)+bank*.48f+forward*Mathf.Sin(i*.41f)*1.2f;
+                var tangent=v*v*(first-cloud)+2*v*u*(second-first)+u*u*(target-second);
+                microbe.position=v*v*v*cloud+3*v*v*u*first+3*v*u*u*second+u*u*u*target;
+                microbe.position+=(right*Mathf.Sin(i+swarmTime*2)+up*Mathf.Cos(i*.7f+swarmTime*1.6f))*.026f*u;
+                var tumble=Quaternion.AngleAxis(i*47+swarmTime*28,forward)*Quaternion.FromToRotation(Vector3.up,right);
+                microbe.rotation=Quaternion.Slerp(tumble,Quaternion.FromToRotation(Vector3.up,tangent),Mathf.Sin(Mathf.PI*u)*.86f);
             }
         }
         public int VisibleMicrobes {get{return microbes.FindAll(m=>m&&m.gameObject.activeSelf).Count;}}
         public void UpdateBreathing(float time){foreach(var material in membranes)material.SetFloat("_BreathPreviewTime",time);}
-        public void SampleReturn(float time,float duration)
+        public void SampleReturn(float time,float duration,float hold=4.5f)
         {
-            Sample(Duration);
+            Sample(WordReadyTime+hold);
             float follow=Mathf.SmoothStep(0,1,Mathf.Clamp01(time/duration));
-            Camera.transform.rotation=Quaternion.LookRotation(Vector3.Lerp(wordCenter,Contact,follow)-FinalCameraPosition,up);
+            Camera.transform.rotation=Quaternion.LookRotation(Vector3.Lerp(finalLook,Contact,follow)-FinalCameraPosition,up);
             for(int i=0;i<microbes.Count;i++)
             {
                 float u=Mathf.SmoothStep(0,1,Mathf.InverseLerp((i%31)/31f*duration*.18f,duration,time));var m=microbes[i];
-                var middle=Vector3.Lerp(targets[i],Contact,.5f)-axis*2+cutRight*Mathf.Sin(i*1.73f)*1.2f;
-                m.position=(1-u)*(1-u)*targets[i]+2*(1-u)*u*middle+u*u*(Contact+axis*.45f);
-                m.rotation=Quaternion.LookRotation((Contact-m.position).sqrMagnitude>.001f?Contact-m.position:axis,up)*Quaternion.Euler(90,0,i*31);
+                var origin=m.position;
+                var middle=Vector3.Lerp(origin,Contact,.5f)-axis*2+cutRight*Mathf.Sin(i*1.73f)*1.2f;
+                m.position=(1-u)*(1-u)*origin+2*(1-u)*u*middle+u*u*(Contact+axis*.45f);
+                var returnRotation=Quaternion.LookRotation((Contact-m.position).sqrMagnitude>.001f?Contact-m.position:axis,up)*Quaternion.Euler(90,0,i*31);
+                m.rotation=Quaternion.Slerp(m.rotation,returnRotation,Mathf.SmoothStep(0,1,u*7));
                 m.gameObject.SetActive(u<.995f);
             }
         }

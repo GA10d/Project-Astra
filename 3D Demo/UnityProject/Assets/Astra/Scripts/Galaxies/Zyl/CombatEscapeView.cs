@@ -34,7 +34,7 @@ namespace AstraCabin
             Fill(new Rect(0,0,fw,fh),new Color(.025f,.018f,.022f));
             for(int i=0;i<stars.Length;i++)
             {
-                float x=Mathf.Repeat(stars[i].x*fw-s.Time*(23+i%3*18),fw),y=stars[i].y*fh;
+                float x=Mathf.Repeat(stars[i].x*fw-s.MotionTime*(23+i%3*18),fw),y=stars[i].y*fh;
                 Line(new Vector2(x,y),new Vector2(x+3+i%3*3,y),new Color(.42f,.30f,.22f,.25f),1);
             }
             // Filled tissue outside the moving silhouette, with layered ribs at different depths.
@@ -42,7 +42,7 @@ namespace AstraCabin
             for(float x=0;x<=fw+5;x+=5)
             {
                 float nx=x/fw,top=s.Ceiling(nx)*fh,bottom=s.Floor(nx)*fh;
-                var tissue=new Color(.19f+.035f*Mathf.Sin((nx+s.Time*.19f)*24),.046f,.05f);
+                var tissue=new Color(.19f+.035f*Mathf.Sin((nx+s.MotionTime*.19f)*24),.046f,.05f);
                 Fill(new Rect(x,0,6,Mathf.Max(0,top)),tissue);Fill(new Rect(x,bottom,6,Mathf.Max(0,fh-bottom)),tissue);
                 if(x>0){Line(lastTop,new Vector2(x,top),new Color(.67f,.23f,.20f),2);Line(lastBottom,new Vector2(x,bottom),new Color(.67f,.23f,.20f),2);}
                 if(((int)x/5)%5==0){Line(new Vector2(x,top-5),new Vector2(x-22,Mathf.Max(0,top-36)),new Color(.29f,.08f,.075f),2);Line(new Vector2(x,bottom+5),new Vector2(x-18,bottom+35),new Color(.29f,.08f,.075f),2);}
@@ -50,7 +50,7 @@ namespace AstraCabin
             }
             foreach(var o in s.Obstacles)
             {
-                float age=s.Time-o.encounter;
+                float age=s.MotionAge(o.encounter);
                 if(o.hit)
                 {
                     if(age>2)continue;
@@ -90,9 +90,9 @@ namespace AstraCabin
             Vector2 leader=new Vector2(s.Leader.x*fw,s.Leader.y*fh),player=new Vector2(s.Player.x*fw,s.Player.y*fh);
             var behind=leader+TowOffset(new Vector2(-22,0),s.LeaderAngle);var front=player+TowOffset(new Vector2(18,0),s.PlayerAngle);
             Line(behind,front,new Color(.2f,.7f,.65f,.2f),6);Line(behind,front,new Color(.58f,1,.83f),1.5f);
-            for(int n=0;n<7;n++){float f=Mathf.Repeat(n/7f+s.Time*.28f,1);var p=Vector2.Lerp(behind,front,f);Fill(new Rect(p.x-2,p.y-2,4,4),green);}
+            for(int n=0;n<7;n++){float f=Mathf.Repeat(n/7f+s.MotionTime*.28f,1);var p=Vector2.Lerp(behind,front,f);Fill(new Rect(p.x-2,p.y-2,4,4),green);}
             Sprite(ship,player,s.PlayerAngle,43,green);EscapeSprite(escapeShip,leader,s.LeaderAngle,65,s.ImpactAge<.25f?Color.white:amber);
-            Line(behind,behind-new Vector2(18+4*Mathf.Sin(s.Time*31),0),amber,4);
+            Line(behind,behind-new Vector2(18+4*Mathf.Sin(s.MotionTime*31),0),amber,4);
             Label(new Rect(player.x-45,player.y+26,135,22),"PROBE 04 / 被牵引",12,green);
             Label(new Rect(leader.x-35,leader.y+30,140,22),"米霍尔 / 领航",12,amber);
             if(s.ImpactAge<.65f){float a=1-s.ImpactAge/.65f;Fill(new Rect(0,0,fw,3),new Color(1,.35f,.16f,a));Fill(new Rect(0,fh-3,fw,3),new Color(1,.35f,.16f,a));}

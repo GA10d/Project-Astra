@@ -10,7 +10,10 @@ namespace AstraCabin.Galaxies.Zyl
     {
         public const float GripTime = 1.15f;
         public const float LiftEnd = 2.65f;
-        const float CrownScale = .86f, ContactRise = .245f, CrownSink = .185f;
+        internal const string PlantedName = "Zyl16 | planted flesh sprout";
+        internal const float CrownScale = .86f, ContactRise = .245f, CrownSink = .185f;
+        internal const float PlantedHeight = .145f + ContactRise - CrownSink;
+        internal static Quaternion PlantedRotation => Quaternion.Euler(5,11,-8);
         const int Rings = 15, Sides = 8, Roots = 7;
         readonly FoolsWalker walker;
         readonly Vector3 ground, actorGround, facing, up, reachDirection;
@@ -24,7 +27,7 @@ namespace AstraCabin.Galaxies.Zyl
         readonly float[] rootSpread = { .04f, .35f, .24f, .36f, .28f, .34f, .26f };
 
         public EscapeSprout(Transform parent, FoolsWalker actor, Vector3 soil, Vector3 standingGround,
-            Vector3 standingFacing, Vector3 vertical, List<UnityEngine.Object> resources)
+            Vector3 standingFacing, Vector3 vertical, List<UnityEngine.Object> resources, Transform planted)
         {
             walker = actor;
             ground = soil;
@@ -33,16 +36,24 @@ namespace AstraCabin.Galaxies.Zyl
             up = vertical;
             reachDirection = Vector3.ProjectOnPlane(ground - actorGround, up).normalized;
             baseRoot = Create("Zyl16 | rooted flesh sprout", parent);
-            baseRoot.SetPositionAndRotation(ground, Quaternion.LookRotation(reachDirection, up));
-            plantedGrip = baseRoot.TransformPoint(new Vector3(0, .145f + ContactRise - CrownSink, 0));
-
-            var flesh = new Material(Shader.Find("Standard (Specular setup)")) { name = "Sprout | moist flesh" };
-            flesh.SetColor("_SpecColor", new Color(.17f, .12f, .105f));
-            flesh.SetFloat("_Glossiness", .62f);
-            var texture = FleshTexture();
-            flesh.mainTexture = texture;
-            resources.Add(flesh);
-            resources.Add(texture);
+            baseRoot.SetPositionAndRotation(ground, planted ? planted.rotation : Quaternion.LookRotation(reachDirection, up));
+            plantedGrip = baseRoot.TransformPoint(Vector3.up * PlantedHeight);
+            Mesh fleshMesh;
+            Material flesh;
+            if (planted)
+            {
+                fleshMesh = planted.GetComponentInChildren<MeshFilter>().sharedMesh;
+                flesh = planted.GetComponentInChildren<MeshRenderer>().sharedMaterial;
+            }
+            else
+            {
+                var texture = FleshTexture();
+                flesh = FleshMaterial(texture);
+                fleshMesh = CrownMesh();
+                resources.Add(texture);
+                resources.Add(flesh);
+                resources.Add(fleshMesh);
+            }
 
             var rootSurface = new Material(flesh) { name = "Sprout | pale root fibers", mainTexture = null };
             rootSurface.color = new Color(.78f, .46f, .35f);
@@ -50,8 +61,6 @@ namespace AstraCabin.Galaxies.Zyl
             resources.Add(rootSurface);
 
             crown = Create("Sprout | lobed crown", baseRoot);
-            var fleshMesh = CrownMesh();
-            resources.Add(fleshMesh);
             Render(crown, fleshMesh, flesh);
             crown.localScale = Vector3.one * CrownScale;
 
@@ -192,7 +201,15 @@ namespace AstraCabin.Galaxies.Zyl
             roots.RecalculateBounds();
         }
 
-        static Mesh CrownMesh()
+        internal static Material FleshMaterial(Texture2D texture)
+        {
+            var flesh = new Material(Shader.Find("Standard (Specular setup)")) { name = "Sprout | moist flesh", mainTexture = texture };
+            flesh.SetColor("_SpecColor", new Color(.17f, .12f, .105f));
+            flesh.SetFloat("_Glossiness", .62f);
+            return flesh;
+        }
+
+        internal static Mesh CrownMesh()
         {
             const int bands = 24, sides = 44;
             var positions = new Vector3[(bands + 1) * (sides + 1)];
@@ -250,7 +267,7 @@ namespace AstraCabin.Galaxies.Zyl
             return mesh;
         }
 
-        static Texture2D FleshTexture()
+        internal static Texture2D FleshTexture()
         {
             const int width = 128, height = 64;
             var texture = new Texture2D(width,height,TextureFormat.RGB24,true) { name = "Sprout | mottled rose and capillaries" };

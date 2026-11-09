@@ -541,7 +541,7 @@ window.ZYL_PARAMETERS={
       "label": "初始剩余时间",
       "value": 300,
       "min": 0,
-      "max": 5999,
+      "max": 359999,
       "unit": "时:分:秒",
       "desc": "首次创建航程倒计时时使用，续玩保留存档时间。",
       "type": "time"
@@ -572,7 +572,7 @@ window.ZYL_PARAMETERS={
       "label": "进入警告颜色的剩余时间",
       "value": 30,
       "min": 0,
-      "max": 5999,
+      "max": 359999,
       "unit": "时:分:秒",
       "desc": "剩余时间低于此值时使用警告色。",
       "type": "time"
@@ -659,6 +659,16 @@ window.ZYL_PARAMETERS={
     },
     {
       "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsMicrobeSpeed",
+      "label": "细菌飞行速度",
+      "value": 1.35,
+      "min": 0.5,
+      "max": 3,
+      "unit": "倍",
+      "desc": "从裂口飞出并汇成 STOP 的速度倍率。STOP 停留和飞回裂口各有独立时长。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
       "key": "foolsStopHold",
       "label": "STOP 停留时长",
       "value": 4.5,
@@ -709,6 +719,16 @@ window.ZYL_PARAMETERS={
     },
     {
       "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsOrbitTargetFov",
+      "label": "绕头结束视野（FOV）",
+      "value": 62,
+      "min": 25,
+      "max": 85,
+      "unit": "度",
+      "desc": "从正面特写的 40° 随半圈旋转同步过渡，到后脑时达到目标值。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
       "key": "foolsPullbackDuration",
       "label": "绕头后半程拉开时长",
       "value": 5,
@@ -751,11 +771,11 @@ window.ZYL_PARAMETERS={
       "group": "16 · 泰德野里_逃出生天",
       "key": "escapeFlightDuration",
       "label": "牵引逃亡时长",
-      "value": 42,
+      "value": 32,
       "min": 24,
       "max": 180,
       "unit": "秒",
-      "desc": "从进入战斗画面到抵达出口。玩家不能操纵，米霍尔沿既定路线领航。"
+      "desc": "从开始牵引到抵达出口的时间。短于 42 秒时，胃壁、障碍和牵引动作会随演出一起加速。"
     },
     {
       "group": "16 · 泰德野里_逃出生天",
@@ -801,7 +821,7 @@ window.ZYL_PARAMETERS={
       "group": "17 · 泰德野里_别离",
       "key": "farewellDepartureHold",
       "label": "启航舷窗停留",
-      "value": 0.65,
+      "value": 0,
       "min": 0,
       "max": 4,
       "unit": "秒",
@@ -875,7 +895,7 @@ window.ZYL_PARAMETERS={
       "min": 0,
       "max": 20,
       "unit": "秒",
-      "desc": "从点击启航算起，到整行标题同时出现的时间。"
+      "desc": "启航镜头开始后，完整标题开始淡入的时间。"
     },
     {
       "group": "17 · 泰德野里_别离",
@@ -1187,7 +1207,7 @@ window.ZYL_PARAMETERS={
         "replies": []
       }
     ],
-    "escapeFlightDuration": 42,
+    "escapeFlightDuration": 32,
     "escapeExitDistance": 12000,
     "escapeHullLoss": 36,
     "escapeFadeDuration": 1.2,
@@ -1201,37 +1221,37 @@ window.ZYL_PARAMETERS={
     "escapeEncouragement": [
       {
         "text": "抓紧，我来带路！",
-        "duration": 8,
+        "duration": 4.5,
         "replies": []
       },
       {
         "text": "跟着我的航线，别担心！",
-        "duration": 8,
+        "duration": 4.5,
         "replies": []
       },
       {
         "text": "前面有障碍，我来撞开！",
-        "duration": 8,
+        "duration": 4.5,
         "replies": []
       },
       {
         "text": "还撑得住，我们继续！",
-        "duration": 8,
+        "duration": 4.5,
         "replies": []
       },
       {
         "text": "就快到出口了，坚持住！",
-        "duration": 8,
+        "duration": 4.5,
         "replies": []
       },
       {
         "text": "看到亮光了，我们能出去！",
-        "duration": 8,
+        "duration": 4.5,
         "replies": []
       },
       {
         "text": "最后一段路，抓稳！",
-        "duration": 8,
+        "duration": 4.5,
         "replies": []
       }
     ],
@@ -1248,7 +1268,7 @@ window.ZYL_PARAMETERS={
         "replies": []
       }
     ],
-    "farewellDepartureHold": 0.65,
+    "farewellDepartureHold": 0,
     "farewellDepartureCameraTime": 4.7,
     "farewellDepartureCameraBack": 6,
     "farewellDepartureCameraRise": 8.8,
@@ -1266,7 +1286,9 @@ window.ZYL_PARAMETERS={
     "farewellFinalFlashDuration": 0.7,
     "farewellFinalFlashIntensity": 1,
     "farewellShakeSustain": 0.42,
-    "farewellImpactDecay": 1.4
+    "farewellImpactDecay": 1.4,
+    "foolsMicrobeSpeed": 1.35,
+    "foolsOrbitTargetFov": 62
   },
   "rules": [
     [

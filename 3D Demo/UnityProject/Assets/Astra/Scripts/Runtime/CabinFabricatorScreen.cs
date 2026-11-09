@@ -4,10 +4,13 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 namespace AstraCabin
 {
-    // A physical, depth-tested terminal mounted in the printer opening.
+    // The screen rolls down from a fixed housing in front of the printer opening.
     public sealed class CabinFabricatorScreen : MonoBehaviour
     {
         CabinFabricator owner; Canvas canvas; GameObject assembly, eventSystem;
+        internal const float MountDepth = -.33f;
+        Transform screenBack, lowerRail;
+        RectTransform viewport;
         Material caseMaterial; Font font; Text status, progress; Text[] counts=new Text[3];
         Button[] choices=new Button[3]; Button begin, claim, close;
         FabricatorContourGraphic drawing;
@@ -18,15 +21,17 @@ namespace AstraCabin
             transform.SetParent(mount,true);
             assembly=new GameObject("Retractable terminal | solid screen");assembly.transform.SetParent(transform,false);
             caseMaterial=new Material(Shader.Find("Standard"));caseMaterial.color=new Color(.09f,.12f,.11f);caseMaterial.SetFloat("_Metallic",.7f);caseMaterial.SetFloat("_Glossiness",.35f);
-            Solid("Screen back",Vector3.zero,new Vector3(.95f,.625f,.035f));
-            Solid("Upper roller lip",new Vector3(0,.32f,-.012f),new Vector3(.99f,.035f,.055f));
-            Solid("Lower weighted rail",new Vector3(0,-.32f,-.012f),new Vector3(.99f,.025f,.05f));
+            screenBack=Solid("Screen back",Vector3.zero,new Vector3(.95f,.625f,.035f),assembly.transform);
+            Solid("Upper roller housing",new Vector3(0,.32f,-.012f),new Vector3(.99f,.055f,.075f),transform);
+            lowerRail=Solid("Lower weighted rail",new Vector3(0,-.32f,-.012f),new Vector3(.99f,.025f,.05f),assembly.transform);
             var go=new GameObject("Interactive display surface",typeof(RectTransform),typeof(Canvas),typeof(GraphicRaycaster));
             go.transform.SetParent(assembly.transform,false);go.transform.localPosition=new Vector3(0,0,-.020f);go.transform.localScale=Vector3.one*.0009f;
             canvas=go.GetComponent<Canvas>();canvas.renderMode=RenderMode.WorldSpace;canvas.worldCamera=camera;
             ((RectTransform)go.transform).sizeDelta=new Vector2(1000,650);
+            viewport=Rect("Screen rollout mask",go.transform,new Rect(0,0,1000,650));
+            viewport.gameObject.AddComponent<RectMask2D>();
             font=Font.CreateDynamicFontFromOSFont(new[]{"Microsoft YaHei","Arial"},18);
-            Image background=Rect("Screen phosphor",go.transform,new Rect(0,0,1000,650)).gameObject.AddComponent<Image>();background.color=new Color(.025f,.045f,.045f,1);
+            Image background=Rect("Screen phosphor",viewport,new Rect(0,0,1000,650)).gameObject.AddComponent<Image>();background.color=new Color(.025f,.045f,.045f,1);
             TextAt("FABRICATOR / MK.04   轮廓制造终端",new Rect(24,18,810,40),24);
             close=ButtonAt("返回 [Esc]",new Rect(865,20,110,40),()=>owner.Close());
             for(int i=0;i<3;i++)
@@ -35,7 +40,7 @@ namespace AstraCabin
                 counts[i]=TextAt("",new Rect(22,305+i*56,235,50),17);
             }
             claim=ButtonAt("领取已完成部件",new Rect(22,495,235,46),()=>owner.ClaimParts());
-            var area=Rect("Blueprint viewport",go.transform,new Rect(280,80,695,445));
+            var area=Rect("Blueprint viewport",viewport,new Rect(280,80,695,445));
             area.gameObject.AddComponent<RectMask2D>();
             var contourObject=Rect("Contour and fixed pen",area,new Rect(0,0,695,445)).gameObject;
             // Create the native renderer before Graphic.OnEnable can access it.
@@ -51,12 +56,13 @@ namespace AstraCabin
             }
             assembly.SetActive(false);
         }
-        void Solid(string name,Vector3 position,Vector3 scale)
+        Transform Solid(string name,Vector3 position,Vector3 scale,Transform parent)
         {
-            var go=GameObject.CreatePrimitive(PrimitiveType.Cube);go.name=name;go.transform.SetParent(assembly.transform,false);go.transform.localPosition=position;go.transform.localScale=scale;
+            var go=GameObject.CreatePrimitive(PrimitiveType.Cube);go.name=name;go.transform.SetParent(parent,false);go.transform.localPosition=position;go.transform.localScale=scale;
             go.GetComponent<Renderer>().sharedMaterial=caseMaterial;
             // Canvas pointer raycaster handles the face. No new cabin navigation hit target.
-            Destroy(go.GetComponent<Collider>());
+            var collider=go.GetComponent<Collider>();collider.enabled=false;Destroy(collider);
+            return go.transform;
         }
         RectTransform Rect(string name,Transform parent,Rect rect)
         {
@@ -65,22 +71,26 @@ namespace AstraCabin
         }
         Text TextAt(string text,Rect rect,int size)
         {
-            var rt=Rect(text,canvas.transform,rect);var t=rt.gameObject.AddComponent<Text>();t.font=font;t.fontSize=size;t.text=text;t.color=new Color(.72f,.88f,.82f);t.alignment=TextAnchor.MiddleLeft;t.raycastTarget=false;return t;
+            var rt=Rect(text,viewport,rect);var t=rt.gameObject.AddComponent<Text>();t.font=font;t.fontSize=size;t.text=text;t.color=new Color(.72f,.88f,.82f);t.alignment=TextAnchor.MiddleLeft;t.raycastTarget=false;return t;
         }
         Button ButtonAt(string text,Rect rect,UnityEngine.Events.UnityAction action)
         {
-            var rt=Rect(text,canvas.transform,rect);var image=rt.gameObject.AddComponent<Image>();image.color=new Color(.14f,.22f,.21f);
+            var rt=Rect(text,viewport,rect);var image=rt.gameObject.AddComponent<Image>();image.color=new Color(.14f,.22f,.21f);
             var b=rt.gameObject.AddComponent<Button>();b.targetGraphic=image;b.onClick.AddListener(action);b.navigation=new UnityEngine.UI.Navigation{mode=UnityEngine.UI.Navigation.Mode.None};
             var t=Rect("Caption",rt,new Rect(8,0,rect.width-16,rect.height)).gameObject.AddComponent<Text>();t.font=font;t.fontSize=17;t.text=text;t.alignment=TextAnchor.MiddleCenter;t.color=new Color(.8f,.94f,.88f);t.raycastTarget=false;return b;
         }
         public void Refresh(Vector3 origin,Quaternion facing,float blend,bool visible,bool interactable)
         {
             if(!canvas)return;
-            assembly.SetActive(visible);
-            // The roller is centered on the opening, with its top lip at the brass trim.
-            float stowed = 1f - Mathf.SmoothStep(0f, 1f, blend);
-            transform.SetPositionAndRotation(origin + facing * new Vector3(.08f, .15f + stowed * .66f, -.145f + stowed * .29f), facing);
-            canvas.GetComponent<GraphicRaycaster>().enabled=interactable&&blend>.98f;
+            transform.SetPositionAndRotation(origin+facing*new Vector3(.08f,.15f,MountDepth),facing);
+            assembly.SetActive(visible&&blend>0);
+            float deployed=Mathf.SmoothStep(0,1,blend);
+            float height=.625f*deployed;
+            screenBack.localPosition=new Vector3(0,(.625f-height)*.5f,0);
+            screenBack.localScale=new Vector3(.95f,height,.035f);
+            lowerRail.localPosition=new Vector3(0,Mathf.Lerp(.32f,-.32f,deployed),-.012f);
+            viewport.sizeDelta=new Vector2(1000,650*deployed);
+            canvas.GetComponent<GraphicRaycaster>().enabled=interactable;
             close.interactable=interactable;
             for(int i=0;i<3;i++)
             {

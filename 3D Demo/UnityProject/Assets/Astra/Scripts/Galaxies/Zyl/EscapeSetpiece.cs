@@ -21,6 +21,7 @@ namespace AstraCabin.Galaxies.Zyl
         // Fitted from the marked ground point in the grave reference view.
         static readonly Vector3 SproutAuth = new Vector3(2.27f, 0f, 6.52f);
         EscapeSprout sprout;
+        Transform plantedSprout;
         EscapeGust gust;
         float sproutCue, shakeTime;
         Vector3 shotPosition;
@@ -57,7 +58,8 @@ namespace AstraCabin.Galaxies.Zyl
             Ground=new FoolsSlope(exterior.MihuoerShipAnchor.transform.parent,frame,exterior.MihuoerAnchor.transform.position);
             Walker=new FoolsWalker(exterior.MihuoerActor,Ground);
             var actorMark = Ground.Ground(frame.MultiplyPoint3x4(ActorAuth));
-            var sproutSoil = Ground.Ground(frame.MultiplyPoint3x4(SproutAuth));
+            plantedSprout = exterior.MihuoerShipAnchor.transform.parent.Find(EscapeSprout.PlantedName);
+            var sproutSoil = plantedSprout ? plantedSprout.position : Ground.Ground(frame.MultiplyPoint3x4(SproutAuth));
             var towardSprout = Vector3.ProjectOnPlane(sproutSoil - actorMark, Ground.Up).normalized;
             actorGround = Ground.Ground(actorMark + towardSprout * .53f);
             var cameraPosition=Ground.Ground(frame.MultiplyPoint3x4(CameraAuth))+Ground.Up*1.55f;actorFacing=cameraPosition-actorGround;
@@ -78,7 +80,8 @@ namespace AstraCabin.Galaxies.Zyl
             oldUI=director.controller.showUI;captured=true;director.controller.showUI=false;
             dialogue=Dialogue(p.escapeGravesDialogue,"graves");
             Walker.SampleStandingAt(actorGround,actorFacing,GravesPose,0);
-            sprout = new EscapeSprout(GravesRoot, Walker, sproutSoil, actorGround, actorFacing, Ground.Up, resources);
+            sprout = new EscapeSprout(GravesRoot, Walker, sproutSoil, actorGround, actorFacing, Ground.Up, resources, plantedSprout);
+            if(plantedSprout) plantedSprout.gameObject.SetActive(false);
             shotPosition = Camera.transform.position;
             shotRotation = Camera.transform.rotation;
             sproutCue = float.PositiveInfinity;
@@ -188,7 +191,8 @@ namespace AstraCabin.Galaxies.Zyl
         void RestoreUI(){if(captured)director.controller.showUI=oldUI;captured=false;}
         void ReleaseShot()
         {
-            sprout=null;gust=null;
+            if(plantedSprout) plantedSprout.gameObject.SetActive(true);
+            plantedSprout=null;sprout=null;gust=null;
             if(Camera){Camera.enabled=false;Destroy(Camera.gameObject);}Camera=null;if(Walker!=null)Walker.Dispose();Walker=null;if(Ground!=null)Ground.Dispose();Ground=null;
             if(GravesRoot){GravesRoot.gameObject.SetActive(false);Destroy(GravesRoot.gameObject);}GravesRoot=null;foreach(var r in resources)if(r)Destroy(r);resources.Clear();
         }

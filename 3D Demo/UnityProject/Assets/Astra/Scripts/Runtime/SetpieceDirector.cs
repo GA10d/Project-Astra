@@ -108,6 +108,7 @@ namespace AstraCabin
             promptPaper=Mat("Terminal prompt paper",new Color(.69f,.70f,.65f),true);
             promptRed=Mat("Terminal prompt red",new Color(.43f,.13f,.10f),true);
             white=Mat("Warning trim",new Color(.68f,.77f,.64f),true);
+            MountServiceHammer();
         }
         void Update()
         {
@@ -201,9 +202,9 @@ namespace AstraCabin
             controller.SetPaused(false); controller.observationAllowed=true;
             farewell.Clear();escape.Clear();fools.Clear();printingRequest.Clear();stomachTalk.Clear();encounter.Clear(); portal.Clear(); combat.Clear(); visitors.Clear(); crimson.Clear(); whales.Clear(); mirror.Clear(); sorting.Clear(); eventAudio.StopAll();
             if(repairRoot) { repairRoot.SetActive(false); Destroy(repairRoot); }
-            if(heldHammer) { heldHammer.SetActive(false); Destroy(heldHammer); }
+            SetHammerAvailability(false);
             if(AlertRoot) { AlertRoot.SetActive(false); Destroy(AlertRoot); }
-            repairRoot=null; heldHammer=null; HammerRack=null; AlertRoot=null;
+            repairRoot=null; AlertRoot=null;
             RepairPoints=new CabinInteractable[0]; crackArt.Clear(); patches.Clear();
             for(int i=0;i<repaired.Length;i++) repaired[i]=false;
             CrisisActive=false; HasHammer=false; RepairedCount=0; alarmStarted=false; repairing=false;
@@ -225,18 +226,35 @@ namespace AstraCabin
         }
         public void PlayCue(string name,float volume=1f) { if(eventAudio) eventAudio.Play(name,Mathf.Clamp01(volume)); }
 
-        void CreateRepairProps()
+        void MountServiceHammer()
         {
-            repairRoot=new GameObject("EVENT_Repair | three hull breaches and service hammer");
-            HammerRack=new GameObject("ACT_ServiceHammer").transform; HammerRack.SetParent(repairRoot.transform);
-            HammerRack.position=new Vector3(-1.05f,1.51f,.42f);
-            MakeHammer(HammerRack,1);
-            Box("Service tool magnetic bracket",HammerRack,new Vector3(-.052f,.08f,0),new Vector3(.045f,.44f,.26f),dark);
-            Text("SERVICE HAMMER",HammerRack,new Vector3(.033f,-.29f,-.16f),Quaternion.Euler(0,-90,0),.028f,new Color(.95f,.76f,.23f));
+            HammerRack=new GameObject("ACT_ServiceHammer").transform;
+            HammerRack.SetParent(transform);
+            HammerRack.SetPositionAndRotation(new Vector3(-1.148f,1.455f,-.44f),Quaternion.Euler(90,0,0));
+            MakeHammer(HammerRack);
+            heldHammer=HammerRack.GetChild(0).gameObject;
             var pickup=HammerRack.gameObject.AddComponent<CabinInteractable>(); pickup.title="维修锤 / SERVICE HAMMER"; pickup.description="取下锤子，修复 D 墙三处裂痕";
             pickup.kind=InteractionKind.Button; pickup.toggleState=false; pickup.travel=0; pickup.outlineShader=Shader.Find("Astra/Outline");
             var pickupCollider=HammerRack.gameObject.AddComponent<BoxCollider>(); pickupCollider.center=new Vector3(.02f,.06f,0); pickupCollider.size=new Vector3(.12f,.49f,.31f);
             pickup.onChanged.AddListener(value=>TakeHammer());
+            SetHammerAvailability(false);
+        }
+
+        void SetHammerAvailability(bool canTake)
+        {
+            if(!HammerRack) return;
+            heldHammer.transform.SetParent(HammerRack,false);
+            heldHammer.transform.SetLocalPositionAndRotation(Vector3.zero,Quaternion.identity);
+            heldHammer.transform.localScale=Vector3.one;
+            var pickup=HammerRack.GetComponent<CabinInteractable>();
+            pickup.enabled=canTake;
+            HammerRack.GetComponent<BoxCollider>().enabled=canTake;
+        }
+
+        void CreateRepairProps()
+        {
+            repairRoot=new GameObject("EVENT_Repair | three hull breaches");
+            SetHammerAvailability(true);
             // Independent repair targets in front of the hull, outside the clear window.
             Vector3[] positions={new Vector3(1.25f,1.98f,.71f),new Vector3(1.07f,1.49f,-1.09f),new Vector3(1.05f,.63f,.65f)};
             RepairPoints=new CabinInteractable[3];
@@ -274,12 +292,12 @@ namespace AstraCabin
         {
             if(!CrisisActive || HasHammer) return false;
             HasHammer=true;
-            if(HammerRack) HammerRack.gameObject.SetActive(false);
-            heldHammer=new GameObject("Held repair hammer | animated");
+            HammerRack.GetComponent<CabinInteractable>().enabled=false;
+            HammerRack.GetComponent<BoxCollider>().enabled=false;
             heldHammer.transform.SetParent(controller.viewCamera.transform,false);
             heldHammer.transform.localPosition=new Vector3(.24f,-.23f,.56f);
             heldHammer.transform.localRotation=Quaternion.Euler(0,0,-18);
-            MakeHammer(heldHammer.transform,.60f);
+            heldHammer.transform.localScale=Vector3.one*.60f;
             PlayCue("hammer",.4f); controller.ShowNotice("维修锤已拿起 / 前往 D 墙点击三处裂痕");
             return true;
         }
@@ -314,16 +332,15 @@ namespace AstraCabin
                 CrisisActive=false; HasHammer=false; systems.SetDamageState(false,false); systems.SetMainPower(true); systems.SetLights(true);
                 controller.observationAllowed=true; eventAudio.SetAlarm(false);
                 foreach(var item in FindObjectsOfType<CabinInteractable>()) if(item.name=="ACT_PowerLever" || item.name=="ACT_LightSwitch") item.ResetToInitialState();
-                if(heldHammer) { heldHammer.SetActive(false); Destroy(heldHammer); heldHammer=null; }
-                if(HammerRack) { HammerRack.gameObject.SetActive(true); HammerRack.GetComponent<CabinInteractable>().enabled=false; }
+                SetHammerAvailability(false);
                 if(ActiveMode == BlockedEngineMode)
                     SetAlert("舱体未完全修复","三处裂痕已封闭\n主电源恢复\n引擎被未知物质堵塞");
                 else SetAlert("舱体修复完成","三处裂痕已封闭\n主电源恢复 / 危机解除"); PlayCue("success",.65f);
             }
         }
-        void MakeHammer(Transform parent,float scale)
+        void MakeHammer(Transform parent)
         {
-            var art=new GameObject("Hammer geometry").transform; art.SetParent(parent,false); art.localScale=Vector3.one*scale;
+            var art=new GameObject("Hammer geometry").transform; art.SetParent(parent,false);
             Box("Worn grip",art,new Vector3(0,-.06f,0),new Vector3(.050f,.30f,.05f),handle);
             for(int i=0;i<7;i++) Box("Grip band",art,new Vector3(0,-.18f+i*.032f,0),new Vector3(.054f,.008f,.054f),dark);
             Box("Steel shaft",art,new Vector3(0,.10f,0),new Vector3(.024f,.19f,.026f),steel);
@@ -430,7 +447,7 @@ namespace AstraCabin
         void OnDestroy()
         {
             Font.textureRebuilt-=RefreshFontAtlas;
-            if(initialized) { if(repairRoot) Destroy(repairRoot); if(heldHammer) Destroy(heldHammer); if(AlertRoot) Destroy(AlertRoot); }
+            if(initialized) { if(repairRoot) Destroy(repairRoot); if(heldHammer) Destroy(heldHammer); if(HammerRack) Destroy(HammerRack.gameObject); if(AlertRoot) Destroy(AlertRoot); }
             foreach(var material in materials) if(material) Destroy(material);
             if(font) Destroy(font);
         }

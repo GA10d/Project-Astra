@@ -13,7 +13,7 @@ namespace AstraCabin.Galaxies.Zyl
         {
             if(action==null)return;
             if(Array.IndexOf(Kinds,action.kind)<0)throw new InvalidDataException("未知倒计时操作");
-            if(NeedsSeconds(action.kind)&&(double.IsNaN(action.seconds)||double.IsInfinity(action.seconds)||action.seconds<0||action.seconds>5999))throw new InvalidDataException("计时操作时间必须为0–99:59");
+            if(NeedsSeconds(action.kind)&&(double.IsNaN(action.seconds)||double.IsInfinity(action.seconds)||action.seconds<0||action.seconds>MihuoerCountdownClock.MaxSeconds))throw new InvalidDataException("计时操作时间必须为00:00:00–99:59:59");
         }
     }
     [Serializable] public sealed class MihuoerCountdownSnapshot
@@ -27,10 +27,11 @@ namespace AstraCabin.Galaxies.Zyl
             if(schemaVersion!=1||!Valid(remaining)||!Valid(frozenSeconds)||consumedActions==null||consumedActions.Count>2048)throw new InvalidDataException("倒计时存档格式无效");
             foreach(string key in consumedActions)if(string.IsNullOrEmpty(key)||key.Length>128)throw new InvalidDataException("倒计时操作记录无效");
         }
-        static bool Valid(double n){return !double.IsNaN(n)&&!double.IsInfinity(n)&&n>=0&&n<=5999;}
+        static bool Valid(double n){return !double.IsNaN(n)&&!double.IsInfinity(n)&&n>=0&&n<=MihuoerCountdownClock.MaxSeconds;}
     }
     public sealed class MihuoerCountdownClock
     {
+        public const int MaxSeconds = 99 * 3600 + 59 * 60 + 59;
         public readonly MihuoerCountdownSnapshot State;
         public double DisplaySeconds {get{return State.displayFrozen?State.frozenSeconds:State.remaining;}}
         public MihuoerCountdownClock(MihuoerCountdownSnapshot state){state.Validate();State=state;}
@@ -52,7 +53,7 @@ namespace AstraCabin.Galaxies.Zyl
                 case "setStart":State.remaining=action.seconds;State.running=action.seconds>0;break;
                 case "start":case "resume":State.running=State.remaining>0;break;
                 case "pause":State.running=false;break;
-                case "add":State.remaining=Math.Min(5999,State.remaining+action.seconds);break;
+                case "add":State.remaining=Math.Min(MaxSeconds,State.remaining+action.seconds);break;
                 case "subtract":State.remaining=Math.Max(0,State.remaining-action.seconds);break;
                 case "stopHide":State.running=false;State.visible=false;break;
                 case "show":State.visible=true;break;
@@ -63,6 +64,6 @@ namespace AstraCabin.Galaxies.Zyl
             State.controlled=true;if(State.remaining>0)State.zeroRaised=false;else State.running=false;
             if(onceKey!=null)State.consumedActions.Add(onceKey);return true;
         }
-        public static string Format(double seconds){int value=(int)Math.Ceiling(Math.Max(0,Math.Min(5999,seconds)));return (value/60).ToString("00")+":"+(value%60).ToString("00");}
+        public static string Format(double seconds){int value=(int)Math.Ceiling(Math.Max(0,Math.Min(MaxSeconds,seconds)));return $"{value / 3600:00}:{value / 60 % 60:00}:{value % 60:00}";}
     }
 }

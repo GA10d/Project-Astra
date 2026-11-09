@@ -67,7 +67,7 @@ namespace AstraCabin.Galaxies.Zyl
                     if(!exterior.Ready||exterior.Busy||ZylScreenCurtain.BlocksInput)return;
                     if(!exterior.MihuoerActor||!exterior.MihuoerShipAnchor){Fail("都是傻瓜：胃内飞船缺失。");return;}
                     exterior.MihuoerActor.SetSeatedOnCraft(true);
-                    Stage=new FoolsStage(exterior.MihuoerActor.Craft,exterior.MihuoerShipAnchor.transform.parent,exterior.AuthoredToRuntime,director.controller.viewCamera);
+                    Stage=new FoolsStage(exterior.MihuoerActor.Craft,exterior.MihuoerShipAnchor.transform.parent,exterior.AuthoredToRuntime,director.controller.viewCamera,parameters.foolsMicrobeSpeed);
                     oldUI=director.controller.showUI;capturedUI=true;director.controller.showUI=false;Stage.Camera.enabled=true;Enter(Step.Playing);
                 }
                 Elapsed+=dt;phaseTime+=dt;
@@ -75,10 +75,10 @@ namespace AstraCabin.Galaxies.Zyl
                 {
                     case Step.Playing:
                         Stage.Sample(phaseTime);
-                        if(phaseTime>=FoolsStage.WordReady+parameters.foolsStopHold)Enter(Step.Returning);
+                        if(phaseTime>=Stage.WordReadyTime+parameters.foolsStopHold)Enter(Step.Returning);
                         break;
                     case Step.Returning:
-                        Stage.SampleReturn(phaseTime,parameters.foolsReturnDuration);
+                        Stage.SampleReturn(phaseTime,parameters.foolsReturnDuration,parameters.foolsStopHold);
                         if(phaseTime>=parameters.foolsReturnDuration)
                         {
                             Slope=new FoolsSlope(exterior.MihuoerShipAnchor.transform.parent,exterior.AuthoredToRuntime,exterior.MihuoerAnchor.transform.position);
@@ -164,11 +164,12 @@ namespace AstraCabin.Galaxies.Zyl
         {
             OrbitFraction=orbit;PullbackFraction=pull;
             var root=Walker.Root;var center=HeadCenter;
-            var direction=Quaternion.AngleAxis(180*Mathf.SmoothStep(0,1,orbit),Slope.Up)*root.forward;
+            float rotationProgress=Mathf.SmoothStep(0,1,orbit);
+            var direction=Quaternion.AngleAxis(180*rotationProgress,Slope.Up)*root.forward;
             var near=center+direction*.86f+Slope.Up*.035f;
             var far=root.position+direction*4.2f+Slope.Up*2.0f;
             var position=pull<=0?near:Slope.CameraPosition(Vector3.Lerp(near,far,pull),center);
-            CameraPose(position,Vector3.Lerp(center,root.position+root.forward*1.8f+Slope.Up*1.05f,pull),Mathf.Lerp(40,62,pull),false);
+            CameraPose(position,Vector3.Lerp(center,root.position+root.forward*1.8f+Slope.Up*1.05f,pull),Mathf.Lerp(40,parameters.foolsOrbitTargetFov,rotationProgress),false);
         }
         void ClosingShot(){CameraPose(closingCamera,Walker.Root.position+Slope.Up*.85f,44,false);}
         void Finish()
