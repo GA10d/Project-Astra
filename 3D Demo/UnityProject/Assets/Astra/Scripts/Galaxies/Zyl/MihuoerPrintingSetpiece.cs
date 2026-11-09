@@ -15,6 +15,7 @@ namespace AstraCabin.Galaxies.Zyl
         MihuoerActionTrack actionTrack;
         MihuoerPole pole;
         float poleTime;
+        bool windowRequested;
         Vector2 scroll;
         Font font;
         GUIStyle text,button;
@@ -24,9 +25,31 @@ namespace AstraCabin.Galaxies.Zyl
         {
             Clear();parameters=ZylPresentationParameters.Load();if(director.computer.Navigation&&director.computer.Navigation.Countdown)director.computer.Navigation.Countdown.ReloadParameters();actionTrack=new MihuoerActionTrack(parameters.printingActionClips,parameters.printingDialogue);Active=true;Phase=Step.WaitingForEnvironment;
             if(!director.computer.Navigation||director.computer.Navigation.ActiveGalaxyId!="zyl"){Fail("米霍尔需要打印构件：请先进入zyl胃内航程。");return;}
-            director.computer.Close();director.controller.SnapToWall(1);director.controller.EnterWindowView();director.controller.cinematicWindowLock=true;
+            TryBeginWindowView(Exterior);
         }
-        public void Resume(){if(!Active||Complete)return;if(Phase==Step.Error){Show();return;}director.computer.Close();director.controller.SnapToWall(1);director.controller.EnterWindowView();director.controller.cinematicWindowLock=true;}
+        public void Resume()
+        {
+            if(!Active||Complete)return;
+            if(Phase==Step.Error){Show();return;}
+            if(windowRequested)OpenWindowView();
+            else TryBeginWindowView(Exterior);
+        }
+        void OpenWindowView()
+        {
+            director.computer.Close();
+            director.controller.SnapToWall(1);
+            director.controller.EnterWindowView();
+            director.controller.cinematicWindowLock=true;
+        }
+        void TryBeginWindowView(ZylStomachEnvironment exterior)
+        {
+            if(!exterior||!exterior.Ready||exterior.Busy||ZylScreenCurtain.BlocksInput)return;
+            if(!exterior.MihuoerShipAnchor||!exterior.MihuoerActor){Fail("胃内缺少米霍尔飞船或角色。");return;}
+            try{exterior.MihuoerActor.SetSeatedOnCraft(true,true);}
+            catch(Exception e){Fail(e.Message);return;}
+            windowRequested=true;
+            OpenWindowView();
+        }
         void Fail(string message){Error=message;Phase=Step.Error;director.controller.cinematicWindowLock=false;director.controller.ShowNotice(message);}
         void Update()
         {
@@ -35,6 +58,7 @@ namespace AstraCabin.Galaxies.Zyl
             if(exterior.Error!=null){Fail(exterior.Error);return;}
             if(Phase==Step.WaitingForEnvironment)
             {
+                if(!windowRequested){TryBeginWindowView(exterior);return;}
                 if(!exterior.Ready||exterior.Busy||ZylScreenCurtain.BlocksInput||!director.controller.IsAtWindow)return;
                 if(!exterior.MihuoerShipAnchor||!exterior.MihuoerActor){Fail("胃内缺少米霍尔飞船或角色。");return;}
                 try{exterior.SetCabinYaw(exterior.CabinYawTowardCraft());exterior.MihuoerActor.SetSeatedOnCraft(true,true);}
@@ -103,7 +127,7 @@ var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(a
             }
             finally{GUI.matrix=matrix;GUI.color=color;GUI.enabled=enabled;}
         }
-        public void Clear(){pole?.Dispose();pole=null;if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor&&Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.ChairListen;Active=Complete=false;dialogue=null;actionTrack=null;Error=null;scroll=Vector2.zero;}
+        public void Clear(){pole?.Dispose();pole=null;if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor&&Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.ChairListen;Active=Complete=windowRequested=false;dialogue=null;actionTrack=null;Error=null;scroll=Vector2.zero;}
         void OnDestroy(){pole?.Dispose();pole=null;if(font)Destroy(font);}
     }
 }

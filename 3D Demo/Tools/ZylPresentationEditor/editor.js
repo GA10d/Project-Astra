@@ -13,7 +13,7 @@ const motionSections = [
   {id:12,group:3,key:'encounterActionClips',dialogue:'freeDialogue',title:'自由对话',poses:seatedPoses,
    note:'接通并回应开场后开始。等待回复暂停动作进度，巨兽仍可打断对话。'},
   {id:13,group:7,key:'stomachActionClips',dialogue:'stomachDialogue',title:'肚中会谈',poses:standingPoses,
-   note:'转舱到位后开始。等待回复暂停动作进度。'},
+   note:'转舱到位后开始。等待回复时保留当前动作。'},
   {id:14,group:9,key:'printingActionClips',dialogue:'printingDialogue',title:'飞船内对白',poses:seatedPoses,
    note:'飞船就座后开始。等待回复暂停动作进度。',cue:'showPole',cueLabel:'展示短杆'},
   {id:15,group:10,key:'foolsActionClips',poses:standingPoses},
@@ -26,9 +26,9 @@ const motionSections = [
 function createActionTimeline(spec) {
   const {key,poses}=spec;
   const continuous=spec.id===15;
-  const titles=continuous ? {ground:'离船对白',walk:'上坡',crest:'坡顶对白与绕后'} : {dialogue:spec.title};
-  const trackKeys=continuous ? {ground:'foolsGroundDialogue',walk:'foolsWalkDialogue',crest:'foolsCrestDialogue'} : {dialogue:spec.dialogue};
-  const editable=continuous ? ['ground','crest'] : ['dialogue'];
+  const titles=continuous ? {ground:'离船对白',walk:'上坡',crest:'坡顶对白与绕后',transition:'黑幕转场',closing:'最后对白'} : {dialogue:spec.title};
+  const trackKeys=continuous ? {ground:'foolsGroundDialogue',walk:'foolsWalkDialogue',crest:'foolsCrestDialogue',transition:null,closing:'foolsClosingDialogue'} : {dialogue:spec.dialogue};
+  const editable=continuous ? ['ground','crest','closing'] : ['dialogue'];
   const ranges = {offset:[0,3600],duration:[.1,600],speed:[.25,3],blend:[0,3]};
   const routeLength = 33.96592;
   const snapPixels = 8;
@@ -74,6 +74,7 @@ function createActionTimeline(spec) {
       });
       let length=lineTime;
       if(section==='walk')length=routeLength/Math.max(.2,finite(config.foolsWalkSpeed,.85));
+      if(section==='transition')length=2*finite(config.foolsSceneFadeDuration,1.2)+.15;
       if(section==='crest'){
         const orbit=finite(config.foolsOrbitDuration,7);
         length=Math.max(length,finite(config.foolsFrontHold,2)+Math.max(orbit,orbit/2+finite(config.foolsPullbackDuration,5))+finite(config.foolsFinalHold,3));
@@ -179,7 +180,7 @@ function createActionTimeline(spec) {
     const width=Math.max(x(total)+48,viewport.clientWidth);
     canvas.style.width=width+'px';
     canvas.replaceChildren();
-    summary.textContent=continuous ? `从离船开始 · 预计 ${round(total)} 秒 · 上坡约 ${round(sections.walk.length)} 秒。走到坡顶时切断上坡对白，以游戏实际位置为准。` : `预计 ${round(total)} 秒（按台词时长）。${spec.note}`;
+    summary.textContent=continuous ? `从离船开始 · 预计 ${round(total)} 秒 · 上坡约 ${round(sections.walk.length)} 秒。到坡顶切断上坡对白，黑幕转场后开始最后对白。` : `预计 ${round(total)} 秒（按台词时长）。${spec.note}`;
     const snapPoints=[];
     const ticks=[];
     const ruler=element('div','timeline-lane ruler');
@@ -193,7 +194,7 @@ function createActionTimeline(spec) {
     const dialogue=element('div','timeline-lane dialogue-lane');
     const nodes=element('div','timeline-lane node-lane');
     const actions=element('div','timeline-lane action-lane');
-    const nodeNames={ground:'离船',walk:'开始上坡',crest:'到达坡顶',dialogue:'开始对白'};
+    const nodeNames={ground:'离船',walk:'开始上坡',crest:'到达坡顶',transition:'黑幕转场',closing:'最后对白开始',dialogue:'开始对白'};
     for(const [name,section] of Object.entries(sections)){
       snapPoints.push({time:section.start,label:nodeNames[name]});
     }
@@ -230,12 +231,16 @@ function createActionTimeline(spec) {
     guide.hidden=true;
     guide.setAttribute('aria-hidden','true');
     guide.append(guideLabel);
-    const locked=continuous ? sections.walk : sections.dialogue;
-    if(locked.actionLength<locked.length || continuous){
-      const start=continuous ? 0 : locked.actionLength;
-      const lock=element('div','timeline-locked',continuous?'🔒 坡度驱动步态':'🔒 拔取与持握');
-      lock.style.left=x(locked.start+start)+'px';lock.style.width=x(locked.length-start)+'px';
+    const lockLane=(section,start,label)=>{
+      const lock=element('div','timeline-locked',label);
+      lock.style.left=x(section.start+start)+'px';lock.style.width=x(section.length-start)+'px';
       actions.append(lock);
+    };
+    if(continuous){
+      lockLane(sections.walk,0,'🔒 坡度驱动步态');
+      lockLane(sections.transition,0,'🔒 黑幕转场');
+    }else if(sections.dialogue.actionLength<sections.dialogue.length){
+      lockLane(sections.dialogue,sections.dialogue.actionLength,'🔒 拔取与持握');
     }
     actions.addEventListener('dragover',event=>{
       if(event.dataTransfer.types.includes('text/x-zyl-pose'))event.preventDefault();
@@ -374,7 +379,7 @@ function createActionTimeline(spec) {
       wrapper.append(input);inspector.append(wrapper);
     };
     if(continuous)select('区段','section',editable.map(key=>[key,titles[key]]));
-    select('开始锚点','lineId',[['',continuous?(clip.section==='crest'?'到达坡顶':'离船开始'):'开始对白'],
+    select('开始锚点','lineId',[['',clip.section==='closing'?'最后对白开始':clip.section==='crest'?'到达坡顶':continuous?'离船开始':'开始对白'],
       ...section.lines.filter(row=>row.line.timerKey).map(row=>[row.line.timerKey,`第 ${row.i+1} 句 · ${(row.line.text||'').slice(0,18)}`])]);
     select('动作','pose',Object.entries(poses));
     select('播放方式','playback',[['loop','循环播放'],['hold','播完保持末帧']]);

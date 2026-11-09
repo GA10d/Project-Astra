@@ -151,7 +151,10 @@ namespace AstraCabin.Galaxies.Zyl
                         if(phaseTime>=parameters.foolsSceneFadeDuration){TransitionAlpha=0;Enter(Step.ClosingDialogue);}
                         break;
                     case Step.ClosingDialogue:
-                        dialogue.Tick(dt,false);Walker.SampleStandingAt(closingGround,closingFacing,DialoguePose,dt);ClosingShot();if(dialogue.Ended)Finish();
+                        dialogue.Tick(dt,false);
+                        var closingCue=actions.SampleClosing(dialogue,out float closingCueTime);
+                        Walker.SampleStandingAt(closingGround,closingFacing,DialoguePose,dt,cue:closingCue,cueTime:closingCueTime);
+                        ClosingShot();if(dialogue.Ended)Finish();
                         break;
                 }
                 if (!Complete) Stage.UpdateBreathing(Elapsed);

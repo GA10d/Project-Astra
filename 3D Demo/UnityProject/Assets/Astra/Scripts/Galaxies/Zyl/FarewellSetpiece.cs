@@ -81,7 +81,7 @@ namespace AstraCabin.Galaxies.Zyl
                 Stage.FinishPlanetEnergy();
                 Stage.SampleFragments(p.farewellDebrisHold + p.farewellPhotoDuration);
             }
-            float flightEnd = p.farewellDepartureHold + p.farewellDepartureFlightTime;
+            float flightEnd = p.farewellDepartureFlightTime;
             float cameraEnd = p.farewellDepartureHold + p.farewellDepartureCameraTime;
             float titleEnd = p.farewellDepartureTitleDelay + TitleFade;
             // Keep the complete title on screen and let the camera settle before the closing fade.

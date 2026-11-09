@@ -53,9 +53,12 @@ namespace AstraCabin.Galaxies.Zyl
             if(Phase==Step.Dialogue)
             {
                 dialogue.Tick(Time.deltaTime,false);
-                var fallback=IsChestLine(dialogue.Current)?MihuoerPose.Idle:MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Slumped);
-                var cue=actionTrack.SampleDialogue(dialogue,out float cueTime);
-                exterior.MihuoerActor.SetDialoguePose(fallback,cue,cueTime);
+                if(!dialogue.WaitingForReply)
+                {
+                    var fallback=IsChestLine(dialogue.Current)?MihuoerPose.Idle:MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Slumped);
+                    var cue=actionTrack.SampleDialogue(dialogue,out float cueTime);
+                    exterior.MihuoerActor.SetDialoguePose(fallback,cue,cueTime);
+                }
                 if(dialogue.Ended)Finish();
             }
         }

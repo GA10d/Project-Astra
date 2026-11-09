@@ -408,6 +408,186 @@
       "speed": 1,
       "blend": 0.62,
       "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw8iz6rc_crn8awwbie",
+      "offset": 0,
+      "duration": 4,
+      "pose": "Explain",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw5zq1ws_eh7crjxcx9",
+      "offset": 0,
+      "duration": 10,
+      "pose": "OpenHands",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_y1ths0ll03",
+      "offset": 0,
+      "duration": 6,
+      "pose": "Emphasis",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "hold"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_1f6p80czg6",
+      "offset": 0,
+      "duration": 8,
+      "pose": "Explain",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_ak8w3vrweq",
+      "offset": 0,
+      "duration": 7,
+      "pose": "AngryFists",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "hold"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_9jul5x0bu7",
+      "offset": 0,
+      "duration": 7,
+      "pose": "ChinThink",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw8iz6rc_y126ecd5k6",
+      "offset": 0,
+      "duration": 5,
+      "pose": "Explain",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_jvzb4qqxu5",
+      "offset": 0,
+      "duration": 6,
+      "pose": "Slumped",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_j95sl7je4v",
+      "offset": 0,
+      "duration": 7,
+      "pose": "TempleTouch",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw8iz6rc_owx9t6v0v0",
+      "offset": 0,
+      "duration": 12,
+      "pose": "Explain",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_etihiue5lq",
+      "offset": 0,
+      "duration": 5,
+      "pose": "OpenHands",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_q2pp68bgc9",
+      "offset": 0,
+      "duration": 7,
+      "pose": "Slumped",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_nkrlxubedy",
+      "offset": 0,
+      "duration": 5,
+      "pose": "ChinThink",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_ln80ylvt9p",
+      "offset": 0,
+      "duration": 7,
+      "pose": "Explain",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_kazjd5ktuv",
+      "offset": 0,
+      "duration": 7,
+      "pose": "OpenHands",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_7jsp367xjh",
+      "offset": 0,
+      "duration": 6,
+      "pose": "Slumped",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw8iz6rc_9tp8ttv0xz",
+      "offset": 0,
+      "duration": 24,
+      "pose": "Explain",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_l4odl7u8vd",
+      "offset": 0,
+      "duration": 7,
+      "pose": "AngryFists",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "hold"
     }
   ],
   "encounterActionClips": [

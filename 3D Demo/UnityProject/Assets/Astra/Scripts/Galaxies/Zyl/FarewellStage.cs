@@ -665,16 +665,16 @@ namespace AstraCabin.Galaxies.Zyl
 
         public void SampleDeparture(float time)
         {
-            float travelTime = Mathf.Max(0, time - settings.farewellDepartureHold);
-            float progress = Mathf.Clamp01(travelTime / (departureDuration - settings.farewellDepartureHold));
-            float cameraTime = travelTime / settings.farewellDepartureCameraTime;
+            float progress = Mathf.Clamp01(time / departureDuration);
+            float launchTurn = Mathf.SmoothStep(0, 1, time / settings.farewellDepartureCameraTime);
+            float cameraTime = Mathf.Max(0, time - settings.farewellDepartureHold) / settings.farewellDepartureCameraTime;
             float rise = Mathf.SmoothStep(0, 1, cameraTime);
             departureShip.SetPositionAndRotation(
                 departureStart + departureDirection * (96 * exteriorScale * Mathf.Lerp(progress, Mathf.Pow(progress, 1.8f), .62f)),
-                Quaternion.Slerp(Quaternion.identity, Quaternion.FromToRotation(Vector3.right, departureDirection), rise));
+                Quaternion.Slerp(Quaternion.identity, Quaternion.FromToRotation(Vector3.right, departureDirection), launchTurn));
             SampleDepartureCamera(cameraTime, rise);
 
-            float thrust = Mathf.SmoothStep(.15f, 1, travelTime / 1.5f);
+            float thrust = Mathf.SmoothStep(.15f, 1, time / 1.5f);
             foreach (var line in exhaust)
             {
                 line.startColor = new Color(.57f, .84f, 1, thrust * .6f);

@@ -21,7 +21,7 @@ namespace AstraCabin.Galaxies.Zyl
                 throw new InvalidDataException("米霍尔动作轨需要数组，最多 64 段。");
             foreach (var clip in clips)
             {
-                if (clip == null || (seated.HasValue ? clip.section != "dialogue" : clip.section != "ground" && clip.section != "crest") ||
+                if (clip == null || (seated.HasValue ? clip.section != "dialogue" : clip.section != "ground" && clip.section != "crest" && clip.section != "closing") ||
                     (clip.playback != "loop" && clip.playback != "hold") ||
                     !Enum.TryParse(clip.pose, out MihuoerPose pose) || pose.ToString() != clip.pose ||
                     !(seated == true ? IsSeated(pose) : IsStanding(pose)) || !InRange(clip.offset, 0, 3600) || !InRange(clip.duration, .1f, 600) ||
@@ -55,15 +55,20 @@ namespace AstraCabin.Galaxies.Zyl
     {
         readonly MihuoerActionTrack ground;
         readonly MihuoerActionTrack crest;
+        readonly MihuoerActionTrack closing;
 
         public FoolsActionTimeline(ZylPresentationParameters parameters)
         {
             ground = new MihuoerActionTrack(parameters.foolsActionClips, parameters.foolsGroundDialogue, "ground");
             crest = new MihuoerActionTrack(parameters.foolsActionClips, parameters.foolsCrestDialogue, "crest");
+            closing = new MihuoerActionTrack(parameters.foolsActionClips, parameters.foolsClosingDialogue, "closing");
         }
 
         public FoolsActionClip Sample(bool atCrest, float time, out float localTime) =>
             (atCrest ? crest : ground).Sample(time, out localTime);
+
+        public FoolsActionClip SampleClosing(MihuoerDialoguePlayer dialogue, out float localTime) =>
+            closing.SampleDialogue(dialogue, out localTime);
     }
 
     sealed class MihuoerActionTrack
