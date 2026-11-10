@@ -11,6 +11,7 @@ public static class ZylStomachSceneBuilder {
  const string ScenePath="Assets/Astra/Scenes/Zyl/StomachRefuge.unity";
  static Material NaturalMaterial(string name,float gloss,float bump){
   string path=Root+"/"+name+".mat";var m=AssetDatabase.LoadAssetAtPath<Material>(path);
+  if(name=="Fluid"&&m&&m.shader.name=="Astra/Zyl/DigestiveWater")return m;
   if(!m){m=new Material(Shader.Find("Standard"));AssetDatabase.CreateAsset(m,path);}m.shader=Shader.Find(name=="Mucosa"?"Astra/Zyl/BreathingMucosa":"Standard (Specular setup)");if(name=="Mucosa"){m.SetFloat("_BreathAmplitude",.6f);m.SetFloat("_BreathPeriod",4.5f);m.SetFloat("_BreathPreviewTime",-1);}m.color=Color.white;m.SetColor("_SpecColor",new Color(.055f,.055f,.055f));m.SetFloat("_Metallic",name=="Fluid"?.08f:0);m.SetFloat("_Glossiness",gloss);
   foreach(string suffix in new[]{"_Albedo","_Normal"}){string p=Root+"/"+name+suffix+".png";var ti=(TextureImporter)AssetImporter.GetAtPath(p);ti.maxTextureSize=2048;ti.wrapMode=TextureWrapMode.Repeat;ti.filterMode=FilterMode.Trilinear;ti.anisoLevel=4;ti.textureType=suffix=="_Normal"?TextureImporterType.NormalMap:TextureImporterType.Default;ti.sRGBTexture=suffix!="_Normal";ti.SaveAndReimport();m.SetTexture(suffix=="_Normal"?"_BumpMap":"_MainTex",AssetDatabase.LoadAssetAtPath<Texture2D>(p));}
   m.EnableKeyword("_NORMALMAP");m.SetFloat("_BumpScale",bump);EditorUtility.SetDirty(m);return m;
