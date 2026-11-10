@@ -90,6 +90,7 @@ namespace AstraCabin.Galaxies.Zyl
 
         public void BeginDeparture()
         {
+            director.ApplyCinematicCameraFilter(p.cinematicCameraFilter);
             director.computer.ClearEventAlert();
             director.computer.Close();
             var controller = director.controller;
@@ -185,6 +186,35 @@ namespace AstraCabin.Galaxies.Zyl
         public void Resume(){if(!Active||Complete)return;if(Phase==Step.Error){Show();return;}if(Phase<=Step.SignalLost){director.computer.Open();director.computer.OpenApp("encounter");}else director.computer.Close();}
         void Enter(Step step){Phase=step;PhaseTime=0;}
         void Update(){Tick(Time.deltaTime);}
+
+        void OnGUI()
+        {
+            if (Phase != Step.ExplosionIllustration || Event.current.type != EventType.Repaint ||
+                director.computer.IsOpen) return;
+            var frame = Stage?.FullExplosionIllustrationFrame;
+            if (!frame) return;
+
+            var color = GUI.color;
+            var matrix = GUI.matrix;
+            int depth = GUI.depth;
+            try
+            {
+                // Draw the finished artwork behind HUD and pause UI, outside the camera color filter.
+                GUI.matrix = Matrix4x4.identity;
+                GUI.depth = 100;
+                var area = new Rect(0, 0, Screen.width, Screen.height);
+                GUI.color = Color.black;
+                GUI.DrawTexture(area, Texture2D.whiteTexture);
+                GUI.color = Color.white;
+                GUI.DrawTexture(area, frame, ScaleMode.ScaleToFit, false);
+            }
+            finally
+            {
+                GUI.color = color;
+                GUI.matrix = matrix;
+                GUI.depth = depth;
+            }
+        }
         public void Tick(float dt)
         {
             if ((!Active && !DepartureActive) || director.controller.IsPaused ||

@@ -13,9 +13,19 @@ window.ZYL_PARAMETERS={
     "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
     "16 · 泰德野里_逃出生天",
     "17 · 泰德野里_别离",
-    "电脑 · 演出提示框"
+    "电脑 · 演出提示框",
+    "通用 · 演出相机"
   ],
   "fields": [
+    {
+      "group": "通用 · 演出相机",
+      "key": "cinematicCameraFilter",
+      "label": "应用复古像素滤镜",
+      "type": "boolean",
+      "value": true,
+      "unit": "开关",
+      "desc": "为 ZYL 演出的舷窗、独立镜头和视频通话相机统一应用调色、网点和像素化。保存后下一次进入演出时生效。"
+    },
     {
       "group": "10 · 撞击与维修",
       "key": "repairAlarmDelay",
@@ -1041,12 +1051,12 @@ window.ZYL_PARAMETERS={
     {
       "group": "17 · 泰德野里_别离",
       "key": "farewellDebrisHold",
-      "label": "碎石停留",
+      "label": "爆炸后舷窗停留",
       "value": 4,
       "min": 1,
       "max": 20,
       "unit": "秒",
-      "desc": "碎石镜头的停留时间。结束后返回导航，手动结算。"
+      "desc": "爆炸插画播完后，镜头继续停在舷窗看实机碎石的时间。若未播放插画，从星球爆炸结束时开始计时。停留结束后返回导航。"
     },
     {
       "group": "17 · 泰德野里_别离",
@@ -1135,7 +1145,7 @@ window.ZYL_PARAMETERS={
       "label": "播放爆炸插画",
       "value": true,
       "unit": "开关",
-      "desc": "勾选后，在实机星球强闪与碎石画面之间播放六张插画。取消勾选后，实机强闪直接接回实机碎石。"
+      "desc": "勾选后，播放当前版本中已选的插画。关闭或当前版本全未勾选时，实机强闪直接接回实机碎石。"
     },
     {
       "group": "17 · 泰德野里_别离",
@@ -1155,7 +1165,7 @@ window.ZYL_PARAMETERS={
       "min": 0.5,
       "max": 3,
       "unit": "倍",
-      "desc": "控制已勾选画面的停留时间。进入插画、图与图之间、回到相机均直接切换。1 倍沿用原关键帧节拍。"
+      "desc": "控制已勾选画面的停留时间。进入插画、图与图之间、回到相机均直接切换。1 倍使用所选版本的关键帧节拍。"
     },
     {
       "group": "17 · 泰德野里_别离",
@@ -1516,6 +1526,8 @@ window.ZYL_PARAMETERS={
     "farewellIllustrationEnabled": true,
     "farewellIllustrationStartOffset": 0,
     "farewellIllustrationSpeed": 1,
+    "farewellIllustrationVersion": "v1",
+    "farewellIllustrationFramesV2": [true, true, true, true, true, true],
     "farewellIllustrationFrames": [
       true,
       true,
@@ -1525,6 +1537,7 @@ window.ZYL_PARAMETERS={
       true
     ],
     "schemaVersion": 1,
+    "cinematicCameraFilter": true,
     "escapeSproutShakeDelay": 1.15,
     "repairAlarmDelay": 3,
     "repairStrikeDuration": 0.48,

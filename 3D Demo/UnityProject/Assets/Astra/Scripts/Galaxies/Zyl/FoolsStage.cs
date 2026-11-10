@@ -43,10 +43,14 @@ namespace AstraCabin.Galaxies.Zyl
         public float WordReadyTime => BurstStart + (WordReady - BurstStart) / microbeSpeed;
         internal float ReturnStartTime(float stopHold, float virusHold) =>
             WordReadyTime + stopHold + VirusFormationDuration + virusHold;
-        public FoolsStage(Transform craft,Transform environment,Matrix4x4 authoredToWorld,Camera source,float microbeSpeed=1)
+        public FoolsStage(Transform craft,Transform environment,Matrix4x4 authoredToWorld,Camera source,float microbeSpeed=1,bool cinematicFilter=true)
         {
             this.microbeSpeed=microbeSpeed;
-            try {Build(craft,environment,authoredToWorld,source);}
+            try
+            {
+                Build(craft,environment,authoredToWorld,source);
+                CabinPresentation.AttachCinematicFilter(source, Camera, cinematicFilter);
+            }
             catch{Dispose();throw;}
         }
         Material Material(string name,Color color,float metal=0,float glow=0)

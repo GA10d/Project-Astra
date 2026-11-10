@@ -155,7 +155,9 @@ namespace AstraCabin
             Quaternion previousPlanetRotation=planet?planet.transform.rotation:Quaternion.identity;
             ClearCurrent();
             ActiveMode=mode; ModeTime=0;
-            zylParameters=Galaxies.Zyl.ZylPresentationParameters.Load(computer.Navigation && computer.Navigation.ActiveGalaxyId=="zyl");
+            bool zyl = computer.Navigation && computer.Navigation.ActiveGalaxyId == "zyl";
+            zylParameters = Galaxies.Zyl.ZylPresentationParameters.Load(zyl);
+            ApplyCinematicCameraFilter(zyl && mode != 0 ? (bool?)zylParameters.cinematicCameraFilter : null);
             if(mode==0)
             {
                 controller.SnapToWall(0); controller.ShowNotice("全部演出已复位 / DEFAULT SCENE"); return true;
@@ -194,6 +196,11 @@ namespace AstraCabin
                 case FarewellMode: farewell.Show();break;
             }
             return true;
+        }
+        internal void ApplyCinematicCameraFilter(bool? apply)
+        {
+            if (controller && controller.viewCamera && controller.viewCamera.TryGetComponent<CabinPresentation>(out var presentation))
+                presentation.CinematicFilter = apply;
         }
         public void ResetToDefault() { TriggerMode(0); }
         void ClearCurrent()
@@ -450,6 +457,7 @@ namespace AstraCabin
         }
         void OnDestroy()
         {
+            ApplyCinematicCameraFilter(null);
             Font.textureRebuilt-=RefreshFontAtlas;
             if(initialized) { if(repairRoot) Destroy(repairRoot); if(heldHammer) Destroy(heldHammer); if(HammerRack) Destroy(HammerRack.gameObject); if(AlertRoot) Destroy(AlertRoot); }
             foreach(var material in materials) if(material) Destroy(material);

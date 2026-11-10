@@ -64,6 +64,8 @@ namespace AstraCabin.Galaxies.Zyl {
    callSurface=new ConferenceCallSurface{Title="米霍尔 · 视频通话",Speaker="米霍尔",Participants=new[]{"米霍尔"},ReplyText=p.playerReplyText};callSurface.DrawCaptions=DrawDialogueCaptions;callSurface.Reply=Reply;callSurface.SetPaused=value=>callSurface.Paused=value;callSurface.Leave=()=>d.computer.OpenApp("navigation");
    var light=new GameObject("Encounter exterior key");light.transform.SetParent(root,false);light.transform.position=new Vector3(2,5,-4);var lamp=light.AddComponent<Light>();lamp.type=LightType.Point;lamp.range=130;lamp.intensity=.8f;lamp.cullingMask=1<<26;lamp.shadows=LightShadows.None;
    var vc=new GameObject("ASTRA LINK live exterior camera");vc.transform.SetParent(root,false);videoCamera=vc.AddComponent<Camera>();videoCamera.enabled=false;videoCamera.cullingMask=(1<<26)|(1<<27);videoCamera.nearClipPlane=.05f;videoCamera.farClipPlane=p.videoFarClip;videoCamera.fieldOfView=p.videoFov;videoCamera.clearFlags=CameraClearFlags.SolidColor;videoCamera.backgroundColor=new Color(.005f,.01f,.025f);
+   CabinPresentation.AttachCinematicFilter(d.controller.viewCamera,videoCamera,
+       d.computer.Navigation && d.computer.Navigation.ActiveGalaxyId=="zyl" && p.cinematicCameraFilter);
    Video=new RenderTexture(1280,720,24){name="Mihuoer live call"};Video.Create();videoCamera.targetTexture=Video;videoCamera.aspect=16f/9f;CreateCallEnvironment();
    d.computer.SetEventAlert(p.promptEncounterTitle, p.promptEncounterBody);d.computer.Open();d.PlayCue("alert",.6f);
   }

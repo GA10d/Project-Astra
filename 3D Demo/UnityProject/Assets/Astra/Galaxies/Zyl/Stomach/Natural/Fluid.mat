@@ -33,12 +33,12 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _FlowSpeed: 1
-    - _ReflectionStrength: 0.9
+    - _FlowSpeed: 2.29
+    - _ReflectionStrength: 1.405
     - _WaterPreviewTime: -1
     - _WaveStrength: 0.32
-    - _WaveTiling: 0.16
+    - _WaveTiling: 0.048
     m_Colors:
-    - _BodyColor: {r: 0.24, g: 0.08, b: 0.034, a: 1}
+    - _BodyColor: {r: 0.23921569, g: 0.17777596, b: 0.03529412, a: 1}
     - _ReflectionTint: {r: 1, g: 0.81, b: 0.7, a: 1}
   m_BuildTextureStacks: []

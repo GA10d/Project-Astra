@@ -81,6 +81,7 @@ namespace AstraCabin.Galaxies.Zyl
                 var mound=GameObject.CreatePrimitive(PrimitiveType.Sphere);mound.name="Grave soil";mound.transform.SetParent(t,false);mound.transform.localPosition=new Vector3(0,.025f,.4f);mound.transform.localScale=new Vector3(1.15f,.12f,1.8f);mound.layer=25;Destroy(mound.GetComponent<Collider>());mound.GetComponent<Renderer>().sharedMaterial=soil;
             }
             var cameraObject=new GameObject("Zyl16 | fixed graves camera");Camera=cameraObject.AddComponent<Camera>();Camera.CopyFrom(director.controller.viewCamera);Camera.enabled=false;Camera.targetTexture=null;Camera.rect=new Rect(0,0,1,1);Camera.cullingMask=1<<25;Camera.nearClipPlane=.05f;Camera.depth=director.controller.viewCamera.depth+10;Camera.farClipPlane=Mathf.Max(500,Camera.farClipPlane);Camera.clearFlags=CameraClearFlags.SolidColor;
+            CabinPresentation.AttachCinematicFilter(director.controller.viewCamera, Camera, p.cinematicCameraFilter);
             Camera.transform.position=cameraPosition;Camera.transform.rotation=Quaternion.LookRotation(actorMark+Ground.Up*.95f-cameraPosition,Ground.Up);Camera.fieldOfView=57;
             var light=new GameObject("Graves soft fill").AddComponent<Light>();light.transform.SetParent(root.transform);light.transform.position=cameraPosition+Ground.Up*2;light.type=LightType.Point;light.range=18;light.intensity=1.1f;light.color=new Color(1,.77f,.58f);light.cullingMask=1<<25;
             oldUI=director.controller.showUI;captured=true;director.controller.showUI=false;

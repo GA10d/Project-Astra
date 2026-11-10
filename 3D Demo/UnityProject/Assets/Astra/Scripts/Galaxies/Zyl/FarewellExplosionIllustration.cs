@@ -12,7 +12,9 @@ namespace AstraCabin.Galaxies.Zyl
         const float SingleFrameHold = .25f;
         internal const int FrameCount = 6;
         static readonly float[] AuthoredTimes = { 0, .14f, .38f, .74f, 1.15f, 1.50f };
+        static readonly float[] V2FrameDurations = { .16f, .10f, .10f, .26f, .34f, .40f };
         internal float Duration { get; }
+        internal Texture2D FullFrame { get; private set; }
 
         // Artwork-space bounds, ordered as the four foreground rocks and the two central remnants.
         // The central pair is still covered by the flash in the first drawing.
@@ -47,34 +49,42 @@ namespace AstraCabin.Galaxies.Zyl
         static readonly int OpeningFit = Shader.PropertyToID("_OpeningFit");
         static readonly int DebrisFit = Shader.PropertyToID("_DebrisFit");
 
-        internal static FarewellExplosionIllustration Load(Transform parent, int layer, Transform[] rocks, bool[] selected)
+        internal static FarewellExplosionIllustration Load(Transform parent, int layer, Transform[] rocks, bool[] selected, bool fullFrame = false)
         {
             if (!Array.Exists(selected, value => value)) return null;
-            var shader = Resources.Load<Shader>(ResourceRoot + "FarewellIllustration");
-            if (!shader || !shader.isSupported) return null;
+            Shader shader = null;
+            if (!fullFrame)
+            {
+                shader = Resources.Load<Shader>(ResourceRoot + "FarewellIllustration");
+                if (!shader || !shader.isSupported) return null;
+            }
+            string folder = fullFrame ? "ExplosionIllustrationV2/" : "ExplosionIllustration/";
             var frames = new List<Texture2D>(FrameCount);
             var times = new List<float>(FrameCount);
             float nextTime = 0;
             for (int i = 0; i < FrameCount; i++)
             {
                 if (!selected[i]) continue;
-                var frame = Resources.Load<Texture2D>(ResourceRoot + "ExplosionIllustration/Frame" + (i + 1));
+                var frame = Resources.Load<Texture2D>(ResourceRoot + folder + "Frame" + (i + 1));
                 if (!frame) return null;
                 frames.Add(frame);
                 times.Add(nextTime);
                 // Keep the outgoing beat of each selected drawing and skip omitted beats.
-                nextTime += i + 1 < FrameCount ? AuthoredTimes[i + 1] - AuthoredTimes[i] : LastFrameHold;
+                nextTime += fullFrame ? V2FrameDurations[i] :
+                    (i + 1 < FrameCount ? AuthoredTimes[i + 1] - AuthoredTimes[i] : LastFrameHold);
             }
-            return new FarewellExplosionIllustration(parent, layer, shader, frames.ToArray(), times.ToArray(), selected[0], rocks, nextTime);
+            return new FarewellExplosionIllustration(parent, layer, shader, frames.ToArray(), times.ToArray(), selected[0], rocks, nextTime, fullFrame);
         }
 
         FarewellExplosionIllustration(Transform parent, int layer, Shader shader, Texture2D[] frames,
-            float[] times, bool includesOpeningFrame, Transform[] rocks, float duration)
+            float[] times, bool includesOpeningFrame, Transform[] rocks, float duration, bool fullFrame)
         {
             this.frames = frames;
             this.times = times;
             this.includesOpeningFrame = includesOpeningFrame;
-            Duration = frames.Length == 1 ? SingleFrameHold : duration;
+            Duration = !fullFrame && frames.Length == 1 ? SingleFrameHold : duration;
+            // V2 paints its own window, so it uses neither a world plate nor silhouette warping.
+            if (fullFrame) return;
             this.rocks = rocks;
             rockVertices = new Vector3[rocks.Length][];
             for (int i = 0; i < rocks.Length; i++)
@@ -97,6 +107,7 @@ namespace AstraCabin.Galaxies.Zyl
 
         internal void Begin(CabinController controller)
         {
+            if (!plate) { Sample(0); return; }
             // The plate is beyond the real window and in front of all explosion geometry.
             // Calibrate its size to the artwork handoff framing from the final observation pose.
             const float depth = 8;
@@ -114,6 +125,7 @@ namespace AstraCabin.Galaxies.Zyl
 
         internal void AlignRocks(Vector3 eyePosition)
         {
+            if (!plate) return;
             Matrix4x4 worldToPlate = plate.worldToLocalMatrix;
             Vector3 eye = worldToPlate.MultiplyPoint3x4(eyePosition);
             for (int i = 0; i < rocks.Length; i++)
@@ -172,6 +184,7 @@ namespace AstraCabin.Galaxies.Zyl
         {
             int index = 0;
             while (index + 1 < times.Length && time >= times[index + 1]) index++;
+            if (!material) { FullFrame = frames[index]; return; }
             bool openingFrame = includesOpeningFrame && index == 0;
             material.SetTexture(FrameTexture, frames[index]);
             material.SetVectorArray(FrameRocks, openingFrame ? OpeningRocks : DebrisRocks);

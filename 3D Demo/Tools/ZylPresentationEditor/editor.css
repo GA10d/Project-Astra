@@ -26,6 +26,8 @@
 .value-row input[type=checkbox]+span{display:inline;font-size:12px}
 
 .frame-selection-card .value-row{flex-wrap:wrap}
+.illustration-version{display:flex;align-items:center;gap:8px;margin:6px 0 10px;font-size:12px}
+.illustration-version select{font:inherit;padding:5px 8px;border:1px solid #aebfa6;border-radius:4px;background:#fff;color:#2c4b36}
 .frame-selection-card fieldset{display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:5px 8px;min-width:0;width:100%;margin:0;padding:0;border:0}
 .frame-selection-card fieldset label{display:flex;align-items:center;gap:5px;font-size:12px;cursor:pointer}
 .frame-selection-card fieldset input[type=checkbox]{width:16px;height:16px;margin:2px}

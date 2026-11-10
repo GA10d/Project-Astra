@@ -14,6 +14,18 @@ namespace AstraCabin
         public CabinSceneLook sceneLook = CabinSceneLook.Pixel;
         [Range(2,4)] public int pixelScale = 2;
         Material blur, runtimeGrade, gradeSource;
+        internal bool? CinematicFilter { get; set; }
+        CabinSceneLook RenderLook => CinematicFilter == true ? CabinSceneLook.Pixel : sceneLook;
+
+        internal static void AttachCinematicFilter(Camera source, Camera target, bool apply)
+        {
+            if (!apply || !source || !target || source == target ||
+                !source.TryGetComponent<CabinPresentation>(out var template)) return;
+            var presentation = target.GetComponent<CabinPresentation>() ?? target.gameObject.AddComponent<CabinPresentation>();
+            presentation.grade = template.grade;
+            presentation.pixelScale = template.pixelScale;
+            presentation.CinematicFilter = true;
+        }
 
         public string LookLabel { get { return sceneLook == CabinSceneLook.Clear ? "清晰" : sceneLook == CabinSceneLook.Dithered ? "网点" : "复古像素"; } }
         public void CycleLook() { sceneLook = (CabinSceneLook)(((int)sceneLook + 1) % 3); }
@@ -32,13 +44,14 @@ namespace AstraCabin
 
         void Grade(RenderTexture source, RenderTexture destination, bool stylized)
         {
+            if (CinematicFilter == false) { Graphics.Blit(source, destination); return; }
             var material = GradingMaterial();
             if (!material) { Graphics.Blit(source, destination); return; }
             int width = destination ? destination.width : source.width;
             int height = destination ? destination.height : source.height;
             material.SetVector("_OutputSize", new Vector4(width, height, 1f / width, 1f / height));
             material.SetFloat("_StyleStrength", stylized ? grade.GetFloat("_StyleStrength") : 0);
-            material.SetFloat("_DitherSize", sceneLook == CabinSceneLook.Dithered ? 2 : 1);
+            material.SetFloat("_DitherSize", RenderLook == CabinSceneLook.Dithered ? 2 : 1);
             Graphics.Blit(source, destination, material);
         }
 
@@ -65,9 +78,9 @@ namespace AstraCabin
                 finally { RenderTexture.ReleaseTemporary(a); RenderTexture.ReleaseTemporary(b); }
                 return;
             }
-            if (sceneLook != CabinSceneLook.Pixel)
+            if (CinematicFilter == false || RenderLook != CabinSceneLook.Pixel)
             {
-                Grade(source, destination, sceneLook == CabinSceneLook.Dithered);
+                Grade(source, destination, RenderLook == CabinSceneLook.Dithered);
                 return;
             }
             int scale = Mathf.Clamp(pixelScale, 2, 4);

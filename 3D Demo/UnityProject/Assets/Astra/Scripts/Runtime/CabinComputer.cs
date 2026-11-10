@@ -656,9 +656,12 @@ namespace AstraCabin
             }
             DrawTaskbar();
             GUI.enabled = wasEnabled;
-            if (HasPendingEventAlert && !recoveryAlert)
+            if (HasPendingEventAlert)
             {
-                GUI.ModalWindow(7405, new Rect(370, 242, 680, 222), DrawEventAlert, "", GUIStyle.none);
+                Rect alertRect = recoveryAlert
+                    ? new Rect(windowRect.center.x - 340, windowRect.center.y - 111, 680, 222)
+                    : new Rect(370, 242, 680, 222);
+                GUI.ModalWindow(7405, alertRect, DrawEventAlert, "", GUIStyle.none);
                 GUI.BringWindowToFront(7405);
             }
             if (string.IsNullOrEmpty(eventAlertTitle)) acknowledgedAlert = "";
@@ -791,6 +794,9 @@ namespace AstraCabin
 
         void DrawAppWindow(int id)
         {
+            bool recoveryAlert = FarewellRecoveryAlert;
+            bool wasEnabled = GUI.enabled;
+            if (recoveryAlert) GUI.enabled = false;
             float width = windowRect.width, height = windowRect.height;
             Bevel(new Rect(0, 0, width, height));
             Fill(new Rect(4, 4, width - 8, 31), titleColor);
@@ -812,7 +818,6 @@ namespace AstraCabin
             GUI.Label(new Rect(15, 37, 620, 24), activeApp == "meeting" ? "ASTRA LINK  /  加密中继通话  /  交互会议" : activeApp == "navigation" ? "信标导航  /  PROBE 04  /  航行进度自动保存" : activeApp == "combat" ? (Combat&&Combat.EscapeStory!=null?"逃出生天  /  PROBE 04  /  米霍尔牵引航线":"舰载战术重建  /  PROBE 04  /  独立演练任务") : "文件(F)      编辑(E)      查看(V)      帮助(H)", small);
             GUI.Label(new Rect(width - 390, 37, 374, 24), activeApp == "combat" ? (Combat&&Combat.EscapeStory!=null?"[ P / ESC ] 暂停 / 继续":"[ P ] 暂停     [ ESC ] 战斗菜单") : "[ CTRL+S ] 保存     [ ESC ] 返回舱室", right);
             Fill(new Rect(8, 64, width - 16, 1), new Color(0.35f, 0.39f, 0.34f));
-            bool wasEnabled = GUI.enabled;
             if (!string.IsNullOrEmpty(confirmationId)) GUI.enabled = false;
             if (activeApp == "combat" && Combat) Combat.Draw(new Rect(12, 70, width - 24, height - 110), font);
             else if (activeApp == "navigation" && Navigation) Navigation.Draw(new Rect(12, 70, width - 24, height - 110), font);
@@ -824,14 +829,9 @@ namespace AstraCabin
             GUIStyle statusStyle = new GUIStyle(small);
             if (statusError) statusStyle.normal.textColor = new Color(0.53f, 0.09f, 0.055f);
             GUI.Label(new Rect(15, height - 32, width - 33, 24), status, statusStyle);
-            if (FarewellRecoveryAlert)
+            if (recoveryAlert)
             {
                 Fill(new Rect(4, 35, width - 8, height - 39), new Color(.01f, .02f, .02f, .55f));
-                GUI.BeginGroup(new Rect((width - 680) * .5f, (height - 222) * .5f, 680, 222));
-                GUI.enabled = true;
-                DrawEventAlert(7405);
-                GUI.enabled = wasEnabled;
-                GUI.EndGroup();
                 return;
             }
             if (!string.IsNullOrEmpty(confirmationId)) DrawDeleteConfirmation(width, height);

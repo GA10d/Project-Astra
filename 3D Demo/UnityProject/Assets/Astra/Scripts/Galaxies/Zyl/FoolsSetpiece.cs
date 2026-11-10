@@ -83,7 +83,7 @@ namespace AstraCabin.Galaxies.Zyl
                     if(!exterior.Ready||exterior.Busy||ZylScreenCurtain.BlocksInput)return;
                     if(!exterior.MihuoerActor||!exterior.MihuoerShipAnchor){Fail("都是傻瓜：胃内飞船缺失。");return;}
                     exterior.MihuoerActor.SetSeatedOnCraft(true);
-                    Stage=new FoolsStage(exterior.MihuoerActor.Craft,exterior.MihuoerShipAnchor.transform.parent,exterior.AuthoredToRuntime,director.controller.viewCamera,parameters.foolsMicrobeSpeed);
+                    Stage=new FoolsStage(exterior.MihuoerActor.Craft,exterior.MihuoerShipAnchor.transform.parent,exterior.AuthoredToRuntime,director.controller.viewCamera,parameters.foolsMicrobeSpeed,parameters.cinematicCameraFilter);
                     oldUI=director.controller.showUI;capturedUI=true;director.controller.showUI=false;
                     cabinCamera=director.controller.viewCamera;
                     cabinCameraWasEnabled=cabinCamera.enabled;

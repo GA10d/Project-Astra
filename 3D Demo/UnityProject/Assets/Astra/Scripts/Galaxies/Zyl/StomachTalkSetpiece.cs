@@ -92,6 +92,7 @@ namespace AstraCabin.Galaxies.Zyl
                 var source = director.controller.viewCamera;
                 chestCamera = new GameObject("Zyl13 | chest countdown closeup").AddComponent<Camera>();
                 chestCamera.CopyFrom(source);
+                CabinPresentation.AttachCinematicFilter(source, chestCamera, parameters.cinematicCameraFilter);
                 chestCamera.targetTexture = null;
                 chestCamera.rect = new Rect(0, 0, 1, 1);
                 chestCamera.depth = source.depth + 10;

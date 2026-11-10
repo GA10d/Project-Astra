@@ -27,6 +27,7 @@ namespace AstraCabin.Galaxies.Zyl
         FarewellExplosionIllustration illustration;
         float illustrationDebrisTime, illustrationLead;
         internal bool HasExplosionIllustration => illustration != null;
+        internal Texture2D FullExplosionIllustrationFrame => illustration?.FullFrame;
         internal float ExplosionIllustrationDuration => illustration.Duration / settings.farewellIllustrationSpeed;
         public FarewellStage(Camera source, ZylPresentationParameters settings)
         {
@@ -67,6 +68,7 @@ namespace AstraCabin.Galaxies.Zyl
             Camera=new GameObject("Farewell call camera").AddComponent<Camera>();Camera.transform.SetParent(callRoot,false);Camera.transform.localPosition=new Vector3(0,1.1f,-2.35f);Camera.transform.LookAt(callRoot.position+Vector3.up*.83f);Camera.cullingMask=1<<26;Camera.nearClipPlane=.03f;Camera.farClipPlane=120;Camera.fieldOfView=CallFov;Camera.clearFlags=CameraClearFlags.SolidColor;Camera.backgroundColor=new Color(.08f,.065f,.06f);Camera.enabled=false;
             Video=new RenderTexture(1280,720,24){name="Farewell live video"};Video.Create();Camera.targetTexture=Video;
             var key=new GameObject("Farewell sunset fill").AddComponent<Light>();key.transform.SetParent(callRoot,false);key.transform.localPosition=new Vector3(-2,4,-3);key.type=LightType.Point;key.range=45;key.intensity=1.05f;key.color=new Color(1,.82f,.65f);key.cullingMask=1<<26;
+            CabinPresentation.AttachCinematicFilter(source, Camera, settings.cinematicCameraFilter);
             SampleActor(0, MihuoerPose.Slumped);
             energySphere = CreateEnergySphere();
             ribbonMesh = CreateRibbon();
@@ -313,6 +315,12 @@ namespace AstraCabin.Galaxies.Zyl
 
         internal void LoadExplosionIllustration()
         {
+            if (settings.farewellIllustrationVersion == "v2")
+            {
+                illustration = FarewellExplosionIllustration.Load(exterior, Planet.gameObject.layer, null,
+                    settings.farewellIllustrationFramesV2, fullFrame: true);
+                return;
+            }
             var matchRocks = new[]
             {
                 pieces[0].Transform, pieces[1].Transform, pieces[2].Transform, pieces[3].Transform,
@@ -563,13 +571,7 @@ namespace AstraCabin.Galaxies.Zyl
             departureCamera.backgroundColor = new Color(.012f, .016f, .025f);
             departureCamera.nearClipPlane = cabin.nearClipPlane;
             departureCamera.farClipPlane = 340;
-            if (cabin.TryGetComponent<CabinPresentation>(out var look))
-            {
-                var presentation = cameraObject.AddComponent<CabinPresentation>();
-                presentation.grade = look.grade;
-                presentation.sceneLook = look.sceneLook;
-                presentation.pixelScale = look.pixelScale;
-            }
+            CabinPresentation.AttachCinematicFilter(cabin, departureCamera, settings.cinematicCameraFilter);
 
             var stars = new GameObject("Farewell distant stars");
             stars.layer = 26;
