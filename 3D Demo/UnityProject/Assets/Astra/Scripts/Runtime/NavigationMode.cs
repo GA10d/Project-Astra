@@ -21,6 +21,7 @@ namespace AstraCabin
         public string ImportPath { get; private set; }
         public string ConfigPath { get; private set; }
         public string ActiveGalaxyId { get; private set; } = "test";
+        bool AutoAdvanceSector => ActiveGalaxyId == "zyl";
         public bool IsGalaxyOverview { get; private set; } = true;
         public bool IsGalaxyReserved { get; private set; }
         public bool CanSwitchGalaxy => (!Director || !Director.farewell || !Director.farewell.DepartureActive)
@@ -100,6 +101,9 @@ namespace AstraCabin
             if (id != ActiveGalaxyId && !CanSwitchGalaxy) { Message = "请先完成当前星系的事件，再切换星系。"; return false; }
             if (id != ActiveGalaxyId || Session == null) LoadGalaxy(id);
             IsGalaxyOverview = false; confirmation = null; showJournal = false;
+            // Also recover voyages saved at a settled exit before automatic advance was added.
+            if (AutoAdvanceSector && Session != null && !Session.Blocked && Session.Engine.CanAdvanceToNextSector)
+                Advance();
             return true;
         }
         public bool ReturnToGalaxies()
@@ -110,9 +114,11 @@ namespace AstraCabin
         {
             Initialize();
             galaxyTransition = false;
-            // Returning from a physical event must keep its settlement controls in view.
-            if (!PresentationPending) ReturnToGalaxies();
-            else IsGalaxyOverview = false;
+            // Keep settlement controls and the newly reached sector entrance in view.
+            bool atNewSectorEntrance = AutoAdvanceSector && Session != null && !Session.Blocked &&
+                !Session.Engine.Complete && Session.Save.commands.LastOrDefault()?.kind == "advance";
+            if (PresentationPending || atNewSectorEntrance) IsGalaxyOverview = false;
+            else ReturnToGalaxies();
         }
         public Campaign Parse(string json)
         {
@@ -152,7 +158,9 @@ namespace AstraCabin
         }
         public bool Travel(string id)
         {
-            if (Session == null || !Session.Commit("travel", id)) { Message = Session == null ? "尚无有效配置" : Session.Error; return false; }
+            var sector = Session?.Engine.Sector;
+            if (Session == null || !Session.Commit("travel", id, advanceToNextSector: AutoAdvanceSector)) { Message = Session == null ? "尚无有效配置" : Session.Error; return false; }
+            if (ShowAutomaticSectorArrival(sector)) return true;
             selectedId = id; detailScroll = Vector2.zero; Message = "已抵达 · " + Session.Engine.Node.name;
             if (PresentationPending) BeginPresentation();
             return true;
@@ -212,9 +220,11 @@ namespace AstraCabin
             var meeting=computer.Meeting;
             if(!meeting || !meeting.Player || !meeting.Player.IsFinished || meeting.EventId!=eventId || meeting.Player.CurrentNodeId!=endNode)
             {Message="会议尚未到达有效结束节点。";return false;}
-            if(Session==null || !Session.Commit("performance",eventId,endNode))
+            var sector = Session?.Engine.Sector;
+            if(Session==null || !Session.Commit("performance",eventId,endNode, advanceToNextSector: AutoAdvanceSector))
             {Message=Session==null?"尚无有效配置":Session.Error;return false;}
             OwnsPresentation=false;computer.Meeting.Stop();computer.FinishMeeting();
+            if (ShowAutomaticSectorArrival(sector)) return true;
             detailScroll=Vector2.zero;Message="会议已结束，事件完成。选择下一个信标继续航行。";return true;
         }
         bool IsZylFarewell(EventDefinition e) => ActiveGalaxyId == "zyl" &&
@@ -229,8 +239,11 @@ namespace AstraCabin
                 if(!departure.Begin(this,id)){Message=departure.Active?"正在返回舷窗，请稍候。":departure.Error??Session.Engine.ChoiceError(id)??"暂时无法启动结算转场。";return false;}
                 Message="正在返回舷窗。";return true;
             }
-            if (Session == null || !Session.Commit("choose", id)) { Message = Session == null ? "尚无有效配置" : Session.Error; return false; }
-            StopPresentation(); detailScroll = Vector2.zero; Message = "处置已记录，资源已结算。选择下一个信标继续航行。"; return true;
+            var sector = Session?.Engine.Sector;
+            if (Session == null || !Session.Commit("choose", id, advanceToNextSector: AutoAdvanceSector)) { Message = Session == null ? "尚无有效配置" : Session.Error; return false; }
+            StopPresentation();
+            if (ShowAutomaticSectorArrival(sector)) return true;
+            detailScroll = Vector2.zero; Message = "处置已记录，资源已结算。选择下一个信标继续航行。"; return true;
         }
         bool ChooseFarewell(string id)
         {
@@ -251,18 +264,37 @@ namespace AstraCabin
             StopPresentation();
             controller.SnapToWall(1);
             controller.ShowNotice("");
+            if (AutoAdvanceSector && Session != null && !Session.Blocked && Session.Engine.CanAdvanceToNextSector)
+                Advance();
         }
 
         internal bool CommitFoolsDeparture(NavigationSession expected,string eventId,string choice)
         {
             if(Session!=expected||Session.Engine.Pending==null||Session.Engine.Pending.id!=eventId){Message="航程或事件已改变，未提交结算。";return false;}
-            if(!Session.Commit("choose",choice)){Message=Session.Error;return false;}
-            StopPresentation();detailScroll=Vector2.zero;Message="处置已记录，返回舷窗。";return true;
+            var sector = Session.Engine.Sector;
+            if(!Session.Commit("choose",choice,advanceToNextSector: AutoAdvanceSector)){Message=Session.Error;return false;}
+            StopPresentation();
+            if (ShowAutomaticSectorArrival(sector)) return true;
+            detailScroll=Vector2.zero;Message="处置已记录，返回舷窗。";return true;
         }
         public bool Advance()
         {
             if (Session == null || !Session.Commit("advance", Session.Engine.Sector.id)) { Message = Session == null ? "尚无有效配置" : Session.Error; return false; }
-            selectedId = Session.Engine.Node.id; Message = Session.Engine.Complete ? "本次航程已完成。" : "已进入「" + Session.Engine.Sector.name + "」。"; return true;
+            ShowSectorArrival();
+            return true;
+        }
+        bool ShowAutomaticSectorArrival(Sector previous)
+        {
+            if (Session.Engine.Sector == previous) return false;
+            ShowSectorArrival();
+            return true;
+        }
+        void ShowSectorArrival()
+        {
+            selectedId = Session.Engine.Node.id;
+            IsGalaxyOverview = false;
+            detailScroll = journalScroll = Vector2.zero;
+            Message = Session.Engine.Complete ? "本次航程已完成。" : "已进入「" + Session.Engine.Sector.name + "」。";
         }
         public bool Restart()
         {

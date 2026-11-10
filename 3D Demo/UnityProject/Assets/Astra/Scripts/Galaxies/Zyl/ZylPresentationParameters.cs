@@ -27,7 +27,7 @@ namespace AstraCabin.Galaxies.Zyl {
   public bool[] farewellIllustrationFrames = { true, true, true, true, true, true };
   public float farewellShakeSustain = 0.42f;
   public float farewellImpactDecay = 1.4f;
-  public float farewellChestDuration=2.8f,farewellSignalHold=1.3f,farewellPlanetDuration=8f,farewellDebrisHold=4f,farewellPhotoDuration=8f,farewellShake=0.35f;
+  public float farewellChestDuration=2.8f,farewellSignalHold=1.3f,farewellPlanetDuration=8f,farewellDebrisHold=4f,farewellShake=0.35f;
   public MihuoerDialogueLine[] farewellDialogue=new[]{new MihuoerDialogueLine{text="【占位：请填写别离视频通话的台词，可添加玩家回复和倒计时操作。倒计时归零将立即打断。】",duration=600f,replies=new string[0]}};
 
   public float escapeFlightDuration=32f,escapeExitDistance=12000f,escapeHullLoss=36f,escapeFadeDuration=1.2f;
@@ -238,7 +238,6 @@ namespace AstraCabin.Galaxies.Zyl {
    Check("farewellSignalHold",farewellSignalHold,0.5f,8f);
    Check("farewellPlanetDuration",farewellPlanetDuration,3f,30f);
    Check("farewellDebrisHold",farewellDebrisHold,1f,20f);
-   Check("farewellPhotoDuration",farewellPhotoDuration,3f,30f);
    Check("farewellShake",farewellShake,0f,1f);
    Check("farewellSurfaceWaveAmplitude",farewellSurfaceWaveAmplitude,0f,6f);
    Check("farewellInnerWaveHz",farewellInnerWaveHz,0.1f,6f);

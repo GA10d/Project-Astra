@@ -22,7 +22,7 @@ window.ZYL_DIALOGUE={
   if(Array.isArray(next.printingDialogue))for(const line of next.printingDialogue)if(line&&typeof line==='object'&&line.replies==null)line.replies=[];
   for(const key of ['farewellDialogue','freeDialogue','stomachDialogue','printingDialogue','foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue','escapeGravesDialogue','escapeEncouragement'])if(Array.isArray(next[key]))next[key].forEach(line=>ZYL_TIMER_DATA.normalizeLine(line));
   for(const key of ['foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue','escapeGravesDialogue','escapeEncouragement'])if(Array.isArray(next[key]))for(const line of next[key])if(line&&line.replies==null)line.replies=[];
-  for(const key of ['explainText','thinkText','explainDuration'])delete next[key];
+  for(const key of ['explainText','thinkText','explainDuration','farewellPhotoDuration'])delete next[key];
   return next;
  },
  validate(lines){

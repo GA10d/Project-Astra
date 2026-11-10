@@ -22,6 +22,8 @@ namespace AstraCabin.Navigation
         public bool Observed { get; private set; }
         public bool Complete { get; private set; }
         public bool EngineBlocked { get; private set; }
+        internal bool CanAdvanceToNextSector =>
+            !Complete && Pending == null && Node.exit && !string.IsNullOrEmpty(Sector.nextSectorId);
         public NavigationEngine(Campaign campaign, EventRegistry registry)
         {
             Campaign = campaign; Registry = registry;
@@ -170,7 +172,7 @@ namespace AstraCabin.Navigation
                 string why; if (!candidate.Apply(command, out why)) throw new InvalidDataException(why); }
             return candidate;
         }
-        public bool Commit(string kind, string id, string outcome = null)
+        public bool Commit(string kind, string id, string outcome = null, bool advanceToNextSector = false)
         {
             if (Blocked) return false;
             try
@@ -178,6 +180,13 @@ namespace AstraCabin.Navigation
                 var candidate = new VoyageSave { fingerprint = Save.fingerprint, commands = new List<Command>(Save.commands),voyageId=Save.voyageId,mihuoerCountdown=Save.mihuoerCountdown };
                 candidate.commands.Add(new Command { kind = kind, id = id, outcome = outcome });
                 var next = Replay(candidate);
+                if (advanceToNextSector && next.CanAdvanceToNextSector)
+                {
+                    // Save the settlement and the sector entry together. Old voyages replay the same commands.
+                    var advance = new Command { kind = "advance", id = next.Sector.id };
+                    if (!next.Apply(advance, out string error)) throw new InvalidDataException(error);
+                    candidate.commands.Add(advance);
+                }
                 // Commit durable data before exposing a world action or a reward.
                 NavigationStorage.WriteAtomic(Path, JsonUtility.ToJson(candidate, true));
                 Engine = next; Save = candidate; Error = null; return true;

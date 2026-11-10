@@ -7,7 +7,7 @@ namespace AstraCabin.Galaxies.Zyl
     {
         public Transform Root {get;private set;}public Transform Actor {get;private set;}public Transform Chest {get;private set;}
         public Camera Camera {get;private set;}public RenderTexture Video {get;private set;}
-        public Transform Planet {get;private set;}public Transform Photo {get;private set;}public Texture2D Portrait {get;private set;}
+        public Transform Planet {get;private set;}
         public bool Broken {get;private set;}public int FragmentCount {get{return pieces.Count;}}
         readonly List<UnityEngine.Object> resources = new List<UnityEngine.Object>();
         readonly List<Fragment> pieces = new List<Fragment>();
@@ -20,8 +20,7 @@ namespace AstraCabin.Galaxies.Zyl
         const float CallFov=47f, WaveFov=51f;
         float waveFraming;
         MihuoerCountdownSkin countdownSkin;
-        Vector3 planetPosition, photoStart;
-        Quaternion photoRotation;
+        Vector3 planetPosition;
         Camera cabin;
         float exteriorScale, concealedFractureTime;
         readonly ZylPresentationParameters settings;
@@ -69,7 +68,6 @@ namespace AstraCabin.Galaxies.Zyl
             Video=new RenderTexture(1280,720,24){name="Farewell live video"};Video.Create();Camera.targetTexture=Video;
             var key=new GameObject("Farewell sunset fill").AddComponent<Light>();key.transform.SetParent(callRoot,false);key.transform.localPosition=new Vector3(-2,4,-3);key.type=LightType.Point;key.range=45;key.intensity=1.05f;key.color=new Color(1,.82f,.65f);key.cullingMask=1<<26;
             SampleActor(0, MihuoerPose.Slumped);
-            CapturePortrait();
             energySphere = CreateEnergySphere();
             ribbonMesh = CreateRibbon();
             var ribbonShader = Shader.Find("Astra/SetpieceGlow");
@@ -93,7 +91,6 @@ namespace AstraCabin.Galaxies.Zyl
             stoneMat.SetFloat("_Ambient", .19f);
             resources.Add(stoneMat);
             BuildFragments(stoneMat);
-            var photoMat=new Material(Shader.Find("Unlit/Transparent"));photoMat.mainTexture=Portrait;resources.Add(photoMat);Photo=Primitive("Mihuoer monochrome photograph",PrimitiveType.Quad,exterior,Vector3.zero,new Vector3(.7f,.86f,1),photoMat);Photo.gameObject.SetActive(false);
         }
         Mesh CreateEnergySphere()
         {
@@ -197,11 +194,6 @@ namespace AstraCabin.Galaxies.Zyl
 
 
         public void AttachCountdown(MihuoerCountdown timer,ZylPresentationParameters p){countdownSkin=MihuoerCountdownSkin.Attach(Actor.gameObject,timer,p,true);}
-        void CapturePortrait()
-        {
-            Camera.Render();var previous=RenderTexture.active;RenderTexture.active=Video;var tex=new Texture2D(1280,720,TextureFormat.RGBA32,false);tex.ReadPixels(new Rect(0,0,1280,720),0,0);tex.Apply();RenderTexture.active=previous;
-            Portrait=new Texture2D(320,400,TextureFormat.RGBA32,false);for(int y=0;y<400;y++)for(int x=0;x<320;x++){bool border=x<13||x>=307||y<13||y>=387;var c=tex.GetPixelBilinear(.32f+x/320f*.36f,.03f+y/400f*.93f);float gray=c.grayscale;Portrait.SetPixel(x,y,border?new Color(.88f,.88f,.84f):new Color(gray,gray,gray,1));}Portrait.Apply();resources.Add(Portrait);UnityEngine.Object.Destroy(tex);
-        }
         internal void SampleActor(float dt,MihuoerPose pose,FoolsActionClip cue=null,float cueTime=0f,bool waitingForReply=false)
         {
             pose=cue?.Pose??pose;
@@ -393,7 +385,7 @@ namespace AstraCabin.Galaxies.Zyl
                 remnants[i] = remnant;
             }
 
-            // Large foreground silhouettes frame the photograph. The middle stays open.
+            // Large foreground silhouettes frame the debris field. The middle stays open.
             var foreground = new[]
             {
                 new Vector3(.13f, .14f, 17), new Vector3(.81f, .69f, 25),
@@ -520,24 +512,6 @@ namespace AstraCabin.Galaxies.Zyl
             }
         }
 
-        public void HidePhoto() { Photo.gameObject.SetActive(false); }
-
-        public void BeginPhoto()
-        {
-            photoStart = cabin.transform.position + cabin.transform.forward * 3.4f + cabin.transform.right * 3.05f;
-            photoRotation = cabin.transform.rotation;
-            SamplePhoto(0, settings.farewellPhotoDuration);
-            Photo.gameObject.SetActive(true);
-        }
-
-        public void SamplePhoto(float t, float duration)
-        {
-            float progress = Mathf.Clamp01(t / duration);
-            var offset = new Vector3(-5.55f * progress, .15f + Mathf.Sin(progress * Mathf.PI) * .2f, 0);
-            Photo.position = photoStart + photoRotation * offset;
-            Photo.rotation = photoRotation * Quaternion.Euler(Mathf.Sin(progress * 6) * 10,
-                Mathf.Sin(progress * 4) * 15, Mathf.Lerp(-14, 22, progress));
-        }
         static readonly Quaternion DepartureWindowView = Quaternion.Euler(0, 90, 0);
 
         Transform departureRoot, departureShip;
@@ -655,7 +629,6 @@ namespace AstraCabin.Galaxies.Zyl
 
         public void BeginDeparture()
         {
-            Photo.gameObject.SetActive(false);
             departureRoot.gameObject.SetActive(true);
             cabinCameraWasEnabled = cabin.enabled;
             cabin.enabled = false;

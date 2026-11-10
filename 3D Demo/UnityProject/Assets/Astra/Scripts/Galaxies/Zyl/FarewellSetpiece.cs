@@ -4,7 +4,7 @@ namespace AstraCabin.Galaxies.Zyl
 {
     public sealed class FarewellSetpiece:MonoBehaviour
     {
-        public enum Step {Talking,ChestBurst,SignalLost,ApproachingWindow,PlanetEnergy,Fragments,Photograph,Finished,Departing,DepartureReturn,Error,ExplosionIllustration}
+        public enum Step {Talking,ChestBurst,SignalLost,ApproachingWindow,PlanetEnergy,Fragments,Finished=7,Departing,DepartureReturn,Error,ExplosionIllustration}
         public bool Active {get;private set;}public bool Complete {get;private set;}public Step Phase {get;private set;}
         public string Error {get;private set;}public FarewellStage Stage {get;private set;}public bool ZeroTriggered {get;private set;}
         public bool DialogueInterrupted {get{return dialogue!=null&&dialogue.Interrupted;}}public ConferenceCallSurface Surface {get;private set;}
@@ -35,8 +35,6 @@ namespace AstraCabin.Galaxies.Zyl
                         return ImpactShake(PhaseTime);
                     case Step.Fragments:
                         return ImpactShake(illustrationTime + PhaseTime);
-                    case Step.Photograph:
-                        return ImpactShake(illustrationTime + p.farewellDebrisHold + PhaseTime);
                     default:
                         return 0;
                 }
@@ -80,7 +78,7 @@ namespace AstraCabin.Galaxies.Zyl
                 Stage.ShowExterior(controller);
                 Stage.SamplePlanetEnergy(p.farewellPlanetDuration, p.farewellPlanetDuration);
                 Stage.FinishPlanetEnergy();
-                Stage.SampleFragments(p.farewellDebrisHold + p.farewellPhotoDuration);
+                Stage.SampleFragments(p.farewellDebrisHold);
             }
             float flightEnd = p.farewellDepartureFlightTime;
             float cameraEnd = p.farewellDepartureHold + p.farewellDepartureCameraTime;
@@ -287,13 +285,9 @@ namespace AstraCabin.Galaxies.Zyl
                         }
                         break;
                     case Step.Fragments:
-                        Stage.SampleFragments(PhaseTime);
-                        if(PhaseTime>=p.farewellDebrisHold){Stage.BeginPhoto();Enter(Step.Photograph);}break;
-                    case Step.Photograph:
-                        Stage.SampleFragments(p.farewellDebrisHold+PhaseTime);Stage.SamplePhoto(PhaseTime,p.farewellPhotoDuration);
-                        if (PhaseTime >= p.farewellPhotoDuration)
+                        Stage.SampleFragments(Mathf.Min(PhaseTime, p.farewellDebrisHold));
+                        if (PhaseTime >= p.farewellDebrisHold)
                         {
-                            Stage.HidePhoto();
                             Complete = true;
                             Enter(Step.Finished);
                             director.controller.cinematicWindowLock = false;
