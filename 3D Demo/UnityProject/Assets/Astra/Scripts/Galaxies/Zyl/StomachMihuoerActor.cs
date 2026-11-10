@@ -38,13 +38,15 @@ namespace AstraCabin.Galaxies.Zyl
         MihuoerPose pose = MihuoerPose.Slumped;
         FoolsActionClip actionCue;
         float actionCueTime;
+        bool waitingForReply;
         internal MihuoerPose Pose
         {
             get => actionCue?.Pose ?? pose;
             set => SetDialoguePose(value, null, 0f);
         }
-        internal void SetDialoguePose(MihuoerPose fallback, FoolsActionClip cue, float cueTime)
+        internal void SetDialoguePose(MihuoerPose fallback, FoolsActionClip cue, float cueTime, bool keepPlaying = false)
         {
+            waitingForReply = keepPlaying;
             pose = fallback;
             actionCue = cue;
             actionCueTime = cueTime;
@@ -114,8 +116,8 @@ namespace AstraCabin.Galaxies.Zyl
         }
         void Sample(float dt)
         {
-            if(!SeatedOnCraft) { standingMotion?.Sample(Pose,dt,cue:actionCue,cueTime:actionCueTime);return; }
-            if(referenceSeat) { seatedMotion.Sample(Pose,dt,cue:actionCue,cueTime:actionCueTime);return; }
+            if(!SeatedOnCraft) { standingMotion?.Sample(Pose,dt,cue:actionCue,cueTime:actionCueTime,waitingForReply:waitingForReply);return; }
+            if(referenceSeat) { seatedMotion.Sample(Pose,dt,cue:actionCue,cueTime:actionCueTime,waitingForReply:waitingForReply);return; }
 
             // Keep the original seated performance in the fixed pole/ceiling shots.
             var state=seatedAnimation["Think"];

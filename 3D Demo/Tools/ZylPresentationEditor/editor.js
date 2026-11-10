@@ -11,41 +11,52 @@ const seatedPoses = {
 };
 const motionSections = [
   {id:12,group:3,key:'encounterActionClips',dialogue:'freeDialogue',title:'自由对话',poses:seatedPoses,
-   note:'接通并回应开场后开始。等待回复暂停动作进度，巨兽仍可打断对话。'},
+   note:'接通并回应开场后开始。等待回复时继续播放当前动作，巨兽仍可打断对话。'},
   {id:13,group:7,key:'stomachActionClips',dialogue:'stomachDialogue',title:'肚中会谈',poses:standingPoses,
-   note:'转舱到位后开始。等待回复时保留当前动作。'},
+   note:'转舱到位后开始。等待回复时继续播放当前动作。'},
   {id:14,group:9,key:'printingActionClips',dialogue:'printingDialogue',title:'飞船内对白',poses:seatedPoses,
-   note:'飞船就座后开始。等待回复暂停动作进度。',cue:'showPole',cueLabel:'展示短杆'},
+   note:'飞船就座后开始。等待回复时继续播放当前动作。',cue:'showPole',cueLabel:'展示短杆'},
   {id:15,group:10,key:'foolsActionClips',poses:standingPoses},
   {id:16,group:11,key:'escapeGravesActionClips',dialogue:'escapeGravesDialogue',title:'墓前对白',poses:standingPoses,
    note:'从墓前对白开始。进入拔肉芽和持握时，由演出接管动作。',cue:'pullSprout',cueLabel:'开始拔肉芽',lock:true},
   {id:17,group:12,key:'farewellActionClips',dialogue:'farewellDialogue',title:'别离视频通话',poses:standingPoses,
-   note:'从通话对白开始。等待回复暂停动作进度，倒计时归零可打断动作。'}
+   note:'从通话对白开始。等待回复时继续播放当前动作，倒计时归零可打断动作。'}
 ];
 
 function createActionTimeline(spec) {
   const {key,poses}=spec;
+  const effectKey=key.replace('ActionClips','CameraEffects');
   const continuous=spec.id===15;
   const titles=continuous ? {ground:'离船对白',walk:'上坡',crest:'坡顶对白与绕后',transition:'黑幕转场',closing:'最后对白'} : {dialogue:spec.title};
   const trackKeys=continuous ? {ground:'foolsGroundDialogue',walk:'foolsWalkDialogue',crest:'foolsCrestDialogue',transition:null,closing:'foolsClosingDialogue'} : {dialogue:spec.dialogue};
   const editable=continuous ? ['ground','crest','closing'] : ['dialogue'];
-  const ranges = {offset:[0,3600],duration:[.1,600],speed:[.25,3],blend:[0,3]};
+  const effectSections=Object.keys(trackKeys).filter(section=>section!=='transition');
+  const ranges = {offset:[0,3600],duration:[.1,600],speed:[.25,3],blend:[0,3],strength:[0,100]};
   const routeLength = 33.96592;
   const snapPixels = 8;
   let panel, viewport, canvas, summary, inspector, notices, selector, zoom;
-  let chosen = -1;
+  let chosen=-1, chosenEffect=-1, effectSelector, effectInspector;
 
   function validate(config) {
     const clips=config[key];
     if (!Array.isArray(clips) || clips.length > 64) return [`演出 ${spec.id} 动作轨需要数组，最多 64 段。`];
-    return clips.flatMap((c,i) => {
+    const errors=clips.flatMap((c,i) => {
       if (c && editable.includes(c.section) && Object.hasOwn(poses,c.pose) &&
           ['loop','hold'].includes(c.playback) && (c.lineId == null || (typeof c.lineId==='string'&&c.lineId.length<=48)) &&
-          Object.entries(ranges).every(([k,[min,max]])=>typeof c[k]==='number'&&Number.isFinite(c[k])&&c[k]>=min&&c[k]<=max)) return [];
+          ['offset','duration','speed','blend'].every(k=>inRange(c[k],ranges[k]))) return [];
       return [`演出 ${spec.id} 动作轨第 ${i+1} 段的动作、区段或时间参数无效。`];
     });
+    const effects=config[effectKey];
+    if(!Array.isArray(effects)||effects.length>64)return [...errors,`演出 ${spec.id} 镜头效果轨需要数组，最多 64 段。`];
+    effects.forEach((cue,i)=>{
+      if(!cue||!effectSections.includes(cue.section)||(cue.lineId!=null&&(typeof cue.lineId!=='string'||cue.lineId.length>48))||
+          !['offset','duration','strength'].every(k=>inRange(cue[k],ranges[k])))
+        errors.push(`演出 ${spec.id} 镜头效果轨第 ${i+1} 段的区段、时间或震动强度无效。`);
+    });
+    return errors;
   }
 
+  const inRange=(value,[min,max])=>Number.isFinite(value)&&value>=min&&value<=max;
   const element = (tag,css,text) => {
     const el=document.createElement(tag);
     if(css)el.className=css;
@@ -91,11 +102,26 @@ function createActionTimeline(spec) {
     return section.lines.find(row=>row.line.timerKey===id)?.start;
   }
 
-  function updateClip(index, changes) {
+  function updateClip(index, changes, isEffect=false) {
     const next=copy(values);
-    if (!next[key]?.[index]) return;
-    Object.assign(next[key][index],changes);
-    chosen=index;commit(next,false);
+    const list=next[isEffect?effectKey:key];
+    if(!list?.[index])return;
+    Object.assign(list[index],changes);
+    if(isEffect)chosenEffect=index;
+    else chosen=index;
+    commit(next,false);
+  }
+
+  function addEffect(section, offset=0) {
+    const next=copy(values), sections=layout(values).bySection;
+    section=section??effectSections.find(name=>sections[name].length>=ranges.duration[0]);
+    if(!section){notices.textContent='请先配置台词或演出时长。';return;}
+    if(next[effectKey].length>=64){notices.textContent='镜头效果轨最多添加 64 段。';return;}
+    chosenEffect=next[effectKey].length;
+    const start=round(clamp(offset,0,Math.min(ranges.offset[1],sections[section].length-ranges.duration[0])));
+    const duration=round(clamp(sections[section].length-start,ranges.duration[0],1));
+    next[effectKey].push({section,lineId:'',offset:start,duration,strength:35});
+    commit(next,false);
   }
 
   function addClip(pose, section, offset) {
@@ -130,7 +156,7 @@ function createActionTimeline(spec) {
     summary=element('p','timeline-note');
     const body=element('div','timeline-body');
     const labels=element('div','timeline-labels');
-    for(const name of ['时间','台词','演出节点','动作轨'])labels.append(element('div','',name));
+    for(const name of ['时间','台词','演出节点','动作轨','镜头效果'])labels.append(element('div','',name));
     viewport=element('div','timeline-viewport');viewport.tabIndex=0;
     viewport.setAttribute('aria-label','可横向滚动的演出时间轴');
     canvas=element('div','timeline-canvas');viewport.append(canvas);body.append(labels,viewport);
@@ -139,6 +165,12 @@ function createActionTimeline(spec) {
     selector.addEventListener('change',()=>{chosen=Number(selector.value);refresh();});
     editBar.append(element('span','','动作细调'),selector);
     inspector=element('div','timeline-inspector');
+    const effectBar=element('div','timeline-edit-bar');
+    effectSelector=element('select');
+    effectSelector.setAttribute('aria-label','选择镜头震动段');
+    effectSelector.addEventListener('change',()=>{chosenEffect=Number(effectSelector.value);refresh();});
+    effectBar.append(element('span','','镜头效果细调'),effectSelector,button('添加镜头震动',()=>addEffect()));
+    effectInspector=element('div','timeline-inspector');
     notices=element('div','timeline-notices');notices.setAttribute('role','status');
     const pool=element('div','timeline-pool');
     pool.append(element('strong','',poses===seatedPoses?'坐姿动作池':'站姿动作池'),element('p','timeline-note','拖到动作轨，或点一下添加。拖动作块移动，拖两端调整时长。靠近刻度、台词边界或节点会自动对齐，按住 Alt 可微调。'));
@@ -155,7 +187,7 @@ function createActionTimeline(spec) {
       choices.append(item);
     }
     pool.append(choices);
-    panel.append(heading,summary,body,editBar,inspector,notices,pool);
+    panel.append(heading,summary,body,editBar,inspector,effectBar,effectInspector,notices,pool);
     group.querySelector('.grid').before(panel);
     const link=element('a','timeline-rail-link',`↳ ${spec.id} · 米霍尔动作时间轴`);
     link.href='#'+panel.id;
@@ -175,6 +207,8 @@ function createActionTimeline(spec) {
     const model=layout(values), {bySection:sections,total}=model;
     const clips=Array.isArray(values[key])?values[key]:[];
     if(chosen>=clips.length)chosen=clips.length-1;
+    const effects=Array.isArray(values[effectKey])?values[effectKey]:[];
+    if(chosenEffect>=effects.length)chosenEffect=effects.length-1;
     const scale=Math.min(Number(zoom.value),50000/Math.max(total,1));
     const x=t=>t*scale;
     const width=Math.max(x(total)+48,viewport.clientWidth);
@@ -194,6 +228,13 @@ function createActionTimeline(spec) {
     const dialogue=element('div','timeline-lane dialogue-lane');
     const nodes=element('div','timeline-lane node-lane');
     const actions=element('div','timeline-lane action-lane');
+    const cameraLane=element('div','timeline-lane camera-lane');
+    cameraLane.addEventListener('dblclick',event=>{
+      if(event.target!==cameraLane)return;
+      const time=(event.clientX-cameraLane.getBoundingClientRect().left)/scale;
+      const section=effectSections.find(name=>time>=sections[name].start&&time<sections[name].start+sections[name].length);
+      if(section)addEffect(section,time-sections[section].start);
+    });
     const nodeNames={ground:'离船',walk:'开始上坡',crest:'到达坡顶',transition:'黑幕转场',closing:'最后对白开始',dialogue:'开始对白'};
     for(const [name,section] of Object.entries(sections)){
       snapPoints.push({time:section.start,label:nodeNames[name]});
@@ -231,14 +272,15 @@ function createActionTimeline(spec) {
     guide.hidden=true;
     guide.setAttribute('aria-hidden','true');
     guide.append(guideLabel);
-    const lockLane=(section,start,label)=>{
+    const lockLane=(section,start,label,lane=actions)=>{
       const lock=element('div','timeline-locked',label);
       lock.style.left=x(section.start+start)+'px';lock.style.width=x(section.length-start)+'px';
-      actions.append(lock);
+      lane.append(lock);
     };
     if(continuous){
       lockLane(sections.walk,0,'🔒 坡度驱动步态');
       lockLane(sections.transition,0,'🔒 黑幕转场');
+      lockLane(sections.transition,0,'黑幕转场',cameraLane);
     }else if(sections.dialogue.actionLength<sections.dialogue.length){
       lockLane(sections.dialogue,sections.dialogue.actionLength,'🔒 拔取与持握');
     }
@@ -258,35 +300,51 @@ function createActionTimeline(spec) {
       else notices.textContent='请将动作拖到可编辑的对白区间。';
     });
     const warnings=[];
-    clips.forEach((clip,index)=>{
-      if(!clip || !editable.includes(clip.section))return;
-      const section=sections[clip.section], at=anchor(section,clip.lineId);
-      if(at===undefined){warnings.push(`动作 ${index+1} 的台词已删除，可重新选择锚点。`);return;}
-      const start=at+finite(clip.offset,0), end=start+finite(clip.duration,0);
-      const length=Math.min(end,section.actionLength)-start;
-      if(length<=0){warnings.push(`动作 ${index+1} 位于区段结束之后。`);return;}
-      if(end>section.actionLength+.001)warnings.push(`动作 ${index+1} 会在区段结束时截断。`);
-      const bar=button(poses[clip.pose]||'动作',()=>{chosen=index;refresh();},'timeline-action'+(chosen===index?' selected':''));
-      bar.title=`${poses[clip.pose]} · ${round(start)}秒起 · ${round(length)}秒`;
-      bar.style.left=x(section.start+start)+'px';bar.style.width=Math.max(8,x(length))+'px';
-      const leftHandle=element('span','timeline-trim trim-start');
-      const rightHandle=element('span','timeline-trim trim-end');
-      leftHandle.dataset.edge='start';leftHandle.title='调整开始位置';
-      rightHandle.dataset.edge='end';rightHandle.title='调整结束位置';
-      bar.append(leftHandle,rightHandle);
-      bar.addEventListener('pointerdown',event=>drag(event,bar,index,clip,{
-        scale,snapPoints,guide,guideLabel,section:{start:section.start,length:section.actionLength},start,end,anchorTime:at
-      }));
-      actions.append(bar);
-    });
-    canvas.append(dialogue,nodes,actions,guide);
+    function drawLane(items,lane,allowed,isEffect) {
+      items.forEach((clip,index)=>{
+        if(!clip||!allowed.includes(clip.section))return;
+        const section=sections[clip.section], at=anchor(section,clip.lineId);
+        const label=isEffect?'震动':'动作';
+        if(at===undefined){warnings.push(`${label} ${index+1} 的台词已删除，可重新选择锚点。`);return;}
+        const start=at+finite(clip.offset,0), end=start+finite(clip.duration,0);
+        const limit=isEffect?section.length:section.actionLength;
+        const length=Math.min(end,limit)-start;
+        if(length<=0){warnings.push(`${label} ${index+1} 位于区段结束之后。`);return;}
+        if(end>limit+.001)warnings.push(`${label} ${index+1} 会在区段结束时截断。`);
+        const name=isEffect?`镜头震动 ${clip.strength}%`:poses[clip.pose]||'动作';
+        const selected=(isEffect?chosenEffect:chosen)===index;
+        const bar=button(name,()=>{
+          if(isEffect)chosenEffect=index;
+          else chosen=index;
+          refresh();
+        },'timeline-action'+(isEffect?' timeline-effect':'')+(selected?' selected':''));
+        bar.title=`${name} · ${round(start)}秒起 · ${round(length)}秒`;
+        bar.style.left=x(section.start+start)+'px';bar.style.width=Math.max(8,x(length))+'px';
+        const leftHandle=element('span','timeline-trim trim-start');
+        const rightHandle=element('span','timeline-trim trim-end');
+        leftHandle.dataset.edge='start';leftHandle.title='调整开始位置';
+        rightHandle.dataset.edge='end';rightHandle.title='调整结束位置';
+        bar.append(leftHandle,rightHandle);
+        bar.addEventListener('pointerdown',event=>drag(event,bar,clip,{
+          scale,snapPoints,guide,guideLabel,section:{start:section.start,length:limit},start,end,anchorTime:at
+        },changes=>updateClip(index,changes,isEffect)));
+        lane.append(bar);
+      });
+    }
+    drawLane(clips,actions,editable,false);
+    drawLane(effects,cameraLane,effectSections,true);
+    canvas.append(dialogue,nodes,actions,cameraLane,guide);
     notices.textContent=warnings.join(' ');
     selector.replaceChildren(new Option('请选择动作',-1),...clips.map((clip,i)=>new Option(`${i+1}. ${poses[clip?.pose]??'无效动作'} · ${titles[clip?.section]??'区段'}`,i)));
     selector.value=String(chosen);
-    drawInspector(clips[chosen],sections);
+    drawInspector(clips[chosen],sections,false);
+    effectSelector.replaceChildren(new Option('请选择震动',-1),...effects.map((cue,i)=>
+      new Option(`${i+1}. 镜头震动 · ${titles[cue?.section]??'区段'}`,i)));
+    effectSelector.value=String(chosenEffect);
+    drawInspector(effects[chosenEffect],sections,true);
   }
 
-  function drag(event,bar,index,clip,track) {
+  function drag(event,bar,clip,track,save) {
     if(event.button!==0||!event.isPrimary)return;
     const {scale,snapPoints,guide,guideLabel,section,start,end,anchorTime}=track;
     const edge=event.target.dataset.edge;
@@ -360,38 +418,54 @@ function createActionTimeline(spec) {
     bar.onpointerup=e=>{
       pointerX=e.clientX;preview(e.altKey);finish();
       if(!active)return;
-      if(Object.keys(changes).some(key=>Math.abs(changes[key]-clip[key])>1e-9))updateClip(index,changes);
+      if(Object.keys(changes).some(key=>Math.abs(changes[key]-clip[key])>1e-9))save(changes);
       else refresh();
     };
   }
 
-  function drawInspector(clip,sections) {
-    inspector.replaceChildren();
-    if(!clip){inspector.append(element('p','timeline-note','动作轨空白处沿用原表演。重叠时，较晚开始的动作优先。'));return;}
-    const section=sections[clip.section]??sections[editable[0]];
-    const select=(label,key,choices)=>{
+  function drawInspector(clip,sections,isEffect) {
+    const box=isEffect?effectInspector:inspector;
+    const index=isEffect?chosenEffect:chosen;
+    const allowed=isEffect?effectSections:editable;
+    box.replaceChildren();
+    if(!clip){
+      box.append(element('p','timeline-note',isEffect?'可双击效果轨的空白处添加震动。拖动或拉伸时沿用时间轴磁吸。':'动作轨空白处沿用原表演。重叠时，较晚开始的动作优先。'));
+      return;
+    }
+    const section=sections[clip.section]??sections[allowed[0]];
+    const update=changes=>updateClip(index,changes,isEffect);
+    const select=(label,field,choices)=>{
       const wrapper=element('label','',label);
       const input=element('select');
       for(const [value,name] of choices)input.add(new Option(name,value));
-      if(![...input.options].some(option=>option.value===(clip[key]??'')))input.add(new Option('原绑定已失效',clip[key]));
-      input.value=clip[key]??'';
-      input.addEventListener('change',()=>updateClip(chosen,key==='section'?{section:input.value,lineId:'',offset:0}:{[key]:input.value}));
-      wrapper.append(input);inspector.append(wrapper);
+      if(![...input.options].some(option=>option.value===(clip[field]??'')))input.add(new Option('原绑定已失效',clip[field]));
+      input.value=clip[field]??'';
+      input.addEventListener('change',()=>update(field==='section'?{section:input.value,lineId:'',offset:0}:{[field]:input.value}));
+      wrapper.append(input);box.append(wrapper);
     };
-    if(continuous)select('区段','section',editable.map(key=>[key,titles[key]]));
-    select('开始锚点','lineId',[['',clip.section==='closing'?'最后对白开始':clip.section==='crest'?'到达坡顶':continuous?'离船开始':'开始对白'],
+    if(continuous)select('区段','section',allowed.map(name=>[name,titles[name]]));
+    const starts={ground:'离船开始',walk:'开始上坡',crest:'到达坡顶',closing:'最后对白开始',dialogue:'开始对白'};
+    select('开始锚点','lineId',[['',starts[clip.section]??'区段开始'],
       ...section.lines.filter(row=>row.line.timerKey).map(row=>[row.line.timerKey,`第 ${row.i+1} 句 · ${(row.line.text||'').slice(0,18)}`])]);
-    select('动作','pose',Object.entries(poses));
-    select('播放方式','playback',[['loop','循环播放'],['hold','播完保持末帧']]);
-    for(const [key,label] of [['offset','锚点后（秒）'],['duration','占用时长（秒）'],['speed','播放速度（倍）'],['blend','混合时长（秒）']]){
+    if(!isEffect){
+      select('动作','pose',Object.entries(poses));
+      select('播放方式','playback',[['loop','循环播放'],['hold','播完保持末帧']]);
+    }
+    const fields=[['offset','锚点后（秒）'],['duration',isEffect?'震动时长（秒）':'占用时长（秒）']];
+    if(isEffect)fields.push(['strength','震动强度（%）']);
+    else fields.push(['speed','播放速度（倍）'],['blend','混合时长（秒）']);
+    for(const [field,label] of fields){
       const wrapper=element('label','',label);
       const input=element('input');
-      Object.assign(input,{type:'number',min:ranges[key][0],max:ranges[key][1],step:'any',value:clip[key]});
-      input.addEventListener('change',()=>updateClip(chosen,{[key]:input.value===''?null:Number(input.value)}));
-      wrapper.append(input);inspector.append(wrapper);
+      Object.assign(input,{type:'number',min:ranges[field][0],max:ranges[field][1],step:'any',value:clip[field]});
+      input.addEventListener('change',()=>update({[field]:input.value===''?null:Number(input.value)}));
+      wrapper.append(input);box.append(wrapper);
     }
-    inspector.append(button('删除动作',()=>{
-      const next=copy(values);next[key].splice(chosen,1);chosen=-1;commit(next,false);
+    box.append(button(isEffect?'删除震动':'删除动作',()=>{
+      const next=copy(values);next[isEffect?effectKey:key].splice(index,1);
+      if(isEffect)chosenEffect=-1;
+      else chosen=-1;
+      commit(next,false);
     }));
   }
 
@@ -463,7 +537,7 @@ function refreshFrameSelection(input,selected){
  input.nextElementSibling.textContent=`已选 ${count} / ${boxes.length} 张`;
 }
 function refresh(){for(const f of fields){const input=$(f.key);if(f.type==='frameSelection')refreshFrameSelection(input,values[f.key]);else if(f.type==='boolean'){input.checked=values[f.key]===true;input.nextElementSibling.textContent=input.checked?'已启用':'已关闭';}else if(document.activeElement!==input)input.value=f.type==='time'?ZYL_TIMER_DATA.format(values[f.key]):['text','color'].includes(f.type)?(values[f.key]??''):(Number.isFinite(values[f.key])?values[f.key]:'');input.closest('.card').classList.toggle('changed',f.type==='frameSelection'?JSON.stringify(values[f.key])!==JSON.stringify(f.value):values[f.key]!==f.value);}$('undo').disabled=!history.length;$('redo').disabled=!future.length;$('errors').textContent=validate(values).join('\n');$('summary').replaceChildren(...[['巨兽初始口部距离',values.initialClearance,'单位'],['全黑加载触发距离',values.loadDistance,'单位'],['胃内淡入时长',values.fadeInDuration,'秒']].map(([s,n,u])=>{let d=document.createElement('div');d.className='metric';d.textContent=s;let b=document.createElement('b');b.textContent=Number.isFinite(n)?n:'—';let small=document.createElement('small');small.textContent=u;b.append(small);d.append(b);return d;}));status();motionTimelines.forEach(timeline=>timeline.refresh());}
-groups.forEach((g,i)=>{let link=document.createElement('a');link.href='#group'+i;link.textContent=g;$('nav').append(link);let section=document.createElement('section');section.className='group';section.id='group'+i;let heading=document.createElement('div');heading.className='group-title';let h=document.createElement('h3');h.textContent=g;let reset=document.createElement('button');reset.textContent='恢复本组默认值';reset.onclick=()=>{const next=copy(values);fields.filter(f=>f.group===g).forEach(f=>next[f.key]=f.value);if(i===3)next.freeDialogue=copy(defaults.freeDialogue);if(i===7)next.stomachDialogue=copy(defaults.stomachDialogue);if(i===9)next.printingDialogue=copy(defaults.printingDialogue);const motion=motionSections.find(spec=>spec.group===i);if(motion)next[motion.key]=copy(defaults[motion.key]);if(i===10)for(const key of ['foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue'])next[key]=copy(defaults[key]);if(i===12)next.farewellDialogue=copy(defaults.farewellDialogue);if(i===11)for(const key of ['escapeGravesDialogue','escapeEncouragement'])next[key]=copy(defaults[key]);commit(next);};heading.append(h,reset);section.append(heading);let grid=document.createElement('div');grid.className='grid';fields.filter(f=>f.group===g).forEach(f=>{let card=document.createElement('article');card.className='card';card.dataset.search=[f.label,f.desc,f.key].join(' ').toLowerCase();card.innerHTML='<div class="field-top"><label></label><span class="tag"></span></div><div class="id"></div><div class="desc"></div><div class="value-row"><input type="number"><span></span><button type="button">还原</button></div><div class="range"></div>';let label=card.querySelector('label');label.textContent=f.label;label.htmlFor=f.key;card.querySelector('.tag').textContent=f.unit;card.querySelector('.id').textContent=f.key;card.querySelector('.desc').textContent=f.desc;if(f.type==='text'){card.classList.add('text-card');card.querySelector('.value-row').innerHTML='<textarea rows=4></textarea><span></span><button type=button>还原</button>';}let input=f.type==='frameSelection'?buildFrameSelection(card,f):card.querySelector(f.type==='text'?'textarea':'input');if(f.type==='frameSelection')label.removeAttribute('for');else if(f.type==='boolean')Object.assign(input,{id:f.key,type:'checkbox'});else if(f.type==='text')Object.assign(input,{id:f.key,maxLength:f.maxLength,required:true});else if(f.type==='color')Object.assign(input,{id:f.key,type:'color',value:f.value,required:true});else if(f.type==='time')Object.assign(input,{id:f.key,type:'text',placeholder:'00:05:00',required:true});else Object.assign(input,{id:f.key,min:f.min,max:f.max,step:f.key==='starCount'?'1':'any',required:true});input.setAttribute('aria-describedby',f.key+'hint');if(f.type!=='frameSelection')input.addEventListener('change',()=>{let next=copy(values);next[f.key]=f.type==='boolean'?input.checked:f.type==='time'?ZYL_TIMER_DATA.parse(input.value):['text','color'].includes(f.type)?input.value:(input.value.trim()===''?null:Number(input.value));commit(next);});card.querySelector('.value-row span').textContent=f.unit;card.querySelector('button').onclick=()=>{let next=copy(values);next[f.key]=f.value;commit(next);};let hint=card.querySelector('.range');hint.id=f.key+'hint';hint.textContent=f.type==='frameSelection'?'默认使用全部六张':f.type==='boolean'?`默认 ${f.value?'开启':'关闭'}`:f.type==='time'?`允许 ${ZYL_TIMER_DATA.format(f.min)}–${ZYL_TIMER_DATA.format(f.max)} · 默认 ${ZYL_TIMER_DATA.format(f.value)}`:f.type==='color'?`默认 ${f.value}`:f.type==='text'?`最多 ${f.maxLength} 字符 · 可换行 · 点击“还原”恢复原台词`:`建议及允许范围 ${f.min}–${f.max} · 默认 ${f.value}`;grid.append(card);});section.append(grid);$('sections').append(section);});
+groups.forEach((g,i)=>{let link=document.createElement('a');link.href='#group'+i;link.textContent=g;$('nav').append(link);let section=document.createElement('section');section.className='group';section.id='group'+i;let heading=document.createElement('div');heading.className='group-title';let h=document.createElement('h3');h.textContent=g;let reset=document.createElement('button');reset.textContent='恢复本组默认值';reset.onclick=()=>{const next=copy(values);fields.filter(f=>f.group===g).forEach(f=>next[f.key]=f.value);if(i===3)next.freeDialogue=copy(defaults.freeDialogue);if(i===7)next.stomachDialogue=copy(defaults.stomachDialogue);if(i===9)next.printingDialogue=copy(defaults.printingDialogue);const motion=motionSections.find(spec=>spec.group===i);if(motion){next[motion.key]=copy(defaults[motion.key]);const effectKey=motion.key.replace('ActionClips','CameraEffects');next[effectKey]=copy(defaults[effectKey]);}if(i===10)for(const key of ['foolsGroundDialogue','foolsWalkDialogue','foolsCrestDialogue','foolsClosingDialogue'])next[key]=copy(defaults[key]);if(i===12)next.farewellDialogue=copy(defaults.farewellDialogue);if(i===11)for(const key of ['escapeGravesDialogue','escapeEncouragement'])next[key]=copy(defaults[key]);commit(next);};heading.append(h,reset);section.append(heading);let grid=document.createElement('div');grid.className='grid';fields.filter(f=>f.group===g).forEach(f=>{let card=document.createElement('article');card.className='card';card.dataset.search=[f.label,f.desc,f.key].join(' ').toLowerCase();card.innerHTML='<div class="field-top"><label></label><span class="tag"></span></div><div class="id"></div><div class="desc"></div><div class="value-row"><input type="number"><span></span><button type="button">还原</button></div><div class="range"></div>';let label=card.querySelector('label');label.textContent=f.label;label.htmlFor=f.key;card.querySelector('.tag').textContent=f.unit;card.querySelector('.id').textContent=f.key;card.querySelector('.desc').textContent=f.desc;if(f.type==='text'){card.classList.add('text-card');card.querySelector('.value-row').innerHTML='<textarea rows=4></textarea><span></span><button type=button>还原</button>';}let input=f.type==='frameSelection'?buildFrameSelection(card,f):card.querySelector(f.type==='text'?'textarea':'input');if(f.type==='frameSelection')label.removeAttribute('for');else if(f.type==='boolean')Object.assign(input,{id:f.key,type:'checkbox'});else if(f.type==='text')Object.assign(input,{id:f.key,maxLength:f.maxLength,required:true});else if(f.type==='color')Object.assign(input,{id:f.key,type:'color',value:f.value,required:true});else if(f.type==='time')Object.assign(input,{id:f.key,type:'text',placeholder:'00:05:00',required:true});else Object.assign(input,{id:f.key,min:f.min,max:f.max,step:f.key==='starCount'?'1':'any',required:true});input.setAttribute('aria-describedby',f.key+'hint');if(f.type!=='frameSelection')input.addEventListener('change',()=>{let next=copy(values);next[f.key]=f.type==='boolean'?input.checked:f.type==='time'?ZYL_TIMER_DATA.parse(input.value):['text','color'].includes(f.type)?input.value:(input.value.trim()===''?null:Number(input.value));commit(next);});card.querySelector('.value-row span').textContent=f.unit;card.querySelector('button').onclick=()=>{let next=copy(values);next[f.key]=f.value;commit(next);};let hint=card.querySelector('.range');hint.id=f.key+'hint';hint.textContent=f.type==='frameSelection'?'默认使用全部六张':f.type==='boolean'?`默认 ${f.value?'开启':'关闭'}`:f.type==='time'?`允许 ${ZYL_TIMER_DATA.format(f.min)}–${ZYL_TIMER_DATA.format(f.max)} · 默认 ${ZYL_TIMER_DATA.format(f.value)}`:f.type==='color'?`默认 ${f.value}`:f.type==='text'?`最多 ${f.maxLength} 字符 · 可换行 · 点击“还原”恢复原台词`:`建议及允许范围 ${f.min}–${f.max} · 默认 ${f.value}`;grid.append(card);});section.append(grid);$('sections').append(section);});
 $('count').textContent=fields.length+' 个固定参数 + 自由对话段落';
 initDialogueEditor();renderDialogueBlocks();
 motionTimelines.forEach(timeline=>timeline.init());

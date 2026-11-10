@@ -59,6 +59,7 @@ namespace AstraCabin
                 bool portalPassed=Session.Save.commands.Any(c=>c.kind=="observed"&&Campaign.events.Any(e=>e.id==c.id&&e.type=="setpiece"&&e.setpiece==SetpieceDirector.PortalMode));
                 if(!swallowed&&portalPassed){Director.TriggerMode(SetpieceDirector.PortalMode);Director.portal.EditorRestoreCompleted();}
                 computer.Open();computer.OpenApp("navigation");IsGalaxyOverview=false;
+                RestoreSkippedCountdown(request);
                 selectedId=request.nodeId;detailScroll=journalScroll=Vector2.zero;
                 if(Session.Engine.Node.id!=request.nodeId&&!Travel(request.nodeId))throw new InvalidOperationException(Message);
                 if(request.autoSupplyItems)
@@ -70,6 +71,22 @@ namespace AstraCabin
             }
             catch(Exception e){EditorDebugError=e.Message;}
             finally{EditorDebugBusy=false;}
+        }
+
+        void RestoreSkippedCountdown(ZylDebugRequest request)
+        {
+            if (!Countdown || request.prefix.mihuoerCountdown != null) return;
+            var target = Session.Engine.Sector.nodes.First(node => node.id == request.nodeId);
+            var targetEvent = Campaign.events.FirstOrDefault(e => e.id == target.eventId);
+            if (targetEvent?.type != "setpiece" || targetEvent.setpiece < 14 || targetEvent.setpiece > 16) return;
+
+            // The debug route settles prior events without running their entrance cues.
+            var observed = Session.Save.commands.Where(command => command.kind == "observed")
+                .Select(command => command.id).ToHashSet();
+            var encounter = Campaign.events.FirstOrDefault(e => e.type == "setpiece" && e.setpiece == 12 && observed.Contains(e.id));
+            var stomachTalk = Campaign.events.FirstOrDefault(e => e.type == "setpiece" && e.setpiece == 13 && observed.Contains(e.id));
+            if (encounter != null) Countdown.BeginEncounter(encounter.id);
+            if (stomachTalk != null) Countdown.BeginStomachTalk(stomachTalk.id);
         }
     }
 }

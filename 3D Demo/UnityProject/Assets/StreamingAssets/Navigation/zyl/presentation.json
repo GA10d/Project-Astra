@@ -12,7 +12,7 @@
   ],
   "schemaVersion": 1,
   "escapeSproutShakeDelay": 8,
-  "repairAlarmDelay": 3.1,
+  "repairAlarmDelay": 2.5,
   "repairStrikeDuration": 0.48,
   "repairImpactStrength": 0.95,
   "repairImpactDuration": 1.35,
@@ -64,7 +64,7 @@
   "freeDialogue": [
     {
       "text": "我想……我可能要请你离开这里。我没有恶意，但是这件事说起来十分复杂",
-      "duration": 4,
+      "duration": 6,
       "replies": [],
       "timerKey": "timer_mw61emp8_149ycwsgf7",
       "timerAction": {
@@ -75,7 +75,7 @@
     },
     {
       "text": "虽然时间不够了，但还有一些时间。我需要想想这件事应该从哪说起？",
-      "duration": 5,
+      "duration": 6,
       "replies": [],
       "timerKey": "timer_mw61emp8_qmmmckiuej",
       "timerAction": null,
@@ -83,7 +83,7 @@
     },
     {
       "text": "也许应该从十年前，那时我居住的地方非常糟糕。",
-      "duration": 4,
+      "duration": 5,
       "replies": [],
       "timerKey": "timer_mw61emp8_sfhbsh82no",
       "timerAction": null,
@@ -91,7 +91,7 @@
     },
     {
       "text": "你肯定难以想象那是一个什么样的地方，即使是如今的我也不愿意主动回忆。",
-      "duration": 5,
+      "duration": 6,
       "replies": [],
       "timerKey": "timer_mw61emp8_ilx7eq455a",
       "timerAction": null,
@@ -99,7 +99,7 @@
     },
     {
       "text": "但是现在情况有点不同，所以我必须把这件事告诉你。",
-      "duration": 4,
+      "duration": 5,
       "replies": [],
       "timerKey": "timer_mw61emp8_15wojpd89u",
       "timerAction": null,
@@ -107,7 +107,7 @@
     },
     {
       "text": "那个地方几乎很少见到阳光，大家似乎有很多烦恼，每个人的脸上都不太平静。",
-      "duration": 5,
+      "duration": 6,
       "replies": [],
       "timerKey": "timer_mw61emp8_klbhr2p5hv",
       "timerAction": null,
@@ -115,7 +115,7 @@
     },
     {
       "text": "但我不知道他们的烦恼是什么，我年纪很小，只知道自己经常生病。",
-      "duration": 5,
+      "duration": 6,
       "replies": [],
       "timerKey": "timer_mw61emp8_41g4wuhsb7",
       "timerAction": null,
@@ -123,7 +123,7 @@
     },
     {
       "text": "我的病不只有一种，有时候会肚子疼，有时候会走不了路……",
-      "duration": 5,
+      "duration": 6,
       "replies": [],
       "timerKey": "timer_mw61emp8_beng373wrt",
       "timerAction": null,
@@ -188,7 +188,7 @@
     },
     {
       "text": "看呐！看我的胸前，这个不知疲倦的倒计时。等倒计时结束，我就会马上爆炸成七八百块，威力足以把一整颗行星炸碎！",
-      "duration": 6,
+      "duration": 7,
       "replies": [
         "爆炸表演吗？收费吗？",
         "今天怪事真多。"
@@ -238,8 +238,8 @@
     }
   ],
   "countdownEnabled": 1,
-  "countdownInitialSeconds": 300,
-  "countdownInitiallyVisible": 0,
+  "countdownInitialSeconds": 28800,
+  "countdownInitiallyVisible": 1,
   "countdownStartOnTalk": 1,
   "countdownWarningSeconds": 30,
   "countdownBrightness": 4,
@@ -249,7 +249,7 @@
   "countdownOffsetX": 0,
   "countdownOffsetY": 0,
   "countdownColor": "#FF4D2E",
-  "countdownWarningColor": "#FF160B",
+  "countdownWarningColor": "#ff0d00",
   "printingPoleCueConfigured": true,
   "printingDialogue": [
     {
@@ -262,7 +262,7 @@
       "timerKey": "timer_mw4rlejw_pgx1ith7k9",
       "timerAction": {
         "kind": "set",
-        "seconds": 5940
+        "seconds": 21600
       },
       "replyTimerActions": [
         null,
@@ -291,7 +291,7 @@
       "duration": 7,
       "replies": [
         "也许？",
-        "好阴险。"
+        "好卑鄙。"
       ],
       "timerKey": "timer_mw4rs1ln_1y4yq56mf8",
       "timerAction": null,
@@ -309,7 +309,7 @@
       "replyTimerActions": []
     },
     {
-      "text": "但是哪有不荒诞的传奇！不会很痛，肯定没有被炸成碎片痛。如果是这家伙，恐怕有七八百千万块碎片。",
+      "text": "但是所谓传奇故事总是听起来很荒诞！不会很痛，肯定没有被炸成碎片痛。如果是这家伙，恐怕有七八百千万块碎片。",
       "duration": 7,
       "replies": [],
       "timerKey": "timer_mw623ddz_qyggik2vuy",
@@ -332,6 +332,7 @@
     }
   ],
   "foolsStopHold": 4.5,
+  "foolsVirusHold": 4.5,
   "foolsReturnDuration": 4,
   "foolsWalkSpeed": 0.9,
   "foolsFrontHold": 3,
@@ -403,18 +404,8 @@
       "section": "crest",
       "lineId": "",
       "offset": 3,
-      "duration": 13,
+      "duration": 13.5,
       "pose": "HeadClutch",
-      "speed": 1,
-      "blend": 0.62,
-      "playback": "loop"
-    },
-    {
-      "section": "closing",
-      "lineId": "timer_mw8iz6rc_crn8awwbie",
-      "offset": 0,
-      "duration": 4,
-      "pose": "Explain",
       "speed": 1,
       "blend": 0.62,
       "playback": "loop"
@@ -424,7 +415,7 @@
       "lineId": "timer_mw5zq1ws_eh7crjxcx9",
       "offset": 0,
       "duration": 10,
-      "pose": "OpenHands",
+      "pose": "Explain",
       "speed": 1,
       "blend": 0.62,
       "playback": "loop"
@@ -437,7 +428,7 @@
       "pose": "Emphasis",
       "speed": 1,
       "blend": 0.62,
-      "playback": "hold"
+      "playback": "loop"
     },
     {
       "section": "closing",
@@ -457,34 +448,14 @@
       "pose": "AngryFists",
       "speed": 1,
       "blend": 0.62,
-      "playback": "hold"
+      "playback": "loop"
     },
     {
       "section": "closing",
       "lineId": "timer_mw6d1jo0_9jul5x0bu7",
       "offset": 0,
       "duration": 7,
-      "pose": "ChinThink",
-      "speed": 1,
-      "blend": 0.62,
-      "playback": "loop"
-    },
-    {
-      "section": "closing",
-      "lineId": "timer_mw8iz6rc_y126ecd5k6",
-      "offset": 0,
-      "duration": 5,
-      "pose": "Explain",
-      "speed": 1,
-      "blend": 0.62,
-      "playback": "loop"
-    },
-    {
-      "section": "closing",
-      "lineId": "timer_mw6d1jo0_jvzb4qqxu5",
-      "offset": 0,
-      "duration": 6,
-      "pose": "Slumped",
+      "pose": "AngryFists",
       "speed": 1,
       "blend": 0.62,
       "playback": "loop"
@@ -551,16 +522,6 @@
     },
     {
       "section": "closing",
-      "lineId": "timer_mw6d1jo0_kazjd5ktuv",
-      "offset": 0,
-      "duration": 7,
-      "pose": "OpenHands",
-      "speed": 1,
-      "blend": 0.62,
-      "playback": "loop"
-    },
-    {
-      "section": "closing",
       "lineId": "timer_mw6d1jo0_7jsp367xjh",
       "offset": 0,
       "duration": 6,
@@ -587,7 +548,53 @@
       "pose": "AngryFists",
       "speed": 1,
       "blend": 0.62,
-      "playback": "hold"
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "",
+      "offset": 0,
+      "duration": 4,
+      "pose": "Slumped",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw8iz6rc_y126ecd5k6",
+      "offset": 0,
+      "duration": 11,
+      "pose": "Slumped",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_kazjd5ktuv",
+      "offset": 0,
+      "duration": 7,
+      "pose": "Emphasis",
+      "speed": 1,
+      "blend": 0.62,
+      "playback": "loop"
+    }
+  ],
+  "foolsCameraEffects": [
+    {
+      "section": "crest",
+      "lineId": "timer_mw5zq1ws_gyahmnqdde",
+      "offset": 0,
+      "duration": 0.7,
+      "strength": 40
+    },
+    {
+      "section": "closing",
+      "lineId": "timer_mw6d1jo0_l4odl7u8vd",
+      "offset": 0,
+      "duration": 0.5,
+      "strength": 35
     }
   ],
   "encounterActionClips": [
@@ -595,7 +602,7 @@
       "section": "dialogue",
       "lineId": "timer_mw61emp8_149ycwsgf7",
       "offset": 0,
-      "duration": 4,
+      "duration": 6,
       "pose": "ChairTalk",
       "speed": 1,
       "blend": 0.55,
@@ -605,7 +612,7 @@
       "section": "dialogue",
       "lineId": "timer_mw61emp8_qmmmckiuej",
       "offset": 0,
-      "duration": 5,
+      "duration": 6,
       "pose": "ChairWorry",
       "speed": 1,
       "blend": 0.55,
@@ -615,7 +622,7 @@
       "section": "dialogue",
       "lineId": "timer_mw61emp8_sfhbsh82no",
       "offset": 0,
-      "duration": 4,
+      "duration": 5,
       "pose": "ChairTalk",
       "speed": 1,
       "blend": 0.55,
@@ -625,7 +632,7 @@
       "section": "dialogue",
       "lineId": "timer_mw61emp8_ilx7eq455a",
       "offset": 0,
-      "duration": 5,
+      "duration": 6,
       "pose": "ChairWorry",
       "speed": 1,
       "blend": 0.55,
@@ -635,7 +642,7 @@
       "section": "dialogue",
       "lineId": "timer_mw61emp8_15wojpd89u",
       "offset": 0,
-      "duration": 4,
+      "duration": 5.5,
       "pose": "ChairEmphasis",
       "speed": 1,
       "blend": 0.55,
@@ -645,7 +652,7 @@
       "section": "dialogue",
       "lineId": "timer_mw61emp8_klbhr2p5hv",
       "offset": 0,
-      "duration": 15,
+      "duration": 12,
       "pose": "ChairTalk",
       "speed": 1,
       "blend": 0.55,
@@ -653,22 +660,23 @@
     },
     {
       "section": "dialogue",
-      "lineId": "timer_mw61emp8_oa19j89pgj",
+      "lineId": "timer_mw61emp8_beng373wrt",
       "offset": 0,
-      "duration": 5,
+      "duration": 11,
       "pose": "ChairWorry",
       "speed": 1,
       "blend": 0.55,
       "playback": "loop"
     }
   ],
+  "encounterCameraEffects": [],
   "stomachActionClips": [
     {
       "section": "dialogue",
       "lineId": "timer_mw61emp8_zxsxiem5xi",
       "offset": 0,
       "duration": 8,
-      "pose": "Slumped",
+      "pose": "Idle",
       "speed": 1,
       "blend": 0.62,
       "playback": "loop"
@@ -687,7 +695,7 @@
       "section": "dialogue",
       "lineId": "timer_mw61emp8_uh2xm70wzu",
       "offset": 0,
-      "duration": 6,
+      "duration": 7,
       "pose": "Idle",
       "speed": 1,
       "blend": 0.62,
@@ -732,6 +740,15 @@
       "speed": 1,
       "blend": 0.62,
       "playback": "loop"
+    }
+  ],
+  "stomachCameraEffects": [
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw61emp8_uh2xm70wzu",
+      "offset": 0,
+      "duration": 0.6,
+      "strength": 25
     }
   ],
   "printingActionClips": [
@@ -806,6 +823,15 @@
       "playback": "loop"
     }
   ],
+  "printingCameraEffects": [
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw623ddz_0s8q7u6rbh",
+      "offset": 0,
+      "duration": 0.2,
+      "strength": 15
+    }
+  ],
   "escapeGravesActionClips": [
     {
       "section": "dialogue",
@@ -848,6 +874,15 @@
       "playback": "loop"
     }
   ],
+  "escapeGravesCameraEffects": [
+    {
+      "section": "dialogue",
+      "lineId": "timer_mw6d1jo0_uydph4gsng",
+      "offset": 0,
+      "duration": 1,
+      "strength": 35
+    }
+  ],
   "farewellActionClips": [
     {
       "section": "dialogue",
@@ -870,13 +905,17 @@
       "playback": "loop"
     }
   ],
+  "farewellCameraEffects": [],
   "foolsGroundDialogue": [
     {
       "text": "……",
       "duration": 3,
       "replies": [],
       "timerKey": "timer_mw8iz6rc_e9nj8bvyq9",
-      "timerAction": null,
+      "timerAction": {
+        "kind": "set",
+        "seconds": 18000
+      },
       "replyTimerActions": []
     },
     {
@@ -1354,7 +1393,7 @@
       "timerKey": "timer_mw5zq1ws_86iltm7gvt",
       "timerAction": {
         "kind": "set",
-        "seconds": 30
+        "seconds": 39
       },
       "replyTimerActions": []
     },
@@ -1401,7 +1440,10 @@
     {
       "text": "再见！",
       "duration": 4,
-      "replies": []
+      "replies": [],
+      "timerKey": "timer_mw9fn503_hkc9kllmqs",
+      "timerAction": null,
+      "replyTimerActions": []
     }
   ],
   "farewellDepartureHold": 1,
@@ -1424,7 +1466,7 @@
   "farewellShakeSustain": 0.42,
   "farewellImpactDecay": 1.4,
   "foolsMicrobeSpeed": 1.35,
-  "foolsOrbitTargetFov": 55,
+  "foolsOrbitTargetFov": 50,
   "promptImpactTitle": "舱体遭遇撞击",
   "promptImpactBody": "应急电源已启动\n前往 B 墙取下维修锤\n修复 D 墙裂痕：0 / 3",
   "promptRepairProgressTitle": "舱体遭遇撞击",
@@ -1461,8 +1503,8 @@
   "escapeSproutWaveHz": 1,
   "escapeSproutPulledWaveAmplitude": 15,
   "escapeSproutPulledWaveHz": 2.9,
-  "foolsOrbitEndDistance": 5,
-  "foolsOrbitEndHeight": 2,
+  "foolsOrbitEndDistance": 6,
+  "foolsOrbitEndHeight": 2.3,
   "escapeBackgroundGustDelay": 8,
   "farewellDepartureTitleInterval": 0.1
 }

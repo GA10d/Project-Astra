@@ -13,6 +13,7 @@ namespace AstraCabin.Galaxies.Zyl
         ZylPresentationParameters parameters;
         MihuoerDialoguePlayer dialogue;
         MihuoerActionTrack actionTrack;
+        readonly ZylCameraEffectTrack cameraEffects = new ZylCameraEffectTrack();
         MihuoerPole pole;
         float poleTime;
         bool windowRequested;
@@ -23,7 +24,7 @@ namespace AstraCabin.Galaxies.Zyl
         public void Initialize(SetpieceDirector value){director=value;}
         public void Show()
         {
-            Clear();parameters=ZylPresentationParameters.Load();if(director.computer.Navigation&&director.computer.Navigation.Countdown)director.computer.Navigation.Countdown.ReloadParameters();actionTrack=new MihuoerActionTrack(parameters.printingActionClips,parameters.printingDialogue);Active=true;Phase=Step.WaitingForEnvironment;
+            Clear();parameters=ZylPresentationParameters.Load();if(director.computer.Navigation&&director.computer.Navigation.Countdown)director.computer.Navigation.Countdown.ReloadParameters();actionTrack=new MihuoerActionTrack(parameters.printingActionClips,parameters.printingDialogue);cameraEffects.Bind(parameters.printingCameraEffects,parameters.printingDialogue,"dialogue");Active=true;Phase=Step.WaitingForEnvironment;
             if(!director.computer.Navigation||director.computer.Navigation.ActiveGalaxyId!="zyl"){Fail("米霍尔需要打印构件：请先进入zyl胃内航程。");return;}
             TryBeginWindowView(Exterior);
         }
@@ -50,7 +51,7 @@ namespace AstraCabin.Galaxies.Zyl
             windowRequested=true;
             OpenWindowView();
         }
-        void Fail(string message){Error=message;Phase=Step.Error;director.controller.cinematicWindowLock=false;director.controller.ShowNotice(message);}
+        void Fail(string message){cameraEffects.Clear();Error=message;Phase=Step.Error;director.controller.cinematicWindowLock=false;director.controller.ShowNotice(message);}
         void Update()
         {
             if(!Active||Complete||director.controller.IsPaused||Phase==Step.Error)return;
@@ -65,7 +66,7 @@ namespace AstraCabin.Galaxies.Zyl
                 catch(Exception e){Fail(e.Message);return;}
                 dialogue=new MihuoerDialoguePlayer(parameters.printingDialogue,(i,a)=>ApplyTimer(i,"line",a),(i,j,a)=>ApplyTimer(i,"reply",a));Phase=Step.Dialogue;scroll=Vector2.zero;
             }
-            if(director.computer.IsOpen)return;
+            if(director.computer.IsOpen){cameraEffects.Clear();return;}
             if (pole != null)
             {
                 poleTime += Time.deltaTime;
@@ -74,8 +75,9 @@ namespace AstraCabin.Galaxies.Zyl
             if(Phase==Step.Dialogue)
             {
                 dialogue.Tick(Time.deltaTime,false);
+                cameraEffects.SampleDialogue(director.controller.viewCamera,dialogue);
                 var cue=actionTrack.SampleDialogue(dialogue,out float cueTime);
-                exterior.MihuoerActor.SetDialoguePose(MihuoerActing.Seated(dialogue),cue,cueTime);
+                exterior.MihuoerActor.SetDialoguePose(MihuoerActing.Seated(dialogue),cue,cueTime,dialogue.WaitingForReply);
                 if(dialogue.Ended)Finish();
             }
         }
@@ -96,6 +98,7 @@ var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(a
         }
         void Finish()
         {
+            cameraEffects.Clear();
             Complete=true;Phase=Step.Finished;if(Exterior&&Exterior.MihuoerActor&&Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.ChairListen;
             director.controller.cinematicWindowLock=false;director.controller.ExitWindowView();director.controller.SnapToWall(0);
             director.computer.Open();director.computer.OpenApp("navigation");
@@ -127,7 +130,8 @@ var nav=director.computer.Navigation;if(nav&&nav.Countdown)nav.Countdown.Apply(a
             }
             finally{GUI.matrix=matrix;GUI.color=color;GUI.enabled=enabled;}
         }
-        public void Clear(){pole?.Dispose();pole=null;if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor&&Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.ChairListen;Active=Complete=windowRequested=false;dialogue=null;actionTrack=null;Error=null;scroll=Vector2.zero;}
+        public void Clear(){cameraEffects.Clear();pole?.Dispose();pole=null;if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor&&Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.ChairListen;Active=Complete=windowRequested=false;dialogue=null;actionTrack=null;Error=null;scroll=Vector2.zero;}
+        void OnDisable(){cameraEffects.Clear();}
         void OnDestroy(){pole?.Dispose();pole=null;if(font)Destroy(font);}
     }
 }

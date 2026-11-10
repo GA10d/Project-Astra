@@ -28,6 +28,7 @@ namespace AstraCabin.Galaxies.Zyl
         Track target;
         float transition, transitionDuration;
         int nextCueId;
+        internal MihuoerPose? CurrentPose => target?.Pose;
 
         sealed class Track
         {
@@ -35,6 +36,7 @@ namespace AstraCabin.Galaxies.Zyl
             public AnimationState State;
             public float Time;
             public float StartWeight;
+            public float ReplyPlaybackTime;
             public FoolsActionClip Cue;
         }
 
@@ -56,8 +58,16 @@ namespace AstraCabin.Galaxies.Zyl
             animation.enabled = false;
         }
 
-        public void Sample(MihuoerPose pose, float dt, float gaitPhase = -1f, FoolsActionClip cue = null, float cueTime = 0f)
+        public void Sample(MihuoerPose pose, float dt, float gaitPhase = -1f, FoolsActionClip cue = null, float cueTime = 0f, bool waitingForReply = false)
         {
+            if (waitingForReply && target != null)
+            {
+                // Advance the pose the player last saw while the dialogue clock waits.
+                if (target.Cue != null) target.ReplyPlaybackTime += dt;
+                Continue(dt);
+                return;
+            }
+
             var key = (pose, cue);
             if (!tracks.TryGetValue(key, out var requested))
             {
@@ -77,6 +87,7 @@ namespace AstraCabin.Galaxies.Zyl
                 if (requested.StartWeight <= 0f) requested.Time = 0f;
                 transitionDuration = cue?.blend ?? target?.Cue?.blend ?? blendDuration;
                 transition = target == null ? transitionDuration : 0f;
+                requested.ReplyPlaybackTime = 0f;
                 target = requested;
             }
 
@@ -102,7 +113,7 @@ namespace AstraCabin.Galaxies.Zyl
                 }
                 state.speed = 0f;
                 if (track == target && cueTime.HasValue)
-                    track.Time = cueTime.Value * track.Cue.speed;
+                    track.Time = (cueTime.Value + track.ReplyPlaybackTime) * track.Cue.speed;
                 else if (gaitPhase >= 0f && (track.Pose == MihuoerPose.WalkFlat || track.Pose == MihuoerPose.WalkUphill))
                     track.Time = gaitPhase * state.length;
                 else

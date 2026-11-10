@@ -5,7 +5,7 @@ namespace AstraCabin.Galaxies.Zyl
         // Stable authored line keys keep the direction attached to each line when dialogue is reordered.
         public static MihuoerPose Standing(MihuoerDialoguePlayer dialogue, MihuoerPose talking, MihuoerPose quiet)
         {
-            if (dialogue?.Current == null || dialogue.WaitingForReply) return quiet;
+            if (dialogue?.Current == null) return quiet;
             switch (dialogue.Current.timerKey)
             {
                 // Trapped inside: numbness, panic, point out the timer, then look for a way out.
@@ -68,7 +68,7 @@ namespace AstraCabin.Galaxies.Zyl
 
         public static MihuoerPose Seated(MihuoerDialoguePlayer dialogue)
         {
-            if (dialogue?.Current == null || dialogue.WaitingForReply) return MihuoerPose.ChairListen;
+            if (dialogue?.Current == null) return MihuoerPose.ChairListen;
             switch (dialogue.Current.timerKey)
             {
                 case "timer_mw61emp8_qmmmckiuej":

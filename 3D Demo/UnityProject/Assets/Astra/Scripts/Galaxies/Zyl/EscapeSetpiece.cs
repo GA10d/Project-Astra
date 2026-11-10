@@ -17,7 +17,10 @@ namespace AstraCabin.Galaxies.Zyl
         public static readonly Vector3 ActorAuth=new Vector3(3.2732f,0,6.9407f),CameraAuth=new Vector3(-2.0167f,0,9.4961f);
         public static readonly Vector3[] GraveAuth={new Vector3(5.7751f,0,6.5558f),new Vector3(4.2910f,0,4.7240f),new Vector3(2.6227f,0,2.7001f)};
         MihuoerActionTrack actionTrack;
+        readonly ZylCameraEffectTrack cameraEffects = new ZylCameraEffectTrack();
         SetpieceDirector director;ZylPresentationParameters p;MihuoerDialoguePlayer dialogue,encouragement;
+        Camera cabinCamera;
+        bool cabinCameraWasEnabled;
         float phaseTime;bool leaving,oldUI,captured;Vector3 actorGround,actorFacing;Font font;GUIStyle subtitle;
         // Fitted from the marked ground point in the grave reference view.
         static readonly Vector3 SproutAuth = new Vector3(2.27f, 0f, 6.52f);
@@ -77,12 +80,12 @@ namespace AstraCabin.Galaxies.Zyl
                 t.gameObject.AddComponent<MeshFilter>().sharedMesh=mesh;t.gameObject.AddComponent<MeshRenderer>().sharedMaterial=stone;
                 var mound=GameObject.CreatePrimitive(PrimitiveType.Sphere);mound.name="Grave soil";mound.transform.SetParent(t,false);mound.transform.localPosition=new Vector3(0,.025f,.4f);mound.transform.localScale=new Vector3(1.15f,.12f,1.8f);mound.layer=25;Destroy(mound.GetComponent<Collider>());mound.GetComponent<Renderer>().sharedMaterial=soil;
             }
-            var cameraObject=new GameObject("Zyl16 | fixed graves camera");Camera=cameraObject.AddComponent<Camera>();Camera.CopyFrom(director.controller.viewCamera);Camera.targetTexture=null;Camera.rect=new Rect(0,0,1,1);Camera.cullingMask=1<<25;Camera.nearClipPlane=.05f;Camera.depth=director.controller.viewCamera.depth+10;Camera.farClipPlane=Mathf.Max(500,Camera.farClipPlane);Camera.clearFlags=CameraClearFlags.SolidColor;
+            var cameraObject=new GameObject("Zyl16 | fixed graves camera");Camera=cameraObject.AddComponent<Camera>();Camera.CopyFrom(director.controller.viewCamera);Camera.enabled=false;Camera.targetTexture=null;Camera.rect=new Rect(0,0,1,1);Camera.cullingMask=1<<25;Camera.nearClipPlane=.05f;Camera.depth=director.controller.viewCamera.depth+10;Camera.farClipPlane=Mathf.Max(500,Camera.farClipPlane);Camera.clearFlags=CameraClearFlags.SolidColor;
             Camera.transform.position=cameraPosition;Camera.transform.rotation=Quaternion.LookRotation(actorMark+Ground.Up*.95f-cameraPosition,Ground.Up);Camera.fieldOfView=57;
             var light=new GameObject("Graves soft fill").AddComponent<Light>();light.transform.SetParent(root.transform);light.transform.position=cameraPosition+Ground.Up*2;light.type=LightType.Point;light.range=18;light.intensity=1.1f;light.color=new Color(1,.77f,.58f);light.cullingMask=1<<25;
             oldUI=director.controller.showUI;captured=true;director.controller.showUI=false;
             dialogue=Dialogue(p.escapeGravesDialogue,"graves");
-            actionTrack=new MihuoerActionTrack(p.escapeGravesActionClips,p.escapeGravesDialogue);
+            actionTrack=new MihuoerActionTrack(p.escapeGravesActionClips,p.escapeGravesDialogue);cameraEffects.Bind(p.escapeGravesCameraEffects,p.escapeGravesDialogue,"dialogue");
             Walker.SampleStandingAt(actorGround,actorFacing,GravesPose,0);
             sprout = new EscapeSprout(GravesRoot, Walker, sproutSoil, actorGround, actorFacing, Ground.Up, resources, plantedSprout, p);
             if(plantedSprout) plantedSprout.gameObject.SetActive(false);
@@ -106,6 +109,10 @@ namespace AstraCabin.Galaxies.Zyl
                 gust = new EscapeGust(GravesRoot, environment, Camera, resources);
                 backgroundGust = new EscapeBackgroundGust(environment, Camera, Ground.Up, resources);
             }
+            cabinCamera=director.controller.viewCamera;
+            cabinCameraWasEnabled=cabinCamera.enabled;
+            cabinCamera.enabled=false;
+            Camera.enabled=true;
         }
         static Mesh StoneMesh()
         {
@@ -188,7 +195,7 @@ namespace AstraCabin.Galaxies.Zyl
             if(float.IsNaN(dt)||float.IsInfinity(dt)||dt<0)return;
             bool battle=Phase==Step.Flying;
             if(battle&&(!Combat.IsVisible||Flight.Paused))return;
-            if(Phase==Step.GravesDialogue&&director.computer.IsOpen)return;
+            if(Phase==Step.GravesDialogue&&director.computer.IsOpen){cameraEffects.Clear();return;}
             try
             {
                 phaseTime+=dt;
@@ -205,6 +212,7 @@ namespace AstraCabin.Galaxies.Zyl
                         sprout.Sample(age, GravesPose, dt, cue, cueTime);
                         shakeTime = age - EscapeSprout.LiftEnd - p.escapeSproutShakeDelay;
                         ShakeGravesCamera(1f);
+                        cameraEffects.SampleDialogue(Camera, dialogue);
                         float gustEnd = backgroundGust != null && backgroundGust.Duration > 0f
                             ? p.escapeBackgroundGustDelay + backgroundGust.Duration : .85f;
                         if (dialogue.Ended && (float.IsPositiveInfinity(sproutCue) || shakeTime >= gustEnd))
@@ -268,10 +276,14 @@ namespace AstraCabin.Galaxies.Zyl
         void RestoreUI(){if(captured)director.controller.showUI=oldUI;captured=false;}
         void ReleaseShot()
         {
+            cameraEffects.Clear();
+            if(Camera)Camera.enabled=false;
+            if(cabinCamera)cabinCamera.enabled=cabinCameraWasEnabled;
+            cabinCamera=null;
             if(plantedSprout) plantedSprout.gameObject.SetActive(true);
             plantedSprout=null;sprout=null;gust=null;
             backgroundGust?.Dispose();backgroundGust=null;
-            if(Camera){Camera.enabled=false;Destroy(Camera.gameObject);}Camera=null;if(Walker!=null)Walker.Dispose();Walker=null;if(Ground!=null)Ground.Dispose();Ground=null;
+            if(Camera)Destroy(Camera.gameObject);Camera=null;if(Walker!=null)Walker.Dispose();Walker=null;if(Ground!=null)Ground.Dispose();Ground=null;
             if(GravesRoot){GravesRoot.gameObject.SetActive(false);Destroy(GravesRoot.gameObject);}GravesRoot=null;foreach(var r in resources)if(r)Destroy(r);resources.Clear();
         }
         void OnGUI()

@@ -10,6 +10,7 @@ namespace AstraCabin.Galaxies.Zyl
         public bool DialogueInterrupted {get{return dialogue!=null&&dialogue.Interrupted;}}public ConferenceCallSurface Surface {get;private set;}
         public float Elapsed {get;private set;}public float PhaseTime {get;private set;}
         MihuoerActionTrack actionTrack;
+        readonly ZylCameraEffectTrack cameraEffects = new ZylCameraEffectTrack();
         SetpieceDirector director;ZylPresentationParameters p;MihuoerDialoguePlayer dialogue;MihuoerCountdown timer;bool zeroPending;Vector2 scroll;GUIStyle label,button;string captionKey;
         float chestPreRoll, planetStartedAt, planetDuration, illustrationTime;
         public float PlanetElapsed => Mathf.Clamp(Elapsed - planetStartedAt, 0, planetDuration);
@@ -167,7 +168,7 @@ namespace AstraCabin.Galaxies.Zyl
         public void Show()
         {
             Clear();Active=true;Phase=Step.Talking;p=ZylPresentationParameters.Load();
-            actionTrack=new MihuoerActionTrack(p.farewellActionClips,p.farewellDialogue);
+            actionTrack=new MihuoerActionTrack(p.farewellActionClips,p.farewellDialogue);cameraEffects.Bind(p.farewellCameraEffects,p.farewellDialogue,"dialogue");
             try
             {
                 if(!director.computer.Navigation||director.computer.Navigation.ActiveGalaxyId!="zyl")throw new InvalidOperationException("别离需要zyl航程");
@@ -208,6 +209,7 @@ namespace AstraCabin.Galaxies.Zyl
                         {
                             ZeroTriggered = true;
                             dialogue.Tick(0, true);
+                            cameraEffects.Clear();
                             Surface.Choosing = false;
                             Surface.Caption = "";
                             Enter(Step.ChestBurst);
@@ -217,8 +219,9 @@ namespace AstraCabin.Galaxies.Zyl
                         }
                         dialogue.Tick(dt, false);
                         var cue=actionTrack.SampleDialogue(dialogue,out float cueTime);
-                        Stage.SampleActor(dt,MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Idle),cue,cueTime);
+                        Stage.SampleActor(dt,MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Idle),cue,cueTime,dialogue.WaitingForReply);
                         SyncCaption();
+                        cameraEffects.SampleDialogue(Stage.Camera, dialogue);
                         UpdateChestPreview();
                         break;
                     case Step.ChestBurst:
@@ -265,7 +268,6 @@ namespace AstraCabin.Galaxies.Zyl
                             : 0;
                         if (Elapsed - planetStartedAt >= planetDuration + illustrationOffset)
                         {
-                            director.PlayCue("impact", .65f);
                             if (Stage.BeginExplosionIllustration(director.controller, PlanetElapsed, planetDuration))
                                 Enter(Step.ExplosionIllustration);
                             else
@@ -339,9 +341,10 @@ namespace AstraCabin.Galaxies.Zyl
             if(Surface==null)return;if(label==null){label=new GUIStyle(GUI.skin.label){font=font,fontSize=18,wordWrap=true,richText=false};label.normal.textColor=Color.white;button=new GUIStyle(GUI.skin.button){font=font,fontSize=16,wordWrap=true,richText=false};}
             director.computer.Meeting.DrawCallSurface(bounds,font,Surface);
         }
-        void Fail(string message){Error="别离："+message;Phase=Step.Error;Stage?.ReleaseExplosionIllustration();director.controller.cinematicWindowLock=false;director.controller.ShowNotice(Error);}
+        void Fail(string message){cameraEffects.Clear();Error="别离："+message;Phase=Step.Error;Stage?.ReleaseExplosionIllustration();director.controller.cinematicWindowLock=false;director.controller.ShowNotice(Error);}
         public void Clear()
         {
+            cameraEffects.Clear();
             if (DepartureActive && director && director.controller)
                 director.controller.showUI = previousCabinHud;
             if(timer)timer.ReachedZero.RemoveListener(ReachedZero);timer=null;if(Active&&director&&director.computer)director.computer.CloseEncounterApp(false);if(Stage!=null)Stage.Dispose();Stage=null;Surface=null;dialogue=null;actionTrack=null;

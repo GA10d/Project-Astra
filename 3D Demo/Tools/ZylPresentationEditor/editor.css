@@ -55,6 +55,7 @@ nav .timeline-rail-link{color:#c4dba5;padding-left:12px}
 .timeline-labels div:nth-child(2),.dialogue-lane{height:52px}
 .timeline-labels div:nth-child(3),.node-lane{height:42px}
 .timeline-labels div:nth-child(4),.action-lane{height:60px}
+.timeline-labels div:nth-child(5),.camera-lane{height:54px}
 .timeline-lane{position:relative;border-bottom:1px solid #d6dfd0}
 .timeline-lane>*{position:absolute;overflow:hidden;white-space:nowrap}
 .timeline-tick{top:4px;height:29px;padding:0 3px;border-left:1px solid #adbc9e;color:#5b6d53;font-size:10px}
@@ -63,6 +64,8 @@ nav .timeline-rail-link{color:#c4dba5;padding-left:12px}
 .timeline-node{top:6px;border-left:2px solid #8b6b44;padding:5px;color:#5b472e;font-size:11px;background:#f2eadd}
 .timeline-action{background:#32604d;color:white;border-color:#234c3b;cursor:grab;touch-action:none;padding-inline:11px;z-index:1}
 .timeline-action:hover,.timeline-action.selected{background:#254c40;color:white;border-color:#c6a45a;z-index:2}
+.timeline-effect{background:#5a4b78;border-color:#45375f}
+.timeline-effect:hover,.timeline-effect.selected{background:#483564;border-color:#c6a45a}
 .timeline-trim{position:absolute;top:2px;bottom:2px;width:min(9px,33%);cursor:ew-resize}
 .trim-start{left:0;border-right:1px solid #aec2a8}
 .trim-end{right:0;border-left:1px solid #aec2a8}

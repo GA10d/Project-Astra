@@ -21,6 +21,8 @@ namespace AstraCabin.Galaxies.Zyl
         public Transform Root {get;private set;}
         readonly List<Transform> microbes=new List<Transform>();
         readonly List<Vector3> targets=new List<Vector3>(),scatter=new List<Vector3>();
+        Vector3[] virusTargets;
+        const float VirusFormationDuration = 1.8f;
         readonly List<Material> ownedMaterials=new List<Material>();
         readonly List<Material> membranes=new List<Material>();
         static readonly int BreathTime = Shader.PropertyToID("_BreathPreviewTime");
@@ -39,6 +41,8 @@ namespace AstraCabin.Galaxies.Zyl
         float distance;
         readonly float microbeSpeed;
         public float WordReadyTime => BurstStart + (WordReady - BurstStart) / microbeSpeed;
+        internal float ReturnStartTime(float stopHold, float virusHold) =>
+            WordReadyTime + stopHold + VirusFormationDuration + virusHold;
         public FoolsStage(Transform craft,Transform environment,Matrix4x4 authoredToWorld,Camera source,float microbeSpeed=1)
         {
             this.microbeSpeed=microbeSpeed;
@@ -255,26 +259,92 @@ namespace AstraCabin.Galaxies.Zyl
                 targets.Add(wordCenter+letterRight*((l*6+x-11)*.60f+jx)+letterUp*((3-y)*.60f+jy)+forward*(float)(random.NextDouble()-.5)*.18f);
                 scatter.Add(cutRight*(float)(random.NextDouble()-.5)*6+cutUp*(float)(random.NextDouble()-.5)*4-axis*(float)(2+random.NextDouble()*5));
             }
+            BuildVirusTargets(letterRight);
         }
+
+        void BuildVirusTargets(Vector3 letterRight)
+        {
+            string[][] glyphs =
+            {
+                new[] {"11011","11011","11011","11011","01010","01010","00100"},
+                new[] {"11111","00100","00100","00100","00100","00100","11111"},
+                new[] {"11110","11011","11011","11110","11100","11010","11001"},
+                new[] {"11011","11011","11011","11011","11011","11011","01110"},
+                new[] {"01111","11000","11000","01110","00011","00011","11110"}
+            };
+            var cells = new List<Vector2>();
+            for (int letter = 0; letter < glyphs.Length; letter++)
+                for (int y = 0; y < 7; y++)
+                    for (int x = 0; x < 5; x++)
+                        if (glyphs[letter][y][x] == '1')
+                        {
+                            float column = letter == 0 ? 2f + (x - 2f) * (1f - y * .10f) : x;
+                            cells.Add(new Vector2((letter * 6 + column - 14) * .47f, (3 - y) * .60f));
+                        }
+
+            var available = new List<Vector3>(microbes.Count);
+            var random = new System.Random(1508);
+            for (int cell = 0; cell < cells.Count; cell++)
+            {
+                // Fill every stroke and reuse every bacterium. Compress only the width to keep the shot.
+                int count = (cell + 1) * microbes.Count / cells.Count - cell * microbes.Count / cells.Count;
+                for (int i = 0; i < count; i++)
+                    available.Add(wordCenter +
+                        letterRight * (cells[cell].x + ((float)random.NextDouble() - .5f) * .20f) +
+                        letterUp * (cells[cell].y + ((float)random.NextDouble() - .5f) * .22f) +
+                        forward * (((float)random.NextDouble() - .5f) * .18f));
+            }
+
+            virusTargets = new Vector3[microbes.Count];
+            for (int i = 0; i < virusTargets.Length; i++)
+            {
+                // Assign the nearest available spot to limit crossing paths during the changeover.
+                int nearest = 0;
+                float nearestDistance = float.PositiveInfinity;
+                for (int j = 0; j < available.Count; j++)
+                {
+                    float distance = (available[j] - targets[i]).sqrMagnitude;
+                    if (distance >= nearestDistance) continue;
+                    nearest = j;
+                    nearestDistance = distance;
+                }
+                virusTargets[i] = available[nearest];
+                available.RemoveAt(nearest);
+            }
+        }
+
         static float Ease(float a,float b,float t){return Mathf.SmoothStep(0,1,Mathf.InverseLerp(a,b,t));}
-        static float Thrust(float time, float start, float pull, float depth, float windup, float drive, float release)
+        static float Thrust(float time, float start, float pull, float depth, float windup, float drive, float release,
+            float shakeDegrees, float shakeDuration, ref Vector3 cameraKick)
         {
             float t = time - start;
             if (t <= 0f || t >= windup + drive + release) return 0f;
             if (t < windup) return -pull * Ease(0f, windup, t);
             t -= windup;
+            // Invert the drive's smoothstep at the point where the tip closes the rest gap.
+            float contactFraction = (pull + RestGap) / (pull + RestGap + depth);
+            float contactTime = drive * (.5f - Mathf.Sin(Mathf.Asin(1f - 2f * contactFraction) / 3f));
+            float age = t - contactTime;
+            if (age > 0f && age < shakeDuration)
+            {
+                float decay = 1f - age / shakeDuration;
+                float strength = shakeDegrees * decay * decay * Ease(0f, .022f, age);
+                cameraKick += new Vector3(Mathf.Sin(age * 61f), Mathf.Sin(age * 47f) * .48f,
+                    Mathf.Sin(age * 53f) * .28f) * strength;
+            }
             if (t < drive) return Mathf.Lerp(-pull, RestGap + depth, Ease(0f, drive, t));
             return (RestGap + depth) * (1f - Ease(drive, drive + release, t));
         }
 
-        public void Sample(float t)
+        public void Sample(float t, float stopHold=4.5f)
         {
             TimeSample=Mathf.Max(0,t);t=TimeSample;
             float swarmTime=t<=BurstStart?t:BurstStart+(t-BurstStart)*microbeSpeed;
             float grown=Mathf.Lerp(.06f,distance-TipRadius-RestGap,Ease(0,10.7f,t));
-            float jab = Thrust(t, 12.1f, .30f, .22f, .28f, .18f, .42f)
-                + Thrust(t, 14.4f, .30f, .22f, .28f, .18f, .42f)
-                + Thrust(t, 16.8f, 1.10f, .85f, .48f, .13f, .72f);
+            Vector3 cameraKick = Vector3.zero;
+            float jab = Thrust(t, 12.1f, .30f, .22f, .28f, .18f, .42f, .42f, .19f, ref cameraKick)
+                + Thrust(t, 14.4f, .30f, .22f, .28f, .18f, .42f, .42f, .19f, ref cameraKick)
+                + Thrust(t, 16.8f, 1.10f, .85f, .48f, .13f, .72f, 1.12f, .29f, ref cameraKick);
             float retract=Mathf.Lerp(0,1.3f,Ease(19,21,t));
             float length=grown+jab-retract;
             IndentDepth=Mathf.Max(0f,length+TipRadius-distance);
@@ -293,6 +363,9 @@ namespace AstraCabin.Galaxies.Zyl
                     Quaternion.LookRotation(finalLook-FinalCameraPosition,up),track);
                 Camera.fieldOfView=70;
             }
+            if (cameraKick.sqrMagnitude > 0f)
+                Camera.transform.rotation *= Quaternion.Euler(cameraKick);
+            float virusAge = t - (WordReadyTime + stopHold);
             for(int i=0;i<microbes.Count;i++)
             {
                 var microbe=microbes[i];
@@ -315,6 +388,13 @@ namespace AstraCabin.Galaxies.Zyl
                 var second=Vector3.Lerp(cloud,target,.76f)+bank*.48f+forward*Mathf.Sin(i*.41f)*1.2f;
                 var tangent=v*v*(first-cloud)+2*v*u*(second-first)+u*u*(target-second);
                 microbe.position=v*v*v*cloud+3*v*v*u*first+3*v*u*u*second+u*u*u*target;
+                if (virusAge > 0f)
+                {
+                    float delay = (i % 23) * .012f;
+                    float regroup = Ease(delay, VirusFormationDuration, virusAge);
+                    microbe.position += (virusTargets[i] - target) * regroup;
+                    microbe.position += cutUp * (4f * regroup * (1f - regroup) * Mathf.Sin(i * 1.7f) * .36f);
+                }
                 microbe.position += right * (Mathf.Sin(i + swarmTime * 2) * .026f * u);
                 microbe.position += letterUp * (Hover(i, t) * u * u);
                 var tumble=Quaternion.AngleAxis(i*47+swarmTime*28,forward)*Quaternion.FromToRotation(Vector3.up,right);
@@ -360,10 +440,10 @@ namespace AstraCabin.Galaxies.Zyl
             foreach (var wall in breathingWalls)
                 SetBreathingTime(wall.renderer, wall.slot, wall.previousTime);
         }
-        public void SampleReturn(float time,float duration,float hold=4.5f)
+        public void SampleReturn(float time,float duration,float stopHold=4.5f,float virusHold=4.5f)
         {
-            float holdEnd = WordReadyTime + hold;
-            Sample(holdEnd);
+            float holdEnd = ReturnStartTime(stopHold, virusHold);
+            Sample(holdEnd, stopHold);
             float follow=Mathf.SmoothStep(0,1,Mathf.Clamp01(time/duration));
             Camera.transform.rotation=Quaternion.LookRotation(Vector3.Lerp(finalLook,Contact,follow)-FinalCameraPosition,up);
             for(int i=0;i<microbes.Count;i++)

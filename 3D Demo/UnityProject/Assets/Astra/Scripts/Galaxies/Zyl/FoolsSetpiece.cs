@@ -30,7 +30,10 @@ namespace AstraCabin.Galaxies.Zyl
         MihuoerDialoguePlayer dialogue;
         float phaseTime, dialogueTime;
         FoolsActionTimeline actions;
+        readonly ZylCameraEffectTrack cameraEffects = new ZylCameraEffectTrack();
         bool capturedUI,oldUI;
+        Camera cabinCamera;
+        bool cabinCameraWasEnabled;
         Font font;GUIStyle subtitle;Vector2 subtitleScroll;
         ZylStomachEnvironment Exterior {get{return director&&director.computer&&director.computer.Navigation?director.computer.Navigation.Exterior:null;}}
         public void Initialize(SetpieceDirector owner){director=owner;}
@@ -47,6 +50,7 @@ namespace AstraCabin.Galaxies.Zyl
         void Dialogue(MihuoerDialogueLine[] lines,string key)
         {
             dialogueTime=0;
+            cameraEffects.Bind(parameters.foolsCameraEffects, lines, key);
             dialogue=new MihuoerDialoguePlayer(lines,(i,action)=>{
                 var nav=director.computer.Navigation;var line=lines[i];
                 if(nav&&nav.Countdown)nav.Countdown.Apply(action,(nav.Session?.Engine.Pending?.id??"fools15")+"/fools/"+key+"/"+(string.IsNullOrEmpty(line.timerKey)?i.ToString():line.timerKey));
@@ -80,17 +84,22 @@ namespace AstraCabin.Galaxies.Zyl
                     if(!exterior.MihuoerActor||!exterior.MihuoerShipAnchor){Fail("都是傻瓜：胃内飞船缺失。");return;}
                     exterior.MihuoerActor.SetSeatedOnCraft(true);
                     Stage=new FoolsStage(exterior.MihuoerActor.Craft,exterior.MihuoerShipAnchor.transform.parent,exterior.AuthoredToRuntime,director.controller.viewCamera,parameters.foolsMicrobeSpeed);
-                    oldUI=director.controller.showUI;capturedUI=true;director.controller.showUI=false;Stage.Camera.enabled=true;Enter(Step.Playing);
+                    oldUI=director.controller.showUI;capturedUI=true;director.controller.showUI=false;
+                    cabinCamera=director.controller.viewCamera;
+                    cabinCameraWasEnabled=cabinCamera.enabled;
+                    cabinCamera.enabled=false;
+                    Stage.Camera.enabled=true;
+                    Enter(Step.Playing);
                 }
                 Elapsed+=dt;phaseTime+=dt;
                 switch(Phase)
                 {
                     case Step.Playing:
-                        Stage.Sample(phaseTime);
-                        if(phaseTime>=Stage.WordReadyTime+parameters.foolsStopHold)Enter(Step.Returning);
+                        Stage.Sample(phaseTime,parameters.foolsStopHold);
+                        if(phaseTime>=Stage.ReturnStartTime(parameters.foolsStopHold,parameters.foolsVirusHold))Enter(Step.Returning);
                         break;
                     case Step.Returning:
-                        Stage.SampleReturn(phaseTime,parameters.foolsReturnDuration,parameters.foolsStopHold);
+                        Stage.SampleReturn(phaseTime,parameters.foolsReturnDuration,parameters.foolsStopHold,parameters.foolsVirusHold);
                         if(phaseTime>=parameters.foolsReturnDuration)
                         {
                             Slope=new FoolsSlope(exterior.MihuoerShipAnchor.transform.parent,exterior.AuthoredToRuntime,exterior.MihuoerAnchor.transform.position);
@@ -157,7 +166,29 @@ namespace AstraCabin.Galaxies.Zyl
                         ClosingShot();if(dialogue.Ended)Finish();
                         break;
                 }
-                if (!Complete) Stage.UpdateBreathing(Elapsed);
+                if (!Complete)
+                {
+                    Stage.UpdateBreathing(Elapsed);
+                    switch (Phase)
+                    {
+                        case Step.GroundDialogue:
+                        case Step.CrestDialogue:
+                        case Step.Orbit:
+                        case Step.Pullback:
+                        case Step.FinalHold:
+                            cameraEffects.Sample(Stage.Camera, dialogueTime);
+                            break;
+                        case Step.Walking:
+                            cameraEffects.Sample(Stage.Camera, phaseTime);
+                            break;
+                        case Step.ClosingDialogue:
+                            cameraEffects.SampleDialogue(Stage.Camera, dialogue);
+                            break;
+                        default:
+                            cameraEffects.Clear();
+                            break;
+                    }
+                }
             }
             catch(Exception e){Fail(e.Message);}
         }
@@ -207,7 +238,16 @@ namespace AstraCabin.Galaxies.Zyl
             }
             finally{GUI.matrix=matrix;GUI.color=color;GUI.depth=depth;}
         }
-        void RestoreView(){if(Stage!=null){if(Stage.Camera)Stage.Camera.enabled=false;Stage.RestoreBreathing();}if(director){director.controller.cinematicWindowLock=false;if(capturedUI)director.controller.showUI=oldUI;}capturedUI=false;}
+        void RestoreView()
+        {
+            cameraEffects.Clear();
+            if(Stage!=null&&Stage.Camera)Stage.Camera.enabled=false;
+            if(cabinCamera)cabinCamera.enabled=cabinCameraWasEnabled;
+            cabinCamera=null;
+            if(Stage!=null)Stage.RestoreBreathing();
+            if(director){director.controller.cinematicWindowLock=false;if(capturedUI)director.controller.showUI=oldUI;}
+            capturedUI=false;
+        }
         public void Clear()
         {
             RestoreView();if(Walker!=null)Walker.Dispose();Walker=null;if(Slope!=null)Slope.Dispose();Slope=null;

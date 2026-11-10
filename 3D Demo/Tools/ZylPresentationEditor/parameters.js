@@ -666,7 +666,7 @@ window.ZYL_PARAMETERS={
       "min": 0.5,
       "max": 3,
       "unit": "倍",
-      "desc": "从裂口飞出并汇成 STOP 的速度倍率。STOP 停留和飞回裂口各有独立时长。"
+      "desc": "从裂口飞出并汇成 STOP 的速度倍率。STOP、VIRUS 的停留和飞回裂口各有独立时长。"
     },
     {
       "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
@@ -676,7 +676,17 @@ window.ZYL_PARAMETERS={
       "min": 1,
       "max": 30,
       "unit": "秒",
-      "desc": "菌群完全组成STOP后停留，再开始回到裂口。"
+      "desc": "菌群完全组成 STOP 后停留，再重新排列成 VIRUS。"
+    },
+    {
+      "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
+      "key": "foolsVirusHold",
+      "label": "VIRUS 停留时长",
+      "value": 4.5,
+      "min": 1,
+      "max": 30,
+      "unit": "秒",
+      "desc": "菌群完全组成 VIRUS 后停留，结束时从该字形飞回裂口。"
     },
     {
       "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
@@ -686,7 +696,7 @@ window.ZYL_PARAMETERS={
       "min": 1,
       "max": 15,
       "unit": "秒",
-      "desc": "从STOP字形飞回原胃壁裂口，结束后切到已离船的米霍尔。"
+      "desc": "从 VIRUS 字形飞回原胃壁裂口，结束后切到已离船的米霍尔。"
     },
     {
       "group": "15 · 泰德野里_都是傻瓜 · 上坡与镜头",
@@ -1627,6 +1637,7 @@ window.ZYL_PARAMETERS={
       }
     ],
     "foolsStopHold": 4.5,
+    "foolsVirusHold": 4.5,
     "foolsReturnDuration": 4,
     "foolsWalkSpeed": 0.85,
     "foolsFrontHold": 2,
@@ -1634,11 +1645,17 @@ window.ZYL_PARAMETERS={
     "foolsPullbackDuration": 5,
     "foolsFinalHold": 3,
     "foolsActionClips": [],
+    "foolsCameraEffects": [],
     "encounterActionClips": [],
+    "encounterCameraEffects": [],
     "stomachActionClips": [],
+    "stomachCameraEffects": [],
     "printingActionClips": [],
+    "printingCameraEffects": [],
     "escapeGravesActionClips": [],
+    "escapeGravesCameraEffects": [],
     "farewellActionClips": [],
+    "farewellCameraEffects": [],
     "foolsGroundDialogue": [
       {
         "text": "【占位：请填写米霍尔离开飞船后的台词。】",

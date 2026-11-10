@@ -13,6 +13,7 @@ namespace AstraCabin.Galaxies.Zyl
         ZylPresentationParameters parameters;
         MihuoerDialoguePlayer dialogue;
         MihuoerActionTrack actionTrack;
+        readonly ZylCameraEffectTrack cameraEffects = new ZylCameraEffectTrack();
         Camera chestCamera;
         Transform chest;
         Vector3 chestTarget;
@@ -24,7 +25,7 @@ namespace AstraCabin.Galaxies.Zyl
         public void Initialize(SetpieceDirector value){director=value;}
         public void Show()
         {
-            Clear();parameters=ZylPresentationParameters.Load();if(director.computer.Navigation&&director.computer.Navigation.Countdown)director.computer.Navigation.Countdown.ReloadParameters();actionTrack=new MihuoerActionTrack(parameters.stomachActionClips,parameters.stomachDialogue);Active=true;Phase=Step.WaitingForEnvironment;
+            Clear();parameters=ZylPresentationParameters.Load();if(director.computer.Navigation&&director.computer.Navigation.Countdown)director.computer.Navigation.Countdown.ReloadParameters();actionTrack=new MihuoerActionTrack(parameters.stomachActionClips,parameters.stomachDialogue);cameraEffects.Bind(parameters.stomachCameraEffects,parameters.stomachDialogue,"dialogue");Active=true;Phase=Step.WaitingForEnvironment;
             if(!director.computer.Navigation||director.computer.Navigation.ActiveGalaxyId!="zyl"){Fail("肚中会谈需要zyl胃内航程，请使用星域调试工具从炸弹信标开始。");return;}
             director.computer.Close();director.controller.SnapToWall(1);director.controller.EnterWindowView();director.controller.cinematicWindowLock=true;
         }
@@ -53,12 +54,9 @@ namespace AstraCabin.Galaxies.Zyl
             if(Phase==Step.Dialogue)
             {
                 dialogue.Tick(Time.deltaTime,false);
-                if(!dialogue.WaitingForReply)
-                {
-                    var fallback=IsChestLine(dialogue.Current)?MihuoerPose.Idle:MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Slumped);
-                    var cue=actionTrack.SampleDialogue(dialogue,out float cueTime);
-                    exterior.MihuoerActor.SetDialoguePose(fallback,cue,cueTime);
-                }
+                var fallback=IsChestLine(dialogue.Current)?MihuoerPose.Idle:MihuoerActing.Standing(dialogue,MihuoerPose.Explain,MihuoerPose.Slumped);
+                var cue=actionTrack.SampleDialogue(dialogue,out float cueTime);
+                exterior.MihuoerActor.SetDialoguePose(fallback,cue,cueTime,dialogue.WaitingForReply);
                 if(dialogue.Ended)Finish();
             }
         }
@@ -68,10 +66,12 @@ namespace AstraCabin.Galaxies.Zyl
 
         void LateUpdate()
         {
-            bool closeup = Active && Phase == Step.Dialogue && IsChestLine(dialogue?.Current);
-            if (!closeup || director.computer.IsOpen || ZylScreenCurtain.IsOpaque)
+            bool showingDialogue = Active && Phase == Step.Dialogue && !director.computer.IsOpen && !ZylScreenCurtain.IsOpaque;
+            bool closeup = showingDialogue && IsChestLine(dialogue.Current);
+            if (!closeup)
             {
                 if (chestCamera) chestCamera.enabled = false;
+                cameraEffects.SampleDialogue(showingDialogue ? director.controller.viewCamera : null, dialogue);
                 return;
             }
 
@@ -80,7 +80,11 @@ namespace AstraCabin.Galaxies.Zyl
             {
                 foreach (var bone in actor.GetComponentsInChildren<Transform>())
                     if (bone.name == "chest") { chest = bone; break; }
-                if (!chest) return;
+                if (!chest)
+                {
+                    cameraEffects.SampleDialogue(director.controller.viewCamera, dialogue);
+                    return;
+                }
                 chestTarget = chest.InverseTransformPoint(MihuoerCountdownSkin.FindCountdownSurface(actor, chest, parameters));
             }
             if (!chestCamera)
@@ -100,10 +104,12 @@ namespace AstraCabin.Galaxies.Zyl
             Vector3 target = chest.TransformPoint(chestTarget);
             Vector3 eye = target + actor.forward * .69f + actor.right * .055f + actor.up * .035f;
             chestCamera.transform.SetPositionAndRotation(eye, Quaternion.LookRotation(target - eye, actor.up));
+            cameraEffects.SampleDialogue(chestCamera, dialogue);
         }
 
         void ReleaseCloseup()
         {
+            cameraEffects.Clear();
             if (chestCamera) { chestCamera.enabled = false; Destroy(chestCamera.gameObject); }
             chestCamera = null;
             chest = null;
@@ -150,6 +156,7 @@ namespace AstraCabin.Galaxies.Zyl
             finally{GUI.matrix=matrix;GUI.color=color;GUI.enabled=enabled;}
         }
         public void Clear(){ReleaseCloseup();if(director)director.controller.cinematicWindowLock=false;if(Exterior&&Exterior.MihuoerActor&&!Exterior.MihuoerActor.SeatedOnCraft)Exterior.MihuoerActor.Pose=MihuoerPose.Slumped;Active=Complete=false;dialogue=null;actionTrack=null;Error=null;elapsed=0;scroll=Vector2.zero;}
+        void OnDisable(){cameraEffects.Clear();}
         void OnDestroy(){ReleaseCloseup();if(font)Destroy(font);}
     }
 }
