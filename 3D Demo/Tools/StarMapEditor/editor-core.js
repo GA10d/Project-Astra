@@ -21,6 +21,10 @@
     const error = text => errors.push(text);
     if (!c || typeof c !== 'object' || Array.isArray(c)) return ['配置必须是 JSON 对象'];
     if (c.schemaVersion !== 1) error('schemaVersion 必须为 1');
+    if ((c.beaconDescriptionFontSize !== undefined && !bounded(c.beaconDescriptionFontSize, 12, 28) && c.beaconDescriptionFontSize !== 0) ||
+        (c.beaconDescriptionCharacterSpacing !== undefined && !bounded(c.beaconDescriptionCharacterSpacing, 0, 8)) ||
+        (c.beaconDescriptionLineSpacing !== undefined && !bounded(c.beaconDescriptionLineSpacing, 0, 20)))
+      error('信标描述排版超出允许范围');
     if (!idOK(c.id) || !textOK(c.name, 80)) error('航程 ID 或名称无效');
     if (!Array.isArray(c.resources) || c.resources.length < 1 || c.resources.length > 6 || c.resources.some(r => !r) ||
         !Array.isArray(c.sectors) || c.sectors.length < 1 || c.sectors.length > 16 || c.sectors.some(s => !s) ||

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using UnityEngine;
 using AstraCabin.Navigation;
@@ -12,6 +14,12 @@ namespace AstraCabin
         Vector2 detailScroll, journalScroll;
         bool showJournal, showInventory;
         float detailHeight = 500;
+        string descriptionText;
+        float descriptionWidth;
+        int descriptionSize, descriptionTracking, descriptionLineSpacing;
+        bool descriptionRichText;
+        readonly List<(string text, Vector2 position, float height)> descriptionRuns = new List<(string, Vector2, float)>();
+        float descriptionHeight;
         readonly Color paper = new Color(.77f, .86f, .71f), muted = new Color(.42f, .55f, .45f), signal = new Color(.63f, .87f, .56f), amber = new Color(.95f, .70f, .34f);
         void Styles(Font font)
         {
@@ -135,8 +143,7 @@ namespace AstraCabin
             {
                 var ev = e.Pending;
                 Label(new Rect(0, y, contentWidth, 45), ev.title, 23); y += 47;
-                navText.fontSize = 15; float dh = navText.CalcHeight(new GUIContent(ev.description), contentWidth);
-                Label(new Rect(0, y, contentWidth, dh + 8), ev.description); y += dh + 23;
+                y += DrawBeaconDescription(y, contentWidth, ev.description) + 23;
                 if(ev.type=="performance")
                 {
                     Label(new Rect(0,y,contentWidth,64),"接入 ASTRA LINK 会议，完成交互演出后自动返回星图。关闭窗口会暂停会议。",15,amber);y+=76;
@@ -182,10 +189,7 @@ namespace AstraCabin
                 string archive = enteredEvent != null ? enteredEvent.description : hasArchive ? node.archiveDescription : info;
                 if((node.requiredItems?.Length??0)>0) archive+="\n需持有："+e.ItemText(node.requiredItems);
                 if((node.itemCosts?.Length??0)>0) archive+="\n进入时交付："+e.ItemText(node.itemCosts);
-                navText.fontSize = 15; navText.richText = hasArchive;
-                float archiveHeight = Mathf.Max(95, navText.CalcHeight(new GUIContent(archive), contentWidth));
-                Label(new Rect(0, 114, contentWidth, archiveHeight + 4), archive);
-                navText.richText = false;
+                float archiveHeight = Mathf.Max(95, DrawBeaconDescription(114, contentWidth, archive, hasArchive));
                 float actionY = Mathf.Max(284, 114 + archiveHeight + 24);
                 nodeDetailHeight = actionY + 126;
                 if (e.Node.exit)
@@ -199,6 +203,94 @@ namespace AstraCabin
             }
             detailHeight = e.Pending != null ? y + 80 : nodeDetailHeight;
             GUI.EndScrollView();
+        }
+
+        float DrawBeaconDescription(float y, float width, string text, bool richText = false)
+        {
+            int size = Campaign.beaconDescriptionFontSize == 0 ? 15 : Campaign.beaconDescriptionFontSize;
+            int tracking = Campaign.beaconDescriptionCharacterSpacing;
+            int spacing = Campaign.beaconDescriptionLineSpacing;
+            navText.fontSize = size;
+            navText.richText = richText;
+            if (tracking == 0 && spacing == 0)
+            {
+                float height = navText.CalcHeight(new GUIContent(text), width);
+                Label(new Rect(0, y, width, height + 8), text, size);
+                navText.richText = false;
+                return height;
+            }
+
+            navText.wordWrap = false;
+            float lineHeight = navText.lineHeight;
+            if (descriptionText != text || descriptionWidth != width || descriptionSize != size ||
+                descriptionTracking != tracking || descriptionLineSpacing != spacing || descriptionRichText != richText)
+            {
+                descriptionText = text;
+                descriptionWidth = width;
+                descriptionSize = size;
+                descriptionTracking = tracking;
+                descriptionLineSpacing = spacing;
+                descriptionRichText = richText;
+                descriptionRuns.Clear();
+                float x = 0, top = 0, currentLineHeight = lineHeight;
+                string normalized = (text ?? "").Replace("\r\n", "\n").Replace('\r', '\n');
+                var characters = StringInfo.GetTextElementEnumerator(normalized);
+                var tags = new List<(string opening, string closing)>();
+                string prefix = "", suffix = "";
+                int tagEnd = -1;
+                while (characters.MoveNext())
+                {
+                    int index = characters.ElementIndex;
+                    if (index <= tagEnd) continue;
+                    string character = characters.GetTextElement();
+                    if (richText && character == "<")
+                    {
+                        tagEnd = normalized.IndexOf('>', index);
+                        if (tagEnd >= 0)
+                        {
+                            string tag = normalized.Substring(index, tagEnd - index + 1);
+                            if (tag.StartsWith("</"))
+                            {
+                                if (tags.Count > 0) tags.RemoveAt(tags.Count - 1);
+                            }
+                            else
+                            {
+                                int nameEnd = tag.IndexOf('=');
+                                if (nameEnd < 0) nameEnd = tag.Length - 1;
+                                tags.Add((tag, "</" + tag.Substring(1, nameEnd - 1) + ">"));
+                            }
+                            prefix = string.Concat(tags.Select(t => t.opening));
+                            suffix = string.Concat(Enumerable.Reverse(tags).Select(t => t.closing));
+                            continue;
+                        }
+                    }
+                    if (character == "\n")
+                    {
+                        x = 0;
+                        top += currentLineHeight + spacing;
+                        currentLineHeight = lineHeight;
+                        continue;
+                    }
+                    string run = prefix + character + suffix;
+                    Vector2 bounds = navText.CalcSize(new GUIContent(run));
+                    if (x > 0 && x + bounds.x > width)
+                    {
+                        x = 0;
+                        top += currentLineHeight + spacing;
+                        currentLineHeight = lineHeight;
+                        if (char.IsWhiteSpace(character, 0)) continue;
+                    }
+                    descriptionRuns.Add((run, new Vector2(x, top), bounds.y));
+                    x += bounds.x + tracking;
+                    currentLineHeight = Mathf.Max(currentLineHeight, bounds.y);
+                }
+                descriptionHeight = top + currentLineHeight;
+            }
+            foreach (var run in descriptionRuns)
+                Label(new Rect(run.position.x, y + run.position.y, width - run.position.x, run.height + 2), run.text, size);
+            navText.wordWrap = true;
+            navText.richText = false;
+            return descriptionHeight;
         }
         Vector2 inventoryScroll;
         void DrawInventory(Rect area)

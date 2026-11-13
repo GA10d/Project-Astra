@@ -248,6 +248,14 @@
     title(panel, 'CAMPAIGN / 航程', '航程与资源');
     field(panel, '航程 ID', campaign.id, value => campaign.id = value);
     field(panel, '航程名称', campaign.name, value => campaign.name = value);
+    heading(panel, '信标描述排版');
+    help(panel, '统一应用于本航程所有星域的信标事件描述。字间距和行间距是在原间距上增加的像素数。');
+    field(panel, '描述字号（像素）', campaign.beaconDescriptionFontSize || 15,
+      value => campaign.beaconDescriptionFontSize = value, {number:true,min:12,max:28});
+    field(panel, '描述字间距（像素）', campaign.beaconDescriptionCharacterSpacing ?? 0,
+      value => campaign.beaconDescriptionCharacterSpacing = value, {number:true,min:0,max:8});
+    field(panel, '描述行间距（像素）', campaign.beaconDescriptionLineSpacing ?? 0,
+      value => campaign.beaconDescriptionLineSpacing = value, {number:true,min:0,max:20});
     field(panel, '起始星域', campaign.startSectorId, value => campaign.startSectorId = value, { select: campaign.sectors.map(s => [s.id, s.name]) });
     amounts(panel, '每次跃迁消耗', campaign.travelCosts);
     heading(panel,'物品定义');

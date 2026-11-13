@@ -80,8 +80,8 @@
         {
           "id": "drifter",
           "name": "被编排的流浪者",
-          "x": 0.492,
-          "y": 0.506,
+          "x": 0.476,
+          "y": 0.471,
           "eventId": "zyl_drifter",
           "next": [
             "roar",
@@ -120,8 +120,8 @@
         {
           "id": "guest",
           "name": "局促的客人",
-          "x": 0.847,
-          "y": 0.456,
+          "x": 0.826,
+          "y": 0.491,
           "eventId": "zyl_guest",
           "next": [],
           "exit": true,
@@ -608,5 +608,8 @@
       "capacity": 99,
       "fabricatorBlueprint": "mihuoer_tee"
     }
-  ]
+  ],
+  "beaconDescriptionFontSize": 16,
+  "beaconDescriptionCharacterSpacing": 3,
+  "beaconDescriptionLineSpacing": 7
 }

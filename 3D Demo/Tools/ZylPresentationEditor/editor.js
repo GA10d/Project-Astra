@@ -601,10 +601,21 @@ async function rememberFile(){
  }catch{return false;}
 }
 
+function isBrowserHandle(file){
+ return typeof FileSystemHandle !== 'undefined' && file instanceof FileSystemHandle;
+}
+
+async function sameFile(first, second){
+ if(!first||!second)return false;
+ if(first===second)return true;
+ if(isBrowserHandle(first)!==isBrowserHandle(second))return false;
+ return first.isSameEntry(second);
+}
+
 async function importText(text,name,newHandle){
  const next=parseConfig(text);
  const previous=handle||rememberedFile?.handle;
- const same=!!newHandle&&!!previous&&await newHandle.isSameEntry(previous);
+ const same=await sameFile(newHandle,previous);
  currentFile=same&&currentFile?currentFile:locationUI.newFile(name,newHandle);
  handle=newHandle;
  fileId=handle?(same&&fileId?fileId:currentFile.id):null;
@@ -690,24 +701,55 @@ $('reconnect').onclick=()=>guarded(async()=>{
  await reopenRemembered();
 });
 async function guarded(action){if(busy)return;busy=true;renderFileLocation();for(const id of ['open','reconnect','save','saveas','export'])$(id).disabled=true;try{await action();}catch(e){if(e.name!=='AbortError')status('操作失败：'+e.message);}finally{busy=false;renderFileLocation();for(const id of ['open','reconnect','save','saveas','export'])$(id).disabled=false;}}
-$('open').onclick=()=>guarded(async()=>{if(revision!==savedRevision&&!confirm('当前有未保存修改，仍要打开其他配置？草稿将被替换。'))return;const pick=localFiles?.open || window.showOpenFilePicker?.bind(window);if(pick){let [selected]=await pick({types:[{description:'ZYL 演出参数',accept:{'application/json':['.json']}}],multiple:false});let file=await selected.getFile();await importText(await file.text(),file.name,selected);}else $('file').click();});
-$('file').onchange=()=>guarded(async()=>{let f=$('file').files[0];if(f)await importText(await f.text(),f.name,null);$('file').value='';});
+let useBasicOpen=false;
+$('open').onclick=()=>guarded(async()=>{
+ if(revision!==savedRevision&&!confirm('当前有未保存修改，仍要打开其他配置？草稿将被替换。'))return;
+ const pick=localFiles?.open || window.showOpenFilePicker?.bind(window);
+ if((useBasicOpen&&!localFiles)||!pick){$('file').click();return;}
+ let selected;
+ try{
+  const options={types:[{description:'ZYL 演出参数',accept:{'application/json':['.json']}}],multiple:false};
+  if(localFiles){
+   status('正在等待 Windows 文件选择窗口。请检查任务栏或按 Alt+Tab。');
+   let timeout;
+   try {
+    [selected]=await Promise.race([
+     pick(options),
+     new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Windows 文件选择窗口仍未返回。请检查任务栏，关闭已打开的选择窗口后重试。')),15000);})
+    ]);
+   } finally {clearTimeout(timeout);}
+  }else [selected]=await pick(options);
+ }catch(error){
+  if(error.name==='AbortError')return;
+  if(localFiles)throw error;
+  useBasicOpen=true;
+  throw Error(error.message+' 再点一次「打开配置」可使用浏览器选择文件。');
+ }
+ const file=await selected.getFile();
+ await importText(await file.text(),file.name,selected);
+});
+$('file').onchange=()=>guarded(async()=>{
+ const input=$('file'), file=input.files[0];
+ input.value='';
+ if(file)await importText(await file.text(),file.name,null);
+});
 function serialized(){if(document.activeElement && typeof document.activeElement.blur === 'function')document.activeElement.blur();let errors=validate(values);if(errors.length)throw Error('请先修正参数：\n'+errors.join('\n'));return JSON.stringify(values,null,2)+'\n';}
 function download(){let text=serialized(),url=URL.createObjectURL(new Blob([text],{type:'application/json'})),a=document.createElement('a');a.href=url;a.download='presentation.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);status('已生成下载；请确认浏览器下载完成并将 presentation.json 放回源码目录。');}
 async function save(as){
  const text=serialized(),atRevision=revision;
  const pick=localFiles?.save || window.showSaveFilePicker?.bind(window);
- if(!pick){download();return;}
+ if((as||!handle)&&!pick){download();return;}
  if(!as&&!handle&&rememberedFile)throw Error('请先重新连接上次文件，或使用另存为。');
  let selected=handle;
  if(as||!selected)selected=await pick({suggestedName:'presentation.json',types:[{description:'ZYL 演出参数',accept:{'application/json':['.json']}}]});
  const previous=handle||rememberedFile?.handle;
- const same=!!previous&&(selected===previous||await selected.isSameEntry(previous));
+ const same=await sameFile(selected,previous);
  if(same&&(fileConflict||baseline===null||(!handle&&fileId!==rememberedFile.id)))
   throw Error('文件与草稿的原始版本不一致。请重新打开配置，或另存为其他文件。');
  if(!as&&selected===handle&&await selected.requestPermission({mode:'readwrite'})!=='granted')
   throw Error('未取得写入权限。');
- const possibleOriginal=!previous&&cachedFile&&selected.name.toLowerCase()===filename.toLowerCase();
+ const mixedHandles=previous&&isBrowserHandle(previous)!==isBrowserHandle(selected);
+ const possibleOriginal=(!previous||mixedHandles)&&cachedFile&&selected.name.toLowerCase()===filename.toLowerCase();
  if((same||possibleOriginal)&&await (await selected.getFile()).text()!==baseline){
   fileConflict=true;
   throw Error('文件已被外部修改，已阻止覆盖。请重新打开配置，或另存为其他文件。');

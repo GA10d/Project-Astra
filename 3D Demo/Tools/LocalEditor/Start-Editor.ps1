@@ -47,10 +47,9 @@ function Select-EditorFile([string]$Operation, [string]$Tool, [string]$Suggested
     $dialog = if ($Operation -eq 'open') { New-Object Windows.Forms.OpenFileDialog } else { New-Object Windows.Forms.SaveFileDialog }
     $owner = New-Object Windows.Forms.Form
     try {
-        $owner.TopMost = $true
+        # Keep an owner for the native dialog without displaying an extra form.
         $owner.ShowInTaskbar = $false
-        $owner.Opacity = 0
-        $owner.Show()
+        $owner.TopMost = $true
         $dialog.Filter = 'JSON 配置 (*.json)|*.json'
         $dialog.DefaultExt = 'json'
         $dialog.AddExtension = $true

@@ -17,6 +17,9 @@ namespace AstraCabin.Navigation
         public Amount[] travelCosts;
         public Sector[] sectors;
         public EventDefinition[] events;
+        public int beaconDescriptionFontSize;
+        public int beaconDescriptionCharacterSpacing;
+        public int beaconDescriptionLineSpacing;
     }
     [Serializable] public sealed class ResourceDefinition { public string id, name; public int initial, capacity; }
     [Serializable] public sealed class Amount { public string resourceId; public int amount; }
@@ -147,6 +150,7 @@ namespace AstraCabin.Navigation
             json=Regex.Replace(json, @",""(?:items|requiredItems|itemCosts|itemRewards)"":(?:null|\[\])", "");
             // Display-only node labels must not invalidate existing voyages.
             json=Regex.Replace(json, @",""(?:travelButtonText|archiveDescription)"":(?:null|""(?:\\.|[^""\\])*"")", "");
+            json=Regex.Replace(json, @",""beaconDescription(?:FontSize|CharacterSpacing|LineSpacing)"":-?\d+", "");
             using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(json))).Replace("-", "");
         }
         public static List<string> Validate(Campaign c, EventRegistry registry)
@@ -154,6 +158,10 @@ namespace AstraCabin.Navigation
             var errors = new List<string>();
             if (c == null) { errors.Add("配置为空"); return errors; }
             if (c.schemaVersion != 1) errors.Add("不支持的 schemaVersion（需要 1）");
+            if ((c.beaconDescriptionFontSize != 0 && (c.beaconDescriptionFontSize < 12 || c.beaconDescriptionFontSize > 28)) ||
+                c.beaconDescriptionCharacterSpacing < 0 || c.beaconDescriptionCharacterSpacing > 8 ||
+                c.beaconDescriptionLineSpacing < 0 || c.beaconDescriptionLineSpacing > 20)
+                errors.Add("信标描述排版超出允许范围");
             if (!Id(c.id) || !Text(c.name, 80)) errors.Add("航程 ID 或名称无效");
             if (c.resources == null || c.resources.Length < 1 || c.resources.Length > 6 || c.resources.Any(r => r == null) ||
                 c.sectors == null || c.sectors.Length < 1 || c.sectors.Length > 16 || c.sectors.Any(s => s == null) ||

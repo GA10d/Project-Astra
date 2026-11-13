@@ -1,7 +1,7 @@
 {
   "farewellIllustrationEnabled": true,
   "farewellIllustrationStartOffset": -0.2,
-  "farewellIllustrationSpeed": 2.6,
+  "farewellIllustrationSpeed": 2.3,
   "farewellIllustrationVersion": "v2",
   "farewellIllustrationFramesV2": [
     true,
@@ -327,7 +327,7 @@
       "replyTimerActions": []
     },
     {
-      "text": "不过现在有个问题，飞船被吞进来的时候摔掉了一个三通接头。我有图纸，等我们说完，我就传到你的打印机。打印好一件，再带来给我。",
+      "text": "不过现在有个问题，飞船被吞进来的时候摔掉了一个三通接头。我倒是有图纸，只是不知道该怎么做出来。",
       "duration": 7,
       "replies": [
         "等我一会。",
@@ -1392,7 +1392,7 @@
   "farewellChestDuration": 4,
   "farewellSignalHold": 1.3,
   "farewellPlanetDuration": 8,
-  "farewellDebrisHold": 4,
+  "farewellDebrisHold": 10,
   "farewellShake": 0.35,
   "farewellDialogue": [
     {
